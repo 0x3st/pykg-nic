@@ -5,17 +5,24 @@ export interface Env {
   LINUXDO_CLIENT_ID: string;
   LINUXDO_CLIENT_SECRET: string;
   JWT_SIGNING_KEY: string;
-  DESEC_TOKEN: string;
+  CLOUDFLARE_API_TOKEN: string;
+  CLOUDFLARE_ZONE_ID: string;
+  CREDIT_PID: string;           // LinuxDO Credit Client ID
+  CREDIT_KEY: string;           // LinuxDO Credit Client Secret
+  DOMAIN_PRICE: string;         // 域名价格（积分）
   BASE_DOMAIN: string;
   SESSION_COOKIE_NAME?: string;
+  ADMIN_LINUXDO_IDS?: string;   // 管理员 LinuxDO ID 列表，逗号分隔
 }
 
 export interface LinuxDOUser {
   id: number;
   username: string;
+  name: string;
+  avatar_template: string;
+  active: boolean;
   trust_level: number;
   silenced: boolean;
-  suspended: boolean;
 }
 
 export interface JWTPayload {
@@ -31,7 +38,10 @@ export interface User {
   username: string;
   trust_level: number;
   silenced: number;
-  suspended: number;
+  active: number;
+  is_admin: number;
+  is_banned: number;
+  ban_reason: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -41,8 +51,22 @@ export interface Domain {
   label: string;
   fqdn: string;
   owner_linuxdo_id: number;
-  status: 'active' | 'suspended';
+  status: 'pending' | 'active' | 'suspended' | 'review';
+  review_reason: string | null;
   created_at: string;
+}
+
+// 订单表
+export interface Order {
+  id: number;
+  order_no: string;           // 业务单号
+  trade_no: string | null;    // 平台单号
+  linuxdo_id: number;
+  label: string;              // 申请的域名标签
+  amount: number;             // 积分数量
+  status: 'pending' | 'paid' | 'failed' | 'refunded';
+  created_at: string;
+  paid_at: string | null;
 }
 
 export interface AuditLog {
@@ -55,23 +79,29 @@ export interface AuditLog {
   created_at: string;
 }
 
-// deSEC types
-export interface DeSECRRSet {
-  subname: string;
-  type: string;
-  ttl: number;
-  records: string[];
+export interface Setting {
+  key: string;
+  value: string;
+  updated_at: string;
 }
 
-export interface DeSECZone {
-  name: string;
-  minimum_ttl: number;
-  keys?: Array<{
-    dnskey: string;
-    ds: string[];
-    flags: number;
-    keytype: string;
-  }>;
+export interface BannedWord {
+  id: number;
+  word: string;
+  category: string;
+  created_at: string;
+}
+
+export interface PendingReview {
+  id: number;
+  order_no: string;
+  linuxdo_id: number;
+  label: string;
+  reason: string;
+  status: 'pending' | 'approved' | 'rejected';
+  reviewed_by: number | null;
+  reviewed_at: string | null;
+  created_at: string;
 }
 
 // API response types
@@ -86,16 +116,68 @@ export interface MeResponse {
     linuxdo_id: number;
     username: string;
     trust_level: number;
+    is_admin: boolean;
+    is_banned: boolean;
   };
   quota: {
     maxDomains: number;
     used: number;
   };
+  price: number;  // 域名价格
 }
 
 export interface DomainResponse {
   label: string;
   fqdn: string;
+  status: string;
+  nameservers: string[];
+  created_at: string;
+  review_reason?: string;
+}
+
+export interface CreateOrderResponse {
+  order_no: string;
+  payment_url: string;
+}
+
+// Admin types
+export interface AdminStats {
+  totalUsers: number;
+  totalDomains: number;
+  pendingReviews: number;
+  totalOrders: number;
+  totalRevenue: number;
+}
+
+export interface AdminUserListItem {
+  linuxdo_id: number;
+  username: string;
+  trust_level: number;
+  is_admin: number;
+  is_banned: number;
+  ban_reason: string | null;
+  domain_count: number;
+  created_at: string;
+}
+
+export interface AdminDomainListItem {
+  id: number;
+  label: string;
+  fqdn: string;
+  owner_linuxdo_id: number;
+  owner_username: string;
+  status: string;
+  review_reason: string | null;
+  created_at: string;
+}
+
+export interface AdminReviewListItem {
+  id: number;
+  order_no: string;
+  linuxdo_id: number;
+  username: string;
+  label: string;
+  reason: string;
   status: string;
   created_at: string;
 }

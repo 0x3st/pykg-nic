@@ -1,10 +1,14 @@
 // Auth middleware for Pages Functions
 
-import type { Env, JWTPayload } from './types';
+import type { Env, JWTPayload, User } from './types';
 import { verifyJWT, parseCookies } from './jwt';
 
 export interface AuthContext {
   user: JWTPayload;
+}
+
+export interface AdminAuthContext extends AuthContext {
+  dbUser: User;
 }
 
 const COOKIE_NAME = 'session';
@@ -96,5 +100,62 @@ export async function requireAuth(
   if (!result.authenticated) {
     return errorResponse(result.error, 401);
   }
-  return { user: result.payload };
+  return { user: result.user };
+}
+
+// Check if user is admin (from env config or database)
+export function isAdminFromEnv(linuxdoId: number, env: Env): boolean {
+  const adminIds = env.ADMIN_LINUXDO_IDS || '';
+  const ids = adminIds.split(',').map(id => parseInt(id.trim(), 10)).filter(id => !isNaN(id));
+  return ids.includes(linuxdoId);
+}
+
+// Require admin authentication
+export async function requireAdmin(
+  request: Request,
+  env: Env
+): Promise<Response | AdminAuthContext> {
+  const result = await authenticateRequest(request, env);
+  if (!result.authenticated) {
+    return errorResponse(result.error, 401);
+  }
+
+  const linuxdoId = parseInt(result.user.sub, 10);
+
+  // Check database for admin status
+  const dbUser = await env.DB.prepare(
+    'SELECT * FROM users WHERE linuxdo_id = ?'
+  ).bind(linuxdoId).first<User>();
+
+  // Check if admin from env or database
+  const isEnvAdmin = isAdminFromEnv(linuxdoId, env);
+  const isDbAdmin = dbUser?.is_admin === 1;
+
+  if (!isEnvAdmin && !isDbAdmin) {
+    return errorResponse('Admin access required', 403);
+  }
+
+  // If user is env admin but not in DB as admin, update DB
+  if (isEnvAdmin && dbUser && !isDbAdmin) {
+    await env.DB.prepare(
+      'UPDATE users SET is_admin = 1, updated_at = datetime(\'now\') WHERE linuxdo_id = ?'
+    ).bind(linuxdoId).run();
+    dbUser.is_admin = 1;
+  }
+
+  return {
+    user: result.user,
+    dbUser: dbUser || {
+      linuxdo_id: linuxdoId,
+      username: result.user.username,
+      trust_level: result.user.trust_level,
+      silenced: 0,
+      active: 1,
+      is_admin: 1,
+      is_banned: 0,
+      ban_reason: null,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    }
+  };
 }

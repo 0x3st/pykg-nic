@@ -31,7 +31,6 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
   // Verify state from cookie
   const cookies = parseCookies(request.headers.get('Cookie'));
   const savedState = cookies['oauth_state'];
-  const pkceVerifier = cookies['pkce_verifier'];
 
   if (!savedState || savedState !== state) {
     return redirectWithError('Invalid state parameter - possible CSRF attack');
@@ -42,8 +41,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
     code,
     getCallbackUrl(request),
     env.LINUXDO_CLIENT_ID,
-    env.LINUXDO_CLIENT_SECRET,
-    pkceVerifier
+    env.LINUXDO_CLIENT_SECRET
   );
 
   if (!tokenResult.success) {
@@ -66,13 +64,13 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
     );
   }
 
-  // Check if user is silenced or suspended
+  // Check if user is silenced or inactive
   if (user.silenced) {
     return redirectWithError('Access denied: Your LinuxDO account is silenced.');
   }
 
-  if (user.suspended) {
-    return redirectWithError('Access denied: Your LinuxDO account is suspended.');
+  if (!user.active) {
+    return redirectWithError('Access denied: Your LinuxDO account is not active.');
   }
 
   // Upsert user in database
@@ -128,7 +126,7 @@ function redirectWithError(error: string): Response {
   });
 }
 
-interface TokenResult {
+type TokenResult = {
   success: true;
   accessToken: string;
 } | {
@@ -140,8 +138,7 @@ async function exchangeCodeForToken(
   code: string,
   redirectUri: string,
   clientId: string,
-  clientSecret: string,
-  codeVerifier?: string
+  clientSecret: string
 ): Promise<TokenResult> {
   const body = new URLSearchParams({
     grant_type: 'authorization_code',
@@ -151,16 +148,12 @@ async function exchangeCodeForToken(
     client_secret: clientSecret,
   });
 
-  // Add PKCE verifier if available
-  if (codeVerifier) {
-    body.set('code_verifier', codeVerifier);
-  }
-
   try {
     const response = await fetch(LINUXDO_TOKEN_URL, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
+        'Accept': 'application/json',
       },
       body: body.toString(),
     });
@@ -181,7 +174,7 @@ async function exchangeCodeForToken(
   }
 }
 
-interface UserResult {
+type UserResult = {
   success: true;
   user: LinuxDOUser;
 } | {
@@ -211,19 +204,19 @@ async function fetchUserInfo(accessToken: string): Promise<UserResult> {
 
 async function upsertUser(db: D1Database, user: LinuxDOUser): Promise<void> {
   await db.prepare(`
-    INSERT INTO users (linuxdo_id, username, trust_level, silenced, suspended, updated_at)
+    INSERT INTO users (linuxdo_id, username, trust_level, silenced, active, updated_at)
     VALUES (?, ?, ?, ?, ?, datetime('now'))
     ON CONFLICT(linuxdo_id) DO UPDATE SET
       username = excluded.username,
       trust_level = excluded.trust_level,
       silenced = excluded.silenced,
-      suspended = excluded.suspended,
+      active = excluded.active,
       updated_at = datetime('now')
   `).bind(
     user.id,
     user.username,
     user.trust_level,
     user.silenced ? 1 : 0,
-    user.suspended ? 1 : 0
+    user.active ? 1 : 0
   ).run();
 }

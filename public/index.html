@@ -130,10 +130,10 @@
       border: 1px solid #bbf7d0;
     }
 
-    .alert-warning {
-      background: #fffbeb;
-      color: var(--warning);
-      border: 1px solid #fde68a;
+    .alert-info {
+      background: #eff6ff;
+      color: var(--primary);
+      border: 1px solid #bfdbfe;
     }
 
     .form-group {
@@ -147,15 +147,16 @@
       font-size: 0.875rem;
     }
 
-    .form-group input, .form-group select {
+    .form-group input, .form-group select, .form-group textarea {
       width: 100%;
       padding: 0.625rem;
       border: 1px solid var(--border);
       border-radius: 6px;
       font-size: 0.875rem;
+      font-family: inherit;
     }
 
-    .form-group input:focus, .form-group select:focus {
+    .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
       outline: none;
       border-color: var(--primary);
       box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
@@ -235,48 +236,41 @@
       margin-bottom: 1rem;
     }
 
-    .records-table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 0.875rem;
+    .ns-list {
+      list-style: none;
+      padding: 0;
+      margin: 1rem 0;
     }
 
-    .records-table th, .records-table td {
-      padding: 0.75rem;
-      text-align: left;
-      border-bottom: 1px solid var(--border);
-    }
-
-    .records-table th {
-      background: var(--bg);
-      font-weight: 600;
-    }
-
-    .records-table code {
-      background: var(--bg);
-      padding: 0.125rem 0.375rem;
-      border-radius: 4px;
-      font-size: 0.8125rem;
-    }
-
-    .record-form {
-      display: grid;
-      grid-template-columns: 1fr 100px 80px 1fr auto;
+    .ns-list li {
+      display: flex;
+      align-items: center;
       gap: 0.5rem;
-      align-items: end;
-      margin-bottom: 1rem;
-    }
-
-    .record-form input, .record-form select {
       padding: 0.5rem;
-      border: 1px solid var(--border);
+      background: var(--bg);
       border-radius: 4px;
+      margin-bottom: 0.5rem;
+      font-family: monospace;
       font-size: 0.875rem;
     }
 
-    .record-actions {
+    .ns-list li .ns-remove {
+      margin-left: auto;
+      background: none;
+      border: none;
+      color: var(--danger);
+      cursor: pointer;
+      padding: 0.25rem;
+    }
+
+    .ns-input-row {
       display: flex;
       gap: 0.5rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .ns-input-row input {
+      flex: 1;
     }
 
     .btn-sm {
@@ -308,6 +302,12 @@
       display: none !important;
     }
 
+    .help-text {
+      font-size: 0.8125rem;
+      color: var(--text-muted);
+      margin-top: 0.5rem;
+    }
+
     footer {
       text-align: center;
       padding: 2rem;
@@ -321,13 +321,13 @@
     }
 
     @media (max-width: 640px) {
-      .record-form {
-        grid-template-columns: 1fr;
-      }
-
       .user-info {
         flex-direction: column;
         align-items: flex-start;
+      }
+
+      .ns-input-row {
+        flex-direction: column;
       }
     }
   </style>
@@ -374,6 +374,9 @@
       <p style="margin-bottom: 1rem; color: var(--text-muted);">
         每位用户可注册一个子域名，请谨慎选择。
       </p>
+      <div class="alert alert-info" style="margin-bottom: 1rem;">
+        <strong>价格：</strong><span id="domain-price">--</span> 积分（LinuxDO Credit）
+      </div>
       <form id="register-form">
         <div class="form-group">
           <label for="label-input">子域名</label>
@@ -385,88 +388,93 @@
             只允许小写字母、数字和连字符，长度 2-63 字符
           </small>
         </div>
-        <button type="submit" class="btn btn-primary" id="register-btn">注册域名</button>
+        <button type="submit" class="btn btn-primary" id="register-btn">支付并注册</button>
       </form>
+    </div>
+
+    <!-- Pending order section -->
+    <div id="pending-order-section" class="card hidden">
+      <h2>待支付订单</h2>
+      <div class="alert alert-warning" style="margin-bottom: 1rem;">
+        您有一个待支付的域名注册订单，请完成支付或取消后重新注册。
+      </div>
+      <div style="margin-bottom: 1rem;">
+        <p><strong>域名：</strong><span id="pending-label">--</span>.py.kg</p>
+        <p><strong>金额：</strong><span id="pending-amount">--</span> 积分</p>
+        <p><strong>订单号：</strong><span id="pending-order-no">--</span></p>
+        <p style="color: var(--text-muted); font-size: 0.875rem;"><strong>创建时间：</strong><span id="pending-created">--</span></p>
+      </div>
+      <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+        <button class="btn btn-primary" id="continue-pay-btn">继续支付</button>
+        <button class="btn btn-secondary" id="cancel-order-btn">取消订单</button>
+      </div>
     </div>
 
     <!-- Domain management section -->
     <div id="domain-section" class="card hidden">
       <h2>我的域名</h2>
       <div class="domain-display" id="domain-display">加载中...</div>
-      <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+      <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem;">
         <span class="badge badge-success" id="domain-status">active</span>
         <span style="color: var(--text-muted); font-size: 0.875rem;" id="domain-created"></span>
       </div>
-      <div style="margin-top: 1rem;">
-        <button class="btn btn-danger btn-sm" id="delete-domain-btn">删除域名</button>
-      </div>
+      <button class="btn btn-danger btn-sm" id="delete-domain-btn">删除域名</button>
     </div>
 
-    <!-- DNS Records section -->
-    <div id="records-section" class="card hidden">
-      <h2>DNS 记录管理</h2>
-      <p style="margin-bottom: 1rem; color: var(--text-muted);">
-        支持的记录类型：A、AAAA、CNAME、TXT
-      </p>
-
-      <!-- Add record form -->
-      <div style="margin-bottom: 1.5rem; padding: 1rem; background: var(--bg); border-radius: 6px;">
-        <h3 style="font-size: 0.875rem; margin-bottom: 0.75rem;">添加记录</h3>
-        <form id="add-record-form">
-          <div class="record-form">
-            <div>
-              <label style="font-size: 0.75rem;">名称</label>
-              <input type="text" id="new-subname" placeholder="@ 或 www">
-            </div>
-            <div>
-              <label style="font-size: 0.75rem;">类型</label>
-              <select id="new-type">
-                <option value="A">A</option>
-                <option value="AAAA">AAAA</option>
-                <option value="CNAME">CNAME</option>
-                <option value="TXT">TXT</option>
-              </select>
-            </div>
-            <div>
-              <label style="font-size: 0.75rem;">TTL</label>
-              <input type="number" id="new-ttl" value="3600" min="60" max="86400">
-            </div>
-            <div>
-              <label style="font-size: 0.75rem;">值</label>
-              <input type="text" id="new-value" placeholder="1.2.3.4" required>
-            </div>
-            <button type="submit" class="btn btn-primary btn-sm">添加</button>
-          </div>
-        </form>
+    <!-- NS Records section -->
+    <div id="ns-section" class="card hidden">
+      <h2>NS 记录配置</h2>
+      <div class="alert alert-info" style="margin-bottom: 1rem;">
+        <strong>说明：</strong>设置 NS 记录后，您的子域名将委派给指定的 DNS 服务器管理。
+        您需要在自己的 DNS 服务器上配置该子域名的解析记录。
       </div>
 
-      <!-- Records table -->
-      <div id="records-loading" class="loading">
+      <div id="ns-loading" class="loading">
         <span class="spinner"></span>
-        <p>加载 DNS 记录...</p>
+        <p>加载 NS 记录...</p>
       </div>
-      <table class="records-table hidden" id="records-table">
-        <thead>
-          <tr>
-            <th>名称</th>
-            <th>类型</th>
-            <th>TTL</th>
-            <th>值</th>
-            <th>操作</th>
-          </tr>
-        </thead>
-        <tbody id="records-tbody">
-        </tbody>
-      </table>
-      <p id="no-records" class="hidden" style="color: var(--text-muted); text-align: center; padding: 1rem;">
-        暂无 DNS 记录
-      </p>
+
+      <div id="ns-content" class="hidden">
+        <div class="form-group">
+          <label>当前 NS 记录</label>
+          <ul class="ns-list" id="ns-list">
+            <li style="color: var(--text-muted);">暂无 NS 记录</li>
+          </ul>
+        </div>
+
+        <div class="form-group">
+          <label>添加 NS 服务器</label>
+          <div class="ns-input-row">
+            <input type="text" id="ns-input" placeholder="ns1.example.com">
+            <button type="button" class="btn btn-secondary btn-sm" id="add-ns-btn">添加</button>
+          </div>
+          <p class="help-text">
+            输入您的 DNS 服务器地址，至少需要 2 个，最多 8 个。
+            <br>
+            推荐使用免费 DNS 服务：<a href="https://www.cloudflare.com/dns/" target="_blank">Cloudflare</a>、
+            <a href="https://dns.he.net/" target="_blank">Hurricane Electric</a>、
+            <a href="https://desec.io/" target="_blank">deSEC</a>
+          </p>
+        </div>
+
+        <div id="ns-pending" class="hidden" style="margin: 1rem 0; padding: 1rem; background: var(--bg); border-radius: 6px;">
+          <strong>待保存的 NS 记录：</strong>
+          <ul class="ns-list" id="ns-pending-list"></ul>
+          <div style="display: flex; gap: 0.5rem; margin-top: 1rem;">
+            <button type="button" class="btn btn-primary" id="save-ns-btn">保存 NS 记录</button>
+            <button type="button" class="btn btn-secondary" id="cancel-ns-btn">取消</button>
+          </div>
+        </div>
+
+        <div id="ns-actions" style="margin-top: 1rem;">
+          <button type="button" class="btn btn-danger btn-sm" id="clear-ns-btn">清除所有 NS 记录</button>
+        </div>
+      </div>
     </div>
 
     <footer>
       <p>
         Powered by <a href="https://pages.cloudflare.com" target="_blank">Cloudflare Pages</a>
-        & <a href="https://desec.io" target="_blank">deSEC</a>
       </p>
       <p style="margin-top: 0.5rem;">
         <a href="https://linux.do" target="_blank">LinuxDO 社区</a>
@@ -478,20 +486,25 @@
     // State
     let currentUser = null;
     let currentDomain = null;
-    let currentRecords = [];
+    let currentNS = [];
+    let pendingNS = [];
+    let pendingOrder = null;
+    let domainPrice = 10;
 
     // DOM elements
     const errorContainer = document.getElementById('error-container');
     const loginSection = document.getElementById('login-section');
     const userSection = document.getElementById('user-section');
     const registerSection = document.getElementById('register-section');
+    const pendingOrderSection = document.getElementById('pending-order-section');
     const domainSection = document.getElementById('domain-section');
-    const recordsSection = document.getElementById('records-section');
+    const nsSection = document.getElementById('ns-section');
 
     // Show error
     function showError(message) {
       errorContainer.innerHTML = `<div class="alert alert-error">${escapeHtml(message)}</div>`;
       errorContainer.classList.remove('hidden');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
     // Show success
@@ -519,8 +532,19 @@
       const error = params.get('error');
       if (error) {
         showError(error);
-        // Clean URL
         window.history.replaceState({}, '', '/');
+      }
+      // Check for payment return - show info message
+      const tradeNo = params.get('trade_no');
+      if (tradeNo) {
+        // User returned from payment, show info message
+        errorContainer.innerHTML = `<div class="alert alert-info">支付处理中，请稍候刷新页面查看结果...</div>`;
+        errorContainer.classList.remove('hidden');
+        window.history.replaceState({}, '', '/');
+        // Auto refresh after 2 seconds
+        setTimeout(() => {
+          window.location.reload();
+        }, 2000);
       }
     }
 
@@ -548,31 +572,24 @@
       try {
         const data = await api('GET', '/api/me');
         currentUser = data.user;
+        domainPrice = data.price || 10;
 
-        // Update UI
         document.getElementById('user-avatar').textContent = currentUser.username[0].toUpperCase();
         document.getElementById('user-name').textContent = currentUser.username;
         document.getElementById('user-trust').textContent = `TL${currentUser.trust_level}`;
+        document.getElementById('domain-price').textContent = domainPrice;
 
         loginSection.classList.add('hidden');
         userSection.classList.remove('hidden');
 
-        // Check quota
-        if (data.quota.used >= data.quota.maxDomains) {
-          registerSection.classList.add('hidden');
-        } else {
-          registerSection.classList.remove('hidden');
-        }
-
-        // Load domain
         await loadDomain();
       } catch (e) {
-        // Not logged in
         loginSection.classList.remove('hidden');
         userSection.classList.add('hidden');
         registerSection.classList.add('hidden');
+        pendingOrderSection.classList.add('hidden');
         domainSection.classList.add('hidden');
-        recordsSection.classList.add('hidden');
+        nsSection.classList.add('hidden');
       }
     }
 
@@ -582,71 +599,179 @@
         const data = await api('GET', '/api/domains');
         if (data.domain) {
           currentDomain = data.domain;
+          currentNS = data.domain.nameservers || [];
+          pendingOrder = null;
+
           document.getElementById('domain-display').textContent = currentDomain.fqdn;
           document.getElementById('domain-status').textContent = currentDomain.status;
           document.getElementById('domain-created').textContent =
             `创建于 ${new Date(currentDomain.created_at).toLocaleDateString('zh-CN')}`;
 
           registerSection.classList.add('hidden');
+          pendingOrderSection.classList.add('hidden');
           domainSection.classList.remove('hidden');
-          recordsSection.classList.remove('hidden');
+          nsSection.classList.remove('hidden');
 
-          // Load records
-          await loadRecords();
-        } else {
+          renderNSList();
+          document.getElementById('ns-loading').classList.add('hidden');
+          document.getElementById('ns-content').classList.remove('hidden');
+        } else if (data.pendingOrder) {
+          // Show pending order
+          pendingOrder = data.pendingOrder;
+          currentDomain = null;
+
+          document.getElementById('pending-label').textContent = pendingOrder.label;
+          document.getElementById('pending-amount').textContent = pendingOrder.amount;
+          document.getElementById('pending-order-no').textContent = pendingOrder.order_no;
+          document.getElementById('pending-created').textContent =
+            new Date(pendingOrder.created_at).toLocaleString('zh-CN');
+
+          registerSection.classList.add('hidden');
+          pendingOrderSection.classList.remove('hidden');
           domainSection.classList.add('hidden');
-          recordsSection.classList.add('hidden');
+          nsSection.classList.add('hidden');
+        } else {
+          // No domain, no pending order - show registration
+          currentDomain = null;
+          pendingOrder = null;
+          registerSection.classList.remove('hidden');
+          pendingOrderSection.classList.add('hidden');
+          domainSection.classList.add('hidden');
+          nsSection.classList.add('hidden');
         }
       } catch (e) {
         showError('加载域名失败: ' + e.message);
       }
     }
 
-    // Load DNS records
-    async function loadRecords() {
-      const loading = document.getElementById('records-loading');
-      const table = document.getElementById('records-table');
-      const noRecords = document.getElementById('no-records');
-      const tbody = document.getElementById('records-tbody');
+    // Render NS list
+    function renderNSList() {
+      const list = document.getElementById('ns-list');
+      if (currentNS.length === 0) {
+        list.innerHTML = '<li style="color: var(--text-muted);">暂无 NS 记录</li>';
+      } else {
+        list.innerHTML = currentNS.map(ns => `
+          <li>
+            <span>${escapeHtml(ns)}</span>
+          </li>
+        `).join('');
+      }
+    }
 
-      loading.classList.remove('hidden');
-      table.classList.add('hidden');
-      noRecords.classList.add('hidden');
+    // Render pending NS list
+    function renderPendingNS() {
+      const container = document.getElementById('ns-pending');
+      const list = document.getElementById('ns-pending-list');
+
+      if (pendingNS.length === 0) {
+        container.classList.add('hidden');
+        return;
+      }
+
+      list.innerHTML = pendingNS.map((ns, i) => `
+        <li>
+          <span>${escapeHtml(ns)}</span>
+          <button class="ns-remove" onclick="removePendingNS(${i})" title="移除">✕</button>
+        </li>
+      `).join('');
+      container.classList.remove('hidden');
+    }
+
+    // Add NS to pending list
+    function addPendingNS() {
+      const input = document.getElementById('ns-input');
+      const ns = input.value.trim().toLowerCase();
+
+      if (!ns) return;
+
+      // Basic validation
+      if (!/^([a-z0-9]([a-z0-9-]*[a-z0-9])?\.)+[a-z]{2,}\.?$/.test(ns)) {
+        showError('无效的 NS 服务器格式，请输入有效的域名（如 ns1.example.com）');
+        return;
+      }
+
+      // Normalize
+      const normalized = ns.endsWith('.') ? ns : ns + '.';
+
+      // Check duplicates
+      if (pendingNS.includes(normalized) || currentNS.includes(normalized)) {
+        showError('该 NS 服务器已存在');
+        return;
+      }
+
+      if (pendingNS.length >= 8) {
+        showError('最多只能添加 8 个 NS 服务器');
+        return;
+      }
+
+      pendingNS.push(normalized);
+      input.value = '';
+      renderPendingNS();
+      clearMessages();
+    }
+
+    // Remove from pending list
+    function removePendingNS(index) {
+      pendingNS.splice(index, 1);
+      renderPendingNS();
+    }
+
+    // Cancel pending changes
+    function cancelPendingNS() {
+      pendingNS = [];
+      renderPendingNS();
+    }
+
+    // Save NS records
+    async function saveNS() {
+      if (pendingNS.length < 2) {
+        showError('至少需要 2 个 NS 服务器');
+        return;
+      }
+
+      const btn = document.getElementById('save-ns-btn');
+      btn.disabled = true;
+      btn.textContent = '保存中...';
+      clearMessages();
 
       try {
-        const data = await api('GET', '/api/rrsets');
-        currentRecords = data.rrsets || [];
-
-        loading.classList.add('hidden');
-
-        if (currentRecords.length === 0) {
-          noRecords.classList.remove('hidden');
-          return;
-        }
-
-        // Render records
-        tbody.innerHTML = '';
-        for (const rrset of currentRecords) {
-          for (const record of rrset.records) {
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-              <td><code>${escapeHtml(rrset.subname || '@')}</code></td>
-              <td>${escapeHtml(rrset.type)}</td>
-              <td>${rrset.ttl}</td>
-              <td><code>${escapeHtml(record)}</code></td>
-              <td>
-                <button class="btn btn-danger btn-sm" onclick="deleteRecord('${escapeHtml(rrset.subname)}', '${escapeHtml(rrset.type)}')">
-                  删除
-                </button>
-              </td>
-            `;
-            tbody.appendChild(tr);
-          }
-        }
-        table.classList.remove('hidden');
+        const data = await api('PUT', '/api/ns', { nameservers: pendingNS });
+        currentNS = data.nameservers;
+        pendingNS = [];
+        renderNSList();
+        renderPendingNS();
+        showSuccess('NS 记录保存成功！DNS 生效可能需要几分钟到几小时。');
       } catch (e) {
-        loading.classList.add('hidden');
-        showError('加载 DNS 记录失败: ' + e.message);
+        showError('保存失败: ' + e.message);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '保存 NS 记录';
+      }
+    }
+
+    // Clear all NS records
+    async function clearNS() {
+      if (!confirm('确定要清除所有 NS 记录吗？这将取消域名委派。')) {
+        return;
+      }
+
+      const btn = document.getElementById('clear-ns-btn');
+      btn.disabled = true;
+      btn.textContent = '清除中...';
+      clearMessages();
+
+      try {
+        await api('DELETE', '/api/ns');
+        currentNS = [];
+        pendingNS = [];
+        renderNSList();
+        renderPendingNS();
+        showSuccess('NS 记录已清除');
+      } catch (e) {
+        showError('清除失败: ' + e.message);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '清除所有 NS 记录';
       }
     }
 
@@ -658,24 +783,27 @@
       const label = input.value.toLowerCase().trim();
 
       btn.disabled = true;
-      btn.textContent = '注册中...';
+      btn.textContent = '处理中...';
       clearMessages();
 
       try {
-        await api('POST', '/api/domains', { label });
-        showSuccess('域名注册成功！');
-        await loadDomain();
+        const data = await api('POST', '/api/domains', { label });
+        // Redirect to payment URL
+        if (data.payment_url) {
+          window.location.href = data.payment_url;
+        } else {
+          showError('未获取到支付链接');
+        }
       } catch (e) {
         showError('注册失败: ' + e.message);
-      } finally {
         btn.disabled = false;
-        btn.textContent = '注册域名';
+        btn.textContent = '支付并注册';
       }
     });
 
     // Delete domain
     document.getElementById('delete-domain-btn').addEventListener('click', async () => {
-      if (!confirm('确定要删除域名吗？此操作不可恢复，所有 DNS 记录将被删除。')) {
+      if (!confirm('确定要删除域名吗？此操作不可恢复，所有 NS 记录将被删除。')) {
         return;
       }
 
@@ -688,8 +816,10 @@
         await api('DELETE', '/api/domains');
         showSuccess('域名已删除');
         currentDomain = null;
+        currentNS = [];
+        pendingNS = [];
         domainSection.classList.add('hidden');
-        recordsSection.classList.add('hidden');
+        nsSection.classList.add('hidden');
         registerSection.classList.remove('hidden');
       } catch (e) {
         showError('删除失败: ' + e.message);
@@ -699,63 +829,69 @@
       }
     });
 
-    // Add record
-    document.getElementById('add-record-form').addEventListener('submit', async (e) => {
-      e.preventDefault();
-
-      let subname = document.getElementById('new-subname').value.trim();
-      const type = document.getElementById('new-type').value;
-      const ttl = parseInt(document.getElementById('new-ttl').value, 10);
-      let value = document.getElementById('new-value').value.trim();
-
-      // Normalize subname
-      if (subname === '@') subname = '';
-
-      // For TXT records, ensure proper quoting
-      if (type === 'TXT' && !value.startsWith('"')) {
-        value = `"${value}"`;
+    // Event listeners
+    document.getElementById('add-ns-btn').addEventListener('click', addPendingNS);
+    document.getElementById('ns-input').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        addPendingNS();
       }
+    });
+    document.getElementById('save-ns-btn').addEventListener('click', saveNS);
+    document.getElementById('cancel-ns-btn').addEventListener('click', cancelPendingNS);
+    document.getElementById('clear-ns-btn').addEventListener('click', clearNS);
 
-      clearMessages();
+    // Continue payment for pending order
+    document.getElementById('continue-pay-btn').addEventListener('click', async () => {
+      if (!pendingOrder) return;
+
+      const btn = document.getElementById('continue-pay-btn');
+      btn.disabled = true;
+      btn.textContent = '跳转中...';
 
       try {
-        // Find existing rrset or create new
-        const existing = currentRecords.find(r => r.subname === subname && r.type === type);
-        const records = existing ? [...existing.records, value] : [value];
-
-        await api('PATCH', '/api/rrsets', {
-          subname,
-          type,
-          ttl,
-          records,
-        });
-
-        showSuccess('记录添加成功');
-        document.getElementById('new-subname').value = '';
-        document.getElementById('new-value').value = '';
-        await loadRecords();
+        // Re-submit with the same label to get payment URL
+        const data = await api('POST', '/api/domains', { label: pendingOrder.label });
+        if (data.payment_url) {
+          window.location.href = data.payment_url;
+        } else {
+          showError('未获取到支付链接');
+          btn.disabled = false;
+          btn.textContent = '继续支付';
+        }
       } catch (e) {
-        showError('添加记录失败: ' + e.message);
+        showError('获取支付链接失败: ' + e.message);
+        btn.disabled = false;
+        btn.textContent = '继续支付';
       }
     });
 
-    // Delete record
-    async function deleteRecord(subname, type) {
-      if (!confirm(`确定要删除 ${subname || '@'} 的 ${type} 记录吗？`)) {
+    // Cancel pending order
+    document.getElementById('cancel-order-btn').addEventListener('click', async () => {
+      if (!pendingOrder) return;
+
+      if (!confirm('确定要取消此订单吗？取消后可以重新注册其他域名。')) {
         return;
       }
 
+      const btn = document.getElementById('cancel-order-btn');
+      btn.disabled = true;
+      btn.textContent = '取消中...';
       clearMessages();
 
       try {
-        const params = new URLSearchParams({ subname, type });
-        await api('DELETE', `/api/rrsets?${params}`);
-        showSuccess('记录已删除');
-        await loadRecords();
+        await api('DELETE', '/api/orders/' + pendingOrder.order_no);
+        showSuccess('订单已取消');
+        pendingOrder = null;
+        pendingOrderSection.classList.add('hidden');
+        registerSection.classList.remove('hidden');
       } catch (e) {
-        showError('删除记录失败: ' + e.message);
+        showError('取消订单失败: ' + e.message);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '取消订单';
       }
-    }
+    });
 
     // Initialize
     checkUrlError();

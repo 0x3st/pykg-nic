@@ -11,7 +11,8 @@
 	},
 	"vars": {
 		"BASE_DOMAIN": "py.kg",
-		"SESSION_COOKIE_NAME": "session"
+		"SESSION_COOKIE_NAME": "session",
+		"DOMAIN_PRICE": "10"
 	},
 	"d1_databases": [
 		{

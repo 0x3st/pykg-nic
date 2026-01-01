@@ -1,9 +1,11 @@
 // /api/domains - Domain registration and management
 
-import type { Env, Domain, DomainResponse } from '../lib/types';
+import type { Env, Domain, DomainResponse, Order, CreateOrderResponse, User, PendingReview } from '../lib/types';
 import { requireAuth, successResponse, errorResponse } from '../lib/auth';
 import { validateLabel } from '../lib/validators';
-import { DeSECClient, createSubdomainWithDelegation, deleteSubdomainWithDelegation } from '../lib/desec';
+import { CloudflareDNSClient } from '../lib/cloudflare-dns';
+import { LinuxDOCreditClient, generateOrderNo } from '../lib/credit';
+import { checkLabel, checkUserAbuse, banUser, getSetting } from '../lib/moderation';
 
 // GET /api/domains - Get user's domain
 export const onRequestGet: PagesFunction<Env> = async (context) => {
@@ -18,26 +20,67 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
   const { user } = authResult;
   const linuxdoId = parseInt(user.sub, 10);
 
-  // Get user's domain
+  // Get user's domain (only active ones)
   const domain = await env.DB.prepare(
-    'SELECT * FROM domains WHERE owner_linuxdo_id = ?'
-  ).bind(linuxdoId).first<Domain>();
+    'SELECT * FROM domains WHERE owner_linuxdo_id = ? AND status = ?'
+  ).bind(linuxdoId, 'active').first<Domain>();
 
   if (!domain) {
+    // Check if there's a pending review
+    const pendingReview = await env.DB.prepare(
+      'SELECT * FROM pending_reviews WHERE linuxdo_id = ? AND status = ? ORDER BY created_at DESC LIMIT 1'
+    ).bind(linuxdoId, 'pending').first<PendingReview>();
+
+    if (pendingReview) {
+      return successResponse({
+        domain: null,
+        pendingReview: {
+          label: pendingReview.label,
+          reason: pendingReview.reason,
+          created_at: pendingReview.created_at,
+        },
+      });
+    }
+
+    // Check if there's a pending order
+    const pendingOrder = await env.DB.prepare(
+      'SELECT * FROM orders WHERE linuxdo_id = ? AND status = ? ORDER BY created_at DESC LIMIT 1'
+    ).bind(linuxdoId, 'pending').first<Order>();
+
+    if (pendingOrder) {
+      return successResponse({
+        domain: null,
+        pendingOrder: {
+          order_no: pendingOrder.order_no,
+          label: pendingOrder.label,
+          amount: pendingOrder.amount,
+          created_at: pendingOrder.created_at,
+        },
+      });
+    }
+
     return successResponse({ domain: null });
   }
+
+  // Get NS records from Cloudflare
+  const cfClient = new CloudflareDNSClient(env.CLOUDFLARE_API_TOKEN, env.CLOUDFLARE_ZONE_ID);
+  const nsResult = await cfClient.getNSRecords(domain.fqdn);
+
+  const nameservers = nsResult.success ? nsResult.records.map(r => r.content) : [];
 
   const response: DomainResponse = {
     label: domain.label,
     fqdn: domain.fqdn,
     status: domain.status,
+    nameservers,
     created_at: domain.created_at,
+    review_reason: domain.review_reason || undefined,
   };
 
   return successResponse({ domain: response });
 };
 
-// POST /api/domains - Register a new domain
+// POST /api/domains - Create payment order for domain registration
 export const onRequestPost: PagesFunction<Env> = async (context) => {
   const { env, request } = context;
 
@@ -49,6 +92,15 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
 
   const { user } = authResult;
   const linuxdoId = parseInt(user.sub, 10);
+
+  // Check if user is banned
+  const dbUser = await env.DB.prepare(
+    'SELECT * FROM users WHERE linuxdo_id = ?'
+  ).bind(linuxdoId).first<User>();
+
+  if (dbUser?.is_banned) {
+    return errorResponse(`您的账户已被封禁: ${dbUser.ban_reason || '违规操作'}`, 403);
+  }
 
   // Parse request body
   let body: { label?: string };
@@ -66,19 +118,93 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
   // Normalize label to lowercase
   const normalizedLabel = label.toLowerCase().trim();
 
-  // Validate label
+  // Validate label format
   const validation = validateLabel(normalizedLabel);
   if (!validation.valid) {
     return errorResponse(validation.error!, 400);
   }
 
-  // Check if user already has a domain
+  // Check label against banned words
+  const moderationResult = await checkLabel(normalizedLabel, env.DB);
+  if (!moderationResult.allowed) {
+    // If it's a reserved word, block immediately
+    if (!moderationResult.requiresReview) {
+      return errorResponse(moderationResult.reason!, 400);
+    }
+
+    // Check for user abuse patterns
+    const abuseCheck = await checkUserAbuse(linuxdoId, env.DB);
+    if (abuseCheck.flagged) {
+      // Ban the user
+      await banUser(linuxdoId, abuseCheck.reason!, env.DB);
+      return errorResponse(`您的账户因滥用已被封禁: ${abuseCheck.reason}`, 403);
+    }
+
+    // Create pending review
+    const orderNo = generateOrderNo();
+    try {
+      await env.DB.prepare(`
+        INSERT INTO pending_reviews (order_no, linuxdo_id, label, reason, status, created_at)
+        VALUES (?, ?, ?, ?, 'pending', datetime('now'))
+      `).bind(orderNo, linuxdoId, normalizedLabel, moderationResult.reason).run();
+
+      // Log the action
+      await logAudit(env.DB, linuxdoId, 'review_submit', normalizedLabel, {
+        reason: moderationResult.reason,
+        matched_word: moderationResult.matchedWord,
+        category: moderationResult.category,
+      }, getClientIP(request));
+
+      return successResponse({
+        requires_review: true,
+        message: '您的域名申请需要人工审核，请耐心等待。',
+      });
+    } catch (e) {
+      console.error('Failed to create review:', e);
+      return errorResponse('Failed to submit for review', 500);
+    }
+  }
+
+  // Check if manual review is required for all registrations
+  const requireReview = await getSetting('require_review', env.DB, 'false');
+  if (requireReview === 'true') {
+    const orderNo = generateOrderNo();
+    try {
+      await env.DB.prepare(`
+        INSERT INTO pending_reviews (order_no, linuxdo_id, label, reason, status, created_at)
+        VALUES (?, ?, ?, ?, 'pending', datetime('now'))
+      `).bind(orderNo, linuxdoId, normalizedLabel, '所有注册需要人工审核').run();
+
+      await logAudit(env.DB, linuxdoId, 'review_submit', normalizedLabel, {
+        reason: 'manual_review_required',
+      }, getClientIP(request));
+
+      return successResponse({
+        requires_review: true,
+        message: '您的域名申请需要人工审核，请耐心等待。',
+      });
+    } catch (e) {
+      console.error('Failed to create review:', e);
+      return errorResponse('Failed to submit for review', 500);
+    }
+  }
+
+  // Check if user already has an active domain
   const existingDomain = await env.DB.prepare(
-    'SELECT * FROM domains WHERE owner_linuxdo_id = ?'
-  ).bind(linuxdoId).first<Domain>();
+    'SELECT * FROM domains WHERE owner_linuxdo_id = ? AND status = ?'
+  ).bind(linuxdoId, 'active').first<Domain>();
 
   if (existingDomain) {
     return errorResponse('You already have a registered domain. Each user can only register one domain.', 409);
+  }
+
+  // Check if there's already a pending review
+  const existingReview = await env.DB.prepare(
+    'SELECT * FROM pending_reviews WHERE linuxdo_id = ? AND status = ?'
+  ).bind(linuxdoId, 'pending').first<PendingReview>();
+
+  if (existingReview) {
+    return errorResponse('您已有一个待审核的域名申请，请等待审核结果。', 409);
   }
 
   // Check if label is already taken
@@ -90,44 +216,94 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     return errorResponse('This domain label is already registered', 409);
   }
 
-  // Create subdomain in deSEC
-  const desec = new DeSECClient(env.DESEC_TOKEN);
-  const baseDomain = env.BASE_DOMAIN || 'py.kg';
+  // Check if there's already a pending order for this user
+  const existingOrder = await env.DB.prepare(
+    'SELECT * FROM orders WHERE linuxdo_id = ? AND status = ?'
+  ).bind(linuxdoId, 'pending').first<Order>();
 
-  const createResult = await createSubdomainWithDelegation(desec, baseDomain, normalizedLabel);
-  if (!createResult.success) {
-    console.error('deSEC error:', createResult.error);
-    return errorResponse(`Failed to create domain: ${createResult.error}`, 500);
+  if (existingOrder) {
+    // Cancel old pending order if label is different
+    if (existingOrder.label !== normalizedLabel) {
+      await env.DB.prepare(
+        'UPDATE orders SET status = ? WHERE id = ?'
+      ).bind('failed', existingOrder.id).run();
+    } else {
+      // Return existing order payment URL
+      const url = new URL(request.url);
+      const creditClient = new LinuxDOCreditClient({
+        pid: env.CREDIT_PID,
+        key: env.CREDIT_KEY,
+        notifyUrl: `${url.protocol}//${url.host}/api/payment/notify`,
+        returnUrl: `${url.protocol}//${url.host}/`,
+      });
+
+      const paymentUrl = creditClient.createOrderUrl({
+        outTradeNo: existingOrder.order_no,
+        name: `py.kg 子域名: ${normalizedLabel}.py.kg`,
+        money: existingOrder.amount,
+      });
+
+      return successResponse<CreateOrderResponse>({
+        order_no: existingOrder.order_no,
+        payment_url: paymentUrl,
+      });
+    }
   }
 
-  // Insert domain into database
+  const baseDomain = env.BASE_DOMAIN || 'py.kg';
+  const fqdn = `${normalizedLabel}.${baseDomain}`;
+
+  // Check if subdomain already exists in Cloudflare
+  const cfClient = new CloudflareDNSClient(env.CLOUDFLARE_API_TOKEN, env.CLOUDFLARE_ZONE_ID);
+  const existsResult = await cfClient.subdomainExists(fqdn);
+  if (existsResult.success && existsResult.exists) {
+    return errorResponse('This subdomain already has DNS records configured', 409);
+  }
+
+  // Get price from settings or env
+  const priceFromDb = await getSetting('domain_price', env.DB, '');
+  const price = parseFloat(priceFromDb || env.DOMAIN_PRICE || '10');
+
+  // Generate order number
+  const orderNo = generateOrderNo();
+
+  // Create order
   try {
     await env.DB.prepare(`
-      INSERT INTO domains (label, fqdn, owner_linuxdo_id, status, created_at)
-      VALUES (?, ?, ?, 'active', datetime('now'))
-    `).bind(normalizedLabel, createResult.fqdn, linuxdoId).run();
+      INSERT INTO orders (order_no, linuxdo_id, label, amount, status, created_at)
+      VALUES (?, ?, ?, ?, 'pending', datetime('now'))
+    `).bind(orderNo, linuxdoId, normalizedLabel, price).run();
 
     // Log the action
-    await logAudit(env.DB, linuxdoId, 'domain_register', createResult.fqdn, {
+    await logAudit(env.DB, linuxdoId, 'order_create', orderNo, {
       label: normalizedLabel,
-      ns: createResult.ns,
+      amount: price,
     }, getClientIP(request));
 
   } catch (e) {
-    // Rollback: delete the zone we just created
     console.error('Database error:', e);
-    await deleteSubdomainWithDelegation(desec, baseDomain, normalizedLabel);
-    return errorResponse('Failed to save domain to database', 500);
+    return errorResponse('Failed to create order', 500);
   }
 
-  const response: DomainResponse = {
-    label: normalizedLabel,
-    fqdn: createResult.fqdn,
-    status: 'active',
-    created_at: new Date().toISOString(),
-  };
+  // Generate payment URL
+  const url = new URL(request.url);
+  const creditClient = new LinuxDOCreditClient({
+    pid: env.CREDIT_PID,
+    key: env.CREDIT_KEY,
+    notifyUrl: `${url.protocol}//${url.host}/api/payment/notify`,
+    returnUrl: `${url.protocol}//${url.host}/`,
+  });
 
-  return successResponse({ domain: response });
+  const paymentUrl = creditClient.createOrderUrl({
+    outTradeNo: orderNo,
+    name: `py.kg 子域名: ${fqdn}`,
+    money: price,
+  });
+
+  return successResponse<CreateOrderResponse>({
+    order_no: orderNo,
+    payment_url: paymentUrl,
+  });
 };
 
 // DELETE /api/domains - Delete user's domain
@@ -145,21 +321,18 @@ export const onRequestDelete: PagesFunction<Env> = async (context) => {
 
   // Get user's domain
   const domain = await env.DB.prepare(
-    'SELECT * FROM domains WHERE owner_linuxdo_id = ?'
-  ).bind(linuxdoId).first<Domain>();
+    'SELECT * FROM domains WHERE owner_linuxdo_id = ? AND status = ?'
+  ).bind(linuxdoId, 'active').first<Domain>();
 
   if (!domain) {
     return errorResponse('You do not have a registered domain', 404);
   }
 
-  // Delete from deSEC
-  const desec = new DeSECClient(env.DESEC_TOKEN);
-  const baseDomain = env.BASE_DOMAIN || 'py.kg';
-
-  const deleteResult = await deleteSubdomainWithDelegation(desec, baseDomain, domain.label);
+  // Delete NS records from Cloudflare
+  const cfClient = new CloudflareDNSClient(env.CLOUDFLARE_API_TOKEN, env.CLOUDFLARE_ZONE_ID);
+  const deleteResult = await cfClient.deleteAllNSRecords(domain.fqdn);
   if (!deleteResult.success) {
-    console.error('deSEC delete error:', deleteResult.error);
-    return errorResponse(`Failed to delete domain: ${deleteResult.error}`, 500);
+    console.error('Cloudflare delete error:', deleteResult.error);
   }
 
   // Delete from database
