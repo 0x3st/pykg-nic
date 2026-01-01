@@ -228,7 +228,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
         'UPDATE orders SET status = ? WHERE id = ?'
       ).bind('failed', existingOrder.id).run();
     } else {
-      // Return existing order payment URL
+      // Return existing order payment form
       const url = new URL(request.url);
       const creditClient = new LinuxDOCreditClient({
         pid: env.CREDIT_PID,
@@ -237,7 +237,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
         returnUrl: `${url.protocol}//${url.host}/api/payment/return`,
       });
 
-      const paymentUrl = creditClient.createOrderUrl({
+      const formData = creditClient.createOrderParams({
         outTradeNo: existingOrder.order_no,
         name: `py.kg 子域名: ${normalizedLabel}.py.kg`,
         money: existingOrder.amount,
@@ -245,7 +245,8 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
 
       return successResponse<CreateOrderResponse>({
         order_no: existingOrder.order_no,
-        payment_url: paymentUrl,
+        submit_url: creditClient.getSubmitUrl(),
+        form_data: formData,
       });
     }
   }
@@ -285,7 +286,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     return errorResponse('Failed to create order', 500);
   }
 
-  // Generate payment URL
+  // Generate payment form
   const url = new URL(request.url);
   const creditClient = new LinuxDOCreditClient({
     pid: env.CREDIT_PID,
@@ -294,7 +295,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     returnUrl: `${url.protocol}//${url.host}/api/payment/return`,
   });
 
-  const paymentUrl = creditClient.createOrderUrl({
+  const formData = creditClient.createOrderParams({
     outTradeNo: orderNo,
     name: `py.kg 子域名: ${fqdn}`,
     money: price,
@@ -302,7 +303,8 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
 
   return successResponse<CreateOrderResponse>({
     order_no: orderNo,
-    payment_url: paymentUrl,
+    submit_url: creditClient.getSubmitUrl(),
+    form_data: formData,
   });
 };
 

@@ -776,6 +776,24 @@
       }
     }
 
+    // Submit payment form (POST)
+    function submitPaymentForm(submitUrl, formData) {
+      const form = document.createElement('form');
+      form.method = 'POST';
+      form.action = submitUrl;
+
+      for (const [key, value] of Object.entries(formData)) {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = key;
+        input.value = value;
+        form.appendChild(input);
+      }
+
+      document.body.appendChild(form);
+      form.submit();
+    }
+
     // Register domain
     document.getElementById('register-form').addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -789,11 +807,13 @@
 
       try {
         const data = await api('POST', '/api/domains', { label });
-        // Redirect to payment URL
-        if (data.payment_url) {
-          window.location.href = data.payment_url;
+        // Submit payment form (POST)
+        if (data.submit_url && data.form_data) {
+          submitPaymentForm(data.submit_url, data.form_data);
         } else {
-          showError('未获取到支付链接');
+          showError('未获取到支付表单数据');
+          btn.disabled = false;
+          btn.textContent = '支付并注册';
         }
       } catch (e) {
         showError('注册失败: ' + e.message);
@@ -851,17 +871,17 @@
       btn.textContent = '跳转中...';
 
       try {
-        // Re-submit with the same label to get payment URL
+        // Re-submit with the same label to get payment form
         const data = await api('POST', '/api/domains', { label: pendingOrder.label });
-        if (data.payment_url) {
-          window.location.href = data.payment_url;
+        if (data.submit_url && data.form_data) {
+          submitPaymentForm(data.submit_url, data.form_data);
         } else {
-          showError('未获取到支付链接');
+          showError('未获取到支付表单数据');
           btn.disabled = false;
           btn.textContent = '继续支付';
         }
       } catch (e) {
-        showError('获取支付链接失败: ' + e.message);
+        showError('获取支付表单失败: ' + e.message);
         btn.disabled = false;
         btn.textContent = '继续支付';
       }

@@ -138,7 +138,8 @@ export interface DomainResponse {
 
 export interface CreateOrderResponse {
   order_no: string;
-  payment_url: string;
+  submit_url: string;  // POST form action URL
+  form_data: Record<string, string>;  // Form parameters for POST submit
 }
 
 // Admin types

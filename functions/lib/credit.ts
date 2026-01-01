@@ -181,8 +181,8 @@ export class LinuxDOCreditClient {
     this.config = config;
   }
 
-  // Create payment order and get redirect URL
-  createOrderUrl(params: CreateOrderParams): string {
+  // Create payment order and get form parameters (for POST submit)
+  createOrderParams(params: CreateOrderParams): Record<string, string> {
     const formParams: Record<string, string> = {
       pid: this.config.pid,
       type: 'epay',
@@ -196,20 +196,17 @@ export class LinuxDOCreditClient {
     // Generate signature
     const sign = generateSign(formParams, this.config.key);
 
-    // Build form data
-    const allParams = {
+    // Return all params including signature
+    return {
       ...formParams,
       sign,
       sign_type: 'MD5',
     };
+  }
 
-    // Build URL with query params for redirect
-    const url = new URL(`${CREDIT_API_BASE}/pay/submit.php`);
-    for (const [key, value] of Object.entries(allParams)) {
-      url.searchParams.set(key, value);
-    }
-
-    return url.toString();
+  // Get submit URL (for form action)
+  getSubmitUrl(): string {
+    return `${CREDIT_API_BASE}/pay/submit.php`;
   }
 
   // Query order status
