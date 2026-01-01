@@ -409,6 +409,7 @@
       </div>
       <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
         <button class="btn btn-primary" id="continue-pay-btn">继续支付</button>
+        <button class="btn btn-secondary" id="refresh-status-btn">刷新状态</button>
         <button class="btn btn-secondary" id="cancel-order-btn">取消订单</button>
       </div>
     </div>
@@ -536,19 +537,39 @@
       if (error) {
         showError(error);
         window.history.replaceState({}, '', '/');
+        return;
       }
-      // Check for payment return - show info message
-      const tradeNo = params.get('trade_no');
-      const fromPayment = params.get('from');
-      if (tradeNo || fromPayment === 'payment') {
-        // User returned from payment, show info message
-        errorContainer.innerHTML = `<div class="alert alert-info">支付处理中，请稍候刷新页面查看结果...</div>`;
+
+      // 支付返回处理
+      const paymentStatus = params.get('payment');
+      if (paymentStatus === 'success') {
+        // 支付成功，域名已创建
+        errorContainer.innerHTML = `<div class="alert alert-success">支付成功！域名已创建，正在加载...</div>`;
         errorContainer.classList.remove('hidden');
         window.history.replaceState({}, '', '/');
-        // Auto refresh after 2 seconds
+        setTimeout(() => window.location.reload(), 1500);
+        return;
+      } else if (paymentStatus === 'processing') {
+        // 支付正在处理中，等待 notify callback
+        errorContainer.innerHTML = `<div class="alert alert-info">支付正在处理中，请稍候刷新页面查看结果...</div>`;
+        errorContainer.classList.remove('hidden');
+        window.history.replaceState({}, '', '/');
+        // 5 秒后自动刷新检查状态
         setTimeout(() => {
           window.location.reload();
-        }, 2000);
+        }, 5000);
+        return;
+      }
+
+      // 通用支付返回（无明确状态）
+      const fromPayment = params.get('from');
+      if (fromPayment === 'payment') {
+        errorContainer.innerHTML = `<div class="alert alert-info">支付处理中，请稍候...</div>`;
+        errorContainer.classList.remove('hidden');
+        window.history.replaceState({}, '', '/');
+        setTimeout(() => {
+          window.location.reload();
+        }, 3000);
       }
     }
 
@@ -888,6 +909,11 @@
         btn.disabled = false;
         btn.textContent = '继续支付';
       }
+    });
+
+    // Refresh status button - simply reload the page
+    document.getElementById('refresh-status-btn').addEventListener('click', () => {
+      window.location.reload();
     });
 
     // Cancel pending order
