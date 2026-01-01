@@ -67,6 +67,7 @@ export interface DnsRecord {
   name: string;
   content: string;
   ttl: number;
+  proxied: number;  // 0 or 1 (boolean in SQLite)
   cloudflare_record_id: string | null;
   created_at: string;
   updated_at: string;

@@ -109,8 +109,12 @@ export class CloudflareDNSClient {
     type: 'A' | 'AAAA' | 'CNAME' | 'NS',
     name: string,
     content: string,
-    ttl: number = 3600
+    ttl: number = 3600,
+    proxied: boolean = false
   ): Promise<{ success: true; record: CloudflareDNSRecord } | { success: false; error: string }> {
+    // NS records cannot be proxied
+    const shouldProxy = type !== 'NS' && proxied;
+
     const result = await this.request<CloudflareDNSRecord>(
       'POST',
       `/zones/${this.zoneId}/dns_records`,
@@ -118,8 +122,8 @@ export class CloudflareDNSClient {
         type,
         name,
         content,
-        ttl,
-        proxied: false, // Don't proxy for now
+        ttl: shouldProxy ? 1 : ttl, // Proxied records use automatic TTL
+        proxied: shouldProxy,
       }
     );
 
@@ -136,8 +140,12 @@ export class CloudflareDNSClient {
     type: 'A' | 'AAAA' | 'CNAME' | 'NS',
     name: string,
     content: string,
-    ttl: number = 3600
+    ttl: number = 3600,
+    proxied: boolean = false
   ): Promise<{ success: true; record: CloudflareDNSRecord } | { success: false; error: string }> {
+    // NS records cannot be proxied
+    const shouldProxy = type !== 'NS' && proxied;
+
     const result = await this.request<CloudflareDNSRecord>(
       'PUT',
       `/zones/${this.zoneId}/dns_records/${recordId}`,
@@ -145,8 +153,8 @@ export class CloudflareDNSClient {
         type,
         name,
         content,
-        ttl,
-        proxied: false,
+        ttl: shouldProxy ? 1 : ttl, // Proxied records use automatic TTL
+        proxied: shouldProxy,
       }
     );
 

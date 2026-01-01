@@ -1,8 +1,8 @@
 // /api/dns-records - DNS records management (A/AAAA/CNAME/NS)
 
-import type { Env, Domain, DnsRecord } from '../lib/types';
-import { requireAuth, successResponse, errorResponse } from '../lib/auth';
-import { CloudflareDNSClient, validateDNSRecordContent } from '../lib/cloudflare-dns';
+import type { Env, Domain, DnsRecord } from '../../lib/types';
+import { requireAuth, successResponse, errorResponse } from '../../lib/auth';
+import { CloudflareDNSClient, validateDNSRecordContent } from '../../lib/cloudflare-dns';
 
 const MAX_RECORDS = 4;
 
@@ -51,14 +51,14 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
   const linuxdoId = parseInt(user.sub, 10);
 
   // Parse request body
-  let body: { type?: string; name?: string; content?: string; ttl?: number };
+  let body: { type?: string; name?: string; content?: string; ttl?: number; proxied?: boolean };
   try {
     body = await request.json();
   } catch {
     return errorResponse('Invalid JSON body', 400);
   }
 
-  const { type, name, content, ttl = 3600 } = body;
+  const { type, name, content, ttl = 3600, proxied = false } = body;
 
   // Validate type
   if (!type || !['A', 'AAAA', 'CNAME', 'NS'].includes(type)) {
@@ -83,6 +83,11 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
   // Validate TTL
   if (ttl < 60 || ttl > 86400) {
     return errorResponse('TTL must be between 60 and 86400 seconds', 400);
+  }
+
+  // Validate proxied - only A, AAAA, CNAME can be proxied
+  if (proxied && type === 'NS') {
+    return errorResponse('NS records cannot be proxied', 400);
   }
 
   // Get user's domain
@@ -133,7 +138,8 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     type as 'A' | 'AAAA' | 'CNAME' | 'NS',
     domain.fqdn,
     content,
-    ttl
+    ttl,
+    proxied
   );
 
   if (!cfResult.success) {
@@ -144,9 +150,9 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
   // Store in database
   try {
     await env.DB.prepare(`
-      INSERT INTO dns_records (domain_id, type, name, content, ttl, cloudflare_record_id, created_at, updated_at)
-      VALUES (?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))
-    `).bind(domain.id, type, name, content, ttl, cfResult.record.id).run();
+      INSERT INTO dns_records (domain_id, type, name, content, ttl, proxied, cloudflare_record_id, created_at, updated_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))
+    `).bind(domain.id, type, name, content, ttl, proxied ? 1 : 0, cfResult.record.id).run();
 
     // Update domain mode
     const newMode = type === 'NS' ? 'ns' : 'direct';
@@ -159,6 +165,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
         name,
         content,
         ttl,
+        proxied,
       },
     });
   } catch (e) {

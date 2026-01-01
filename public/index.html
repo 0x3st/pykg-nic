@@ -513,6 +513,43 @@
           <p class="help-text" id="dns-type-hint">
             输入 IPv4 地址，例如：1.2.3.4
           </p>
+
+          <div style="margin-top: 1rem; padding: 1rem; background: var(--bg); border-radius: 6px;">
+            <div id="dns-proxy-option" style="margin-bottom: 0.75rem;">
+              <label style="display: flex; align-items: center; cursor: pointer;">
+                <input type="checkbox" id="dns-proxy-checkbox" style="margin-right: 0.5rem; width: 18px; height: 18px; cursor: pointer;">
+                <span>
+                  <strong>启用 Cloudflare CDN/Proxy 🟠</strong>
+                  <small style="display: block; color: var(--text-muted); margin-top: 0.25rem;">
+                    开启后将通过 Cloudflare 代理流量，提供 CDN 加速、DDoS 防护和 SSL。仅支持 A/AAAA/CNAME 记录。
+                  </small>
+                </span>
+              </label>
+            </div>
+
+            <div style="margin-top: 0.75rem;">
+              <label style="display: block; margin-bottom: 0.5rem;">
+                TTL (生存时间)
+                <span id="dns-ttl-auto-badge" class="hidden" style="margin-left: 0.5rem;">
+                  <span class="badge" style="background: var(--warning); color: white; font-size: 0.7rem;">Auto</span>
+                </span>
+              </label>
+              <select id="dns-ttl-select" style="width: 100%; padding: 0.625rem; border: 1px solid var(--border); border-radius: 6px; font-size: 0.875rem;">
+                <option value="60">1 分钟</option>
+                <option value="300">5 分钟</option>
+                <option value="900">15 分钟</option>
+                <option value="1800">30 分钟</option>
+                <option value="3600" selected>1 小时</option>
+                <option value="7200">2 小时</option>
+                <option value="14400">4 小时</option>
+                <option value="43200">12 小时</option>
+                <option value="86400">1 天</option>
+              </select>
+              <small style="color: var(--text-muted); margin-top: 0.25rem; display: block;">
+                <span id="dns-ttl-hint">TTL 决定 DNS 记录在缓存中保留的时间</span>
+              </small>
+            </div>
+          </div>
         </div>
 
         <div id="dns-actions" style="margin-top: 1rem;">
@@ -734,14 +771,29 @@
       if (currentDNSRecords.length === 0) {
         list.innerHTML = '<li style="color: var(--text-muted);">暂无 DNS 记录</li>';
       } else {
-        list.innerHTML = currentDNSRecords.map(record => `
+        list.innerHTML = currentDNSRecords.map(record => {
+          // For proxied records, show "Auto" instead of actual TTL
+          const ttlText = record.proxied ? 'Auto' : formatTTL(record.ttl);
+          const proxyBadge = record.proxied ? '<span class="badge badge-warning" style="font-size: 0.7rem; margin-left: 0.5rem;">🟠 Proxied</span>' : '';
+          return `
           <li>
             <span class="badge" style="background: #dbeafe; color: #1e40af; font-size: 0.75rem; margin-right: 0.5rem;">${escapeHtml(record.type)}</span>
             <span>${escapeHtml(record.content)}</span>
+            ${proxyBadge}
+            <small style="color: var(--text-muted); margin-left: 0.5rem;">TTL: ${ttlText}</small>
             <button class="ns-remove" onclick="deleteDNSRecord(${record.id})" title="删除">✕</button>
           </li>
-        `).join('');
+        `;
+        }).join('');
       }
+    }
+
+    // Format TTL for display
+    function formatTTL(seconds) {
+      if (seconds < 60) return `${seconds}秒`;
+      if (seconds < 3600) return `${Math.floor(seconds / 60)}分钟`;
+      if (seconds < 86400) return `${Math.floor(seconds / 3600)}小时`;
+      return `${Math.floor(seconds / 86400)}天`;
     }
 
     // Update DNS type hint based on selected type
@@ -749,6 +801,8 @@
       const type = document.getElementById('dns-type-select').value;
       const input = document.getElementById('dns-content-input');
       const hint = document.getElementById('dns-type-hint');
+      const proxyOption = document.getElementById('dns-proxy-option');
+      const proxyCheckbox = document.getElementById('dns-proxy-checkbox');
 
       const hints = {
         'A': { placeholder: '1.2.3.4', text: '输入 IPv4 地址，例如：1.2.3.4' },
@@ -759,14 +813,52 @@
 
       input.placeholder = hints[type].placeholder;
       hint.textContent = hints[type].text;
+
+      // Show/hide proxy option (only for A, AAAA, CNAME)
+      if (type === 'NS') {
+        proxyOption.style.display = 'none';
+        proxyCheckbox.checked = false;
+        updateTTLState(); // Update TTL state when proxy changes
+      } else {
+        proxyOption.style.display = 'block';
+      }
+    }
+
+    // Update TTL select state based on proxy checkbox
+    function updateTTLState() {
+      const proxyCheckbox = document.getElementById('dns-proxy-checkbox');
+      const ttlSelect = document.getElementById('dns-ttl-select');
+      const ttlAutoBadge = document.getElementById('dns-ttl-auto-badge');
+      const ttlHint = document.getElementById('dns-ttl-hint');
+
+      if (proxyCheckbox.checked) {
+        // Proxy enabled: disable TTL select and show Auto badge
+        ttlSelect.disabled = true;
+        ttlSelect.style.opacity = '0.5';
+        ttlSelect.style.cursor = 'not-allowed';
+        ttlAutoBadge.classList.remove('hidden');
+        ttlHint.textContent = 'Proxy 模式下 TTL 由 Cloudflare 自动管理（通常为 5 分钟）';
+      } else {
+        // Proxy disabled: enable TTL select
+        ttlSelect.disabled = false;
+        ttlSelect.style.opacity = '1';
+        ttlSelect.style.cursor = 'default';
+        ttlAutoBadge.classList.add('hidden');
+        ttlHint.textContent = 'TTL 决定 DNS 记录在缓存中保留的时间';
+      }
     }
 
     // Add DNS record
     async function addDNSRecord() {
       const typeSelect = document.getElementById('dns-type-select');
       const input = document.getElementById('dns-content-input');
+      const ttlSelect = document.getElementById('dns-ttl-select');
+      const proxyCheckbox = document.getElementById('dns-proxy-checkbox');
+
       const type = typeSelect.value;
       const content = input.value.trim();
+      const ttl = parseInt(ttlSelect.value, 10);
+      const proxied = proxyCheckbox.checked;
 
       if (!content) {
         showError('请输入记录内容');
@@ -788,13 +880,15 @@
           type: type,
           name: '@',
           content: content,
-          ttl: 3600
+          ttl: ttl,
+          proxied: proxied
         });
 
         // Reload domain to get updated records
         await loadDomain();
         input.value = '';
-        showSuccess(`${type} 记录添加成功！DNS 生效可能需要几分钟。`);
+        const proxyText = proxied ? '（已启用 CDN）' : '';
+        showSuccess(`${type} 记录添加成功${proxyText}！DNS 生效可能需要几分钟。`);
       } catch (e) {
         showError('添加失败: ' + e.message);
       } finally {
@@ -977,6 +1071,7 @@
 
     // Event listeners for DNS records
     document.getElementById('dns-type-select').addEventListener('change', updateDNSTypeHint);
+    document.getElementById('dns-proxy-checkbox').addEventListener('change', updateTTLState);
     document.getElementById('add-dns-btn').addEventListener('click', addDNSRecord);
     document.getElementById('dns-content-input').addEventListener('keypress', (e) => {
       if (e.key === 'Enter') {
@@ -986,8 +1081,9 @@
     });
     document.getElementById('clear-dns-btn').addEventListener('click', clearAllDNS);
 
-    // Initialize DNS type hint
+    // Initialize DNS type hint and TTL state
     updateDNSTypeHint();
+    updateTTLState();
 
     // Continue payment for pending order
     document.getElementById('continue-pay-btn').addEventListener('click', async () => {
