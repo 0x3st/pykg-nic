@@ -21,7 +21,10 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
     sign: url.searchParams.get('sign') || '',
   };
 
-  console.log('Payment callback received:', JSON.stringify(params));
+  console.log('[Payment Notify] Callback received:', JSON.stringify({
+    ...params,
+    sign: '***' // 隐藏签名
+  }));
 
   // Verify signature
   const creditClient = new LinuxDOCreditClient({
@@ -32,14 +35,16 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
   });
 
   if (!creditClient.verifyNotify(params)) {
-    console.error('Payment callback signature verification failed');
-    return new Response('signature error', { status: 400 });
+    console.error('[Payment Notify] Signature verification failed');
+    // 签名错误不应该重试，返回 200 + 'fail' 让平台停止重试
+    return new Response('fail', { status: 200 });
   }
 
   // Check trade status
   if (params.trade_status !== 'TRADE_SUCCESS') {
-    console.log('Payment not successful:', params.trade_status);
-    return new Response('success');
+    console.log('[Payment Notify] Trade status is not TRADE_SUCCESS:', params.trade_status);
+    // 非成功状态，返回 success 避免重试
+    return new Response('success', { status: 200 });
   }
 
   // Find order by out_trade_no
@@ -48,25 +53,30 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
   ).bind(params.out_trade_no).first<Order>();
 
   if (!order) {
-    console.error('Order not found:', params.out_trade_no);
-    return new Response('order not found', { status: 404 });
+    console.error('[Payment Notify] Order not found:', params.out_trade_no);
+    // 订单不存在不应该重试，返回 200 + 'fail' 让平台停止重试
+    return new Response('fail', { status: 200 });
   }
 
   // Check if already processed
   if (order.status === 'paid') {
-    console.log('Order already paid:', params.out_trade_no);
-    return new Response('success');
+    console.log('[Payment Notify] Order already paid:', params.out_trade_no);
+    return new Response('success', { status: 200 });
   }
 
   // Verify amount
   const expectedAmount = order.amount.toFixed(2);
   const receivedAmount = parseFloat(params.money).toFixed(2);
   if (expectedAmount !== receivedAmount) {
-    console.error('Amount mismatch:', { expected: expectedAmount, received: receivedAmount });
-    return new Response('amount mismatch', { status: 400 });
+    console.error('[Payment Notify] Amount mismatch:', {
+      expected: expectedAmount,
+      received: receivedAmount
+    });
+    // 金额不匹配不应该重试，返回 200 + 'fail' 让平台停止重试
+    return new Response('fail', { status: 200 });
   }
 
-  // Update order status
+  // Update order status and create domain
   try {
     await env.DB.prepare(`
       UPDATE orders SET status = 'paid', trade_no = ?, paid_at = datetime('now')
@@ -100,7 +110,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
         request.headers.get('CF-Connecting-IP')
       ).run();
 
-      console.log('Payment successful, domain pending review:', fqdn);
+      console.log('[Payment Notify] Payment successful, domain pending review:', fqdn);
     } else {
       // No review needed, create domain directly as active
       await env.DB.prepare(`
@@ -124,14 +134,15 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
         request.headers.get('CF-Connecting-IP')
       ).run();
 
-      console.log('Domain registered successfully:', fqdn);
+      console.log('[Payment Notify] Domain registered successfully:', fqdn);
     }
 
   } catch (e) {
-    console.error('Failed to process payment:', e);
+    console.error('[Payment Notify] Database error:', e);
+    // 数据库错误可能是临时的，返回错误状态码让平台重试
     return new Response('database error', { status: 500 });
   }
 
-  // Return success to stop retries
-  return new Response('success');
+  // 返回 HTTP 200 + 'success' 表示处理成功，停止重试
+  return new Response('success', { status: 200 });
 };

@@ -221,13 +221,36 @@ export class LinuxDOCreditClient {
     }
 
     try {
-      const response = await fetch(url.toString());
+      console.log('[Credit API] Querying order:', { tradeNo, outTradeNo });
+
+      // Add browser-like headers to avoid 403
+      const response = await fetch(url.toString(), {
+        method: 'GET',
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          'Accept': 'application/json, text/plain, */*',
+          'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
+          'Referer': 'https://credit.linux.do/',
+        }
+      });
+
       if (!response.ok) {
+        console.error('[Credit API] HTTP error:', response.status, response.statusText);
+        const body = await response.text();
+        console.error('[Credit API] Response body:', body);
         return null;
       }
+
       const data = await response.json() as OrderQueryResult;
+      console.log('[Credit API] Query response:', {
+        code: data.code,
+        status: data.status,
+        msg: data.msg
+      });
+
       return data;
-    } catch {
+    } catch (e) {
+      console.error('[Credit API] Query failed:', e);
       return null;
     }
   }
