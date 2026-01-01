@@ -1,21 +1,23 @@
 {
-  "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "pykg-nic",
-  "compatibility_date": "2025-12-31",
-  "compatibility_flags": ["nodejs_compat"],
-  "pages_build_output_dir": "./public",
-  "observability": {
-    "enabled": true
-  },
-  "vars": {
-    "BASE_DOMAIN": "py.kg",
-    "SESSION_COOKIE_NAME": "session"
-  },
-  "d1_databases": [
-    {
-      "binding": "DB",
-      "database_name": "pykg-nic-db",
-      "database_id": "939c3ed8-c4c0-4170-95d3-d342db3f85af"
-    }
-  ]
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "pykg-nic",
+	"compatibility_date": "2025-12-31",
+	"compatibility_flags": [
+		"nodejs_compat"
+	],
+	"pages_build_output_dir": "./public",
+	"observability": {
+		"enabled": true
+	},
+	"vars": {
+		"BASE_DOMAIN": "py.kg",
+		"SESSION_COOKIE_NAME": "session"
+	},
+	"d1_databases": [
+		{
+			"binding": "DB",
+			"database_name": "pykg-nic-db",
+			"database_id": "2a29a2f6-50a3-478b-a0ae-869df4753db0"
+		}
+	]
 }
