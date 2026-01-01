@@ -1,6 +1,6 @@
 // /api/domains - Domain registration and management
 
-import type { Env, Domain, DomainResponse, Order, CreateOrderResponse, User, PendingReview } from '../lib/types';
+import type { Env, Domain, DomainResponse, Order, CreateOrderResponse, User, PendingReview, DnsRecord } from '../lib/types';
 import { requireAuth, successResponse, errorResponse } from '../lib/auth';
 import { validateLabel } from '../lib/validators';
 import { CloudflareDNSClient } from '../lib/cloudflare-dns';
@@ -68,11 +68,18 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
 
   const nameservers = nsResult.success ? nsResult.records.map(r => r.content) : [];
 
+  // Get DNS records from database
+  const { results: dnsRecords } = await env.DB.prepare(
+    'SELECT * FROM dns_records WHERE domain_id = ? ORDER BY type, name'
+  ).bind(domain.id).all<DnsRecord>();
+
   const response: DomainResponse = {
     label: domain.label,
     fqdn: domain.fqdn,
     status: domain.status,
+    dns_mode: domain.dns_mode || null,
     nameservers,
+    dns_records: dnsRecords || [],
     created_at: domain.created_at,
     review_reason: domain.review_reason || undefined,
   };
@@ -247,7 +254,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
 
       const formData = creditClient.createOrderParams({
         outTradeNo: existingOrder.order_no,
-        name: `py.kg 子域名: ${normalizedLabel}.py.kg`,
+        name: `PY.KG 子域名: ${normalizedLabel}.py.kg`,
         money: existingOrder.amount,
       });
 
@@ -305,7 +312,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
 
   const formData = creditClient.createOrderParams({
     outTradeNo: orderNo,
-    name: `py.kg 子域名: ${fqdn}`,
+    name: `PY.KG 子域名: ${fqdn}`,
     money: price,
   });
 
@@ -340,12 +347,12 @@ export const onRequestDelete: PagesFunction<Env> = async (context) => {
 
   // Delete NS records from Cloudflare
   const cfClient = new CloudflareDNSClient(env.CLOUDFLARE_API_TOKEN, env.CLOUDFLARE_ZONE_ID);
-  const deleteResult = await cfClient.deleteAllNSRecords(domain.fqdn);
+  const deleteResult = await cfClient.deleteAllRecords(domain.fqdn);
   if (!deleteResult.success) {
     console.error('Cloudflare delete error:', deleteResult.error);
   }
 
-  // Delete from database
+  // Delete from database (DNS records will be cascade deleted due to FOREIGN KEY)
   try {
     await env.DB.prepare(
       'DELETE FROM domains WHERE owner_linuxdo_id = ?'

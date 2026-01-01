@@ -1,4 +1,4 @@
--- py.kg NIC D1 Database Schema
+-- PY.KG NIC D1 Database Schema
 -- Run: wrangler d1 execute pykg-nic-db --file=./schema.sql
 
 -- Users table: stores LinuxDO user info

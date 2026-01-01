@@ -469,53 +469,54 @@
       <button class="btn btn-danger btn-sm" id="delete-domain-btn">删除域名</button>
     </div>
 
-    <!-- NS Records section -->
-    <div id="ns-section" class="card hidden">
-      <h2>NS 记录配置</h2>
+    <!-- DNS Records section -->
+    <div id="dns-section" class="card hidden">
+      <h2>DNS 记录管理</h2>
       <div class="alert alert-info" style="margin-bottom: 1rem;">
-        <strong>说明：</strong>设置 NS 记录后，您的子域名将委派给指定的 DNS 服务器管理。
-        您需要在自己的 DNS 服务器上配置该子域名的解析记录。
+        <strong>说明：</strong>您可以选择以下两种方式之一管理您的域名：
+        <ul style="margin: 0.5rem 0 0 1.5rem;">
+          <li><strong>直接解析模式：</strong>添加 A/AAAA/CNAME 记录（最多4条）</li>
+          <li><strong>NS 委派模式：</strong>添加 NS 记录委派给外部 DNS 服务器（最多4条）</li>
+        </ul>
+        <small style="color: var(--text-muted); display: block; margin-top: 0.5rem;">
+          注意：两种模式不能混用。如需切换模式，请先删除所有现有记录。
+        </small>
       </div>
 
-      <div id="ns-loading" class="loading">
+      <div id="dns-loading" class="loading">
         <span class="spinner"></span>
-        <p>加载 NS 记录...</p>
+        <p>加载 DNS 记录...</p>
       </div>
 
-      <div id="ns-content" class="hidden">
+      <div id="dns-content" class="hidden">
         <div class="form-group">
-          <label>当前 NS 记录</label>
-          <ul class="ns-list" id="ns-list">
-            <li style="color: var(--text-muted);">暂无 NS 记录</li>
+          <label>当前 DNS 记录 <span id="dns-mode-badge"></span></label>
+          <ul class="ns-list" id="dns-list">
+            <li style="color: var(--text-muted);">暂无 DNS 记录</li>
           </ul>
         </div>
 
         <div class="form-group">
-          <label>添加 NS 服务器</label>
-          <div class="ns-input-row">
-            <input type="text" id="ns-input" placeholder="ns1.example.com">
-            <button type="button" class="btn btn-secondary btn-sm" id="add-ns-btn">添加</button>
+          <label>添加 DNS 记录</label>
+          <div style="margin-bottom: 0.5rem;">
+            <select id="dns-type-select" style="width: 100%; padding: 0.625rem; border: 1px solid var(--border); border-radius: 6px; font-size: 0.875rem;">
+              <option value="A">A - IPv4 地址</option>
+              <option value="AAAA">AAAA - IPv6 地址</option>
+              <option value="CNAME">CNAME - 别名</option>
+              <option value="NS">NS - 名称服务器</option>
+            </select>
           </div>
-          <p class="help-text">
-            输入您的 DNS 服务器地址，至少需要 2 个，最多 8 个。
-            <br>
-            推荐使用免费 DNS 服务：<a href="https://www.cloudflare.com/dns/" target="_blank">Cloudflare</a>、
-            <a href="https://dns.he.net/" target="_blank">Hurricane Electric</a>、
-            <a href="https://desec.io/" target="_blank">deSEC</a>
+          <div class="ns-input-row">
+            <input type="text" id="dns-content-input" placeholder="1.2.3.4">
+            <button type="button" class="btn btn-secondary btn-sm" id="add-dns-btn">添加</button>
+          </div>
+          <p class="help-text" id="dns-type-hint">
+            输入 IPv4 地址，例如：1.2.3.4
           </p>
         </div>
 
-        <div id="ns-pending" class="hidden" style="margin: 1rem 0; padding: 1rem; background: var(--bg); border-radius: 6px;">
-          <strong>待保存的 NS 记录：</strong>
-          <ul class="ns-list" id="ns-pending-list"></ul>
-          <div style="display: flex; gap: 0.5rem; margin-top: 1rem;">
-            <button type="button" class="btn btn-primary" id="save-ns-btn">保存 NS 记录</button>
-            <button type="button" class="btn btn-secondary" id="cancel-ns-btn">取消</button>
-          </div>
-        </div>
-
-        <div id="ns-actions" style="margin-top: 1rem;">
-          <button type="button" class="btn btn-danger btn-sm" id="clear-ns-btn">清除所有 NS 记录</button>
+        <div id="dns-actions" style="margin-top: 1rem;">
+          <button type="button" class="btn btn-danger btn-sm" id="clear-dns-btn">清除所有 DNS 记录</button>
         </div>
       </div>
     </div>
@@ -534,8 +535,8 @@
     // State
     let currentUser = null;
     let currentDomain = null;
-    let currentNS = [];
-    let pendingNS = [];
+    let currentDNSRecords = [];
+    let currentDNSMode = null;
     let pendingOrder = null;
     let domainPrice = 10;
     let pendingLabel = ''; // Store the label for registration flow
@@ -548,7 +549,7 @@
     const registerDetailSection = document.getElementById('register-detail-section');
     const pendingOrderSection = document.getElementById('pending-order-section');
     const domainSection = document.getElementById('domain-section');
-    const nsSection = document.getElementById('ns-section');
+    const dnsSection = document.getElementById('dns-section');
 
     // Show error
     function showError(message) {
@@ -660,7 +661,7 @@
         registerSection.classList.add('hidden');
         pendingOrderSection.classList.add('hidden');
         domainSection.classList.add('hidden');
-        nsSection.classList.add('hidden');
+        dnsSection.classList.add('hidden');
       }
     }
 
@@ -670,7 +671,8 @@
         const data = await api('GET', '/api/domains');
         if (data.domain) {
           currentDomain = data.domain;
-          currentNS = data.domain.nameservers || [];
+          currentDNSRecords = data.domain.dns_records || [];
+          currentDNSMode = data.domain.dns_mode;
           pendingOrder = null;
 
           document.getElementById('domain-display').textContent = currentDomain.fqdn;
@@ -681,11 +683,11 @@
           registerSection.classList.add('hidden');
           pendingOrderSection.classList.add('hidden');
           domainSection.classList.remove('hidden');
-          nsSection.classList.remove('hidden');
+          dnsSection.classList.remove('hidden');
 
-          renderNSList();
-          document.getElementById('ns-loading').classList.add('hidden');
-          document.getElementById('ns-content').classList.remove('hidden');
+          renderDNSList();
+          document.getElementById('dns-loading').classList.add('hidden');
+          document.getElementById('dns-content').classList.remove('hidden');
         } else if (data.pendingOrder) {
           // Show pending order
           pendingOrder = data.pendingOrder;
@@ -700,7 +702,7 @@
           registerSection.classList.add('hidden');
           pendingOrderSection.classList.remove('hidden');
           domainSection.classList.add('hidden');
-          nsSection.classList.add('hidden');
+          dnsSection.classList.add('hidden');
         } else {
           // No domain, no pending order - show registration
           currentDomain = null;
@@ -708,141 +710,139 @@
           registerSection.classList.remove('hidden');
           pendingOrderSection.classList.add('hidden');
           domainSection.classList.add('hidden');
-          nsSection.classList.add('hidden');
+          dnsSection.classList.add('hidden');
         }
       } catch (e) {
         showError('加载域名失败: ' + e.message);
       }
     }
 
-    // Render NS list
-    function renderNSList() {
-      const list = document.getElementById('ns-list');
-      if (currentNS.length === 0) {
-        list.innerHTML = '<li style="color: var(--text-muted);">暂无 NS 记录</li>';
+    // Render DNS records list
+    function renderDNSList() {
+      const list = document.getElementById('dns-list');
+      const modeBadge = document.getElementById('dns-mode-badge');
+
+      // Show mode badge
+      if (currentDNSMode === 'ns') {
+        modeBadge.innerHTML = '<span class="badge badge-warning">NS 委派模式</span>';
+      } else if (currentDNSMode === 'direct') {
+        modeBadge.innerHTML = '<span class="badge badge-success">直接解析模式</span>';
       } else {
-        list.innerHTML = currentNS.map(ns => `
+        modeBadge.innerHTML = '';
+      }
+
+      if (currentDNSRecords.length === 0) {
+        list.innerHTML = '<li style="color: var(--text-muted);">暂无 DNS 记录</li>';
+      } else {
+        list.innerHTML = currentDNSRecords.map(record => `
           <li>
-            <span>${escapeHtml(ns)}</span>
+            <span class="badge" style="background: #dbeafe; color: #1e40af; font-size: 0.75rem; margin-right: 0.5rem;">${escapeHtml(record.type)}</span>
+            <span>${escapeHtml(record.content)}</span>
+            <button class="ns-remove" onclick="deleteDNSRecord(${record.id})" title="删除">✕</button>
           </li>
         `).join('');
       }
     }
 
-    // Render pending NS list
-    function renderPendingNS() {
-      const container = document.getElementById('ns-pending');
-      const list = document.getElementById('ns-pending-list');
+    // Update DNS type hint based on selected type
+    function updateDNSTypeHint() {
+      const type = document.getElementById('dns-type-select').value;
+      const input = document.getElementById('dns-content-input');
+      const hint = document.getElementById('dns-type-hint');
 
-      if (pendingNS.length === 0) {
-        container.classList.add('hidden');
-        return;
-      }
+      const hints = {
+        'A': { placeholder: '1.2.3.4', text: '输入 IPv4 地址，例如：1.2.3.4' },
+        'AAAA': { placeholder: '2001:db8::1', text: '输入 IPv6 地址，例如：2001:db8::1' },
+        'CNAME': { placeholder: 'example.com', text: '输入目标域名，例如：example.com' },
+        'NS': { placeholder: 'ns1.example.com', text: '输入 NS 服务器地址，例如：ns1.example.com。推荐免费 DNS：Cloudflare、Hurricane Electric、deSEC' },
+      };
 
-      list.innerHTML = pendingNS.map((ns, i) => `
-        <li>
-          <span>${escapeHtml(ns)}</span>
-          <button class="ns-remove" onclick="removePendingNS(${i})" title="移除">✕</button>
-        </li>
-      `).join('');
-      container.classList.remove('hidden');
+      input.placeholder = hints[type].placeholder;
+      hint.textContent = hints[type].text;
     }
 
-    // Add NS to pending list
-    function addPendingNS() {
-      const input = document.getElementById('ns-input');
-      const ns = input.value.trim().toLowerCase();
+    // Add DNS record
+    async function addDNSRecord() {
+      const typeSelect = document.getElementById('dns-type-select');
+      const input = document.getElementById('dns-content-input');
+      const type = typeSelect.value;
+      const content = input.value.trim();
 
-      if (!ns) return;
-
-      // Basic validation
-      if (!/^([a-z0-9]([a-z0-9-]*[a-z0-9])?\.)+[a-z]{2,}\.?$/.test(ns)) {
-        showError('无效的 NS 服务器格式，请输入有效的域名（如 ns1.example.com）');
+      if (!content) {
+        showError('请输入记录内容');
         return;
       }
 
-      // Normalize
-      const normalized = ns.endsWith('.') ? ns : ns + '.';
-
-      // Check duplicates
-      if (pendingNS.includes(normalized) || currentNS.includes(normalized)) {
-        showError('该 NS 服务器已存在');
+      if (currentDNSRecords.length >= 4) {
+        showError('最多只能添加 4 条 DNS 记录');
         return;
       }
 
-      if (pendingNS.length >= 8) {
-        showError('最多只能添加 8 个 NS 服务器');
-        return;
-      }
-
-      pendingNS.push(normalized);
-      input.value = '';
-      renderPendingNS();
-      clearMessages();
-    }
-
-    // Remove from pending list
-    function removePendingNS(index) {
-      pendingNS.splice(index, 1);
-      renderPendingNS();
-    }
-
-    // Cancel pending changes
-    function cancelPendingNS() {
-      pendingNS = [];
-      renderPendingNS();
-    }
-
-    // Save NS records
-    async function saveNS() {
-      if (pendingNS.length < 2) {
-        showError('至少需要 2 个 NS 服务器');
-        return;
-      }
-
-      const btn = document.getElementById('save-ns-btn');
+      const btn = document.getElementById('add-dns-btn');
       btn.disabled = true;
-      btn.textContent = '保存中...';
+      btn.textContent = '添加中...';
       clearMessages();
 
       try {
-        const data = await api('PUT', '/api/ns', { nameservers: pendingNS });
-        currentNS = data.nameservers;
-        pendingNS = [];
-        renderNSList();
-        renderPendingNS();
-        showSuccess('NS 记录保存成功！DNS 生效可能需要几分钟到几小时。');
+        await api('POST', '/api/dns-records', {
+          type: type,
+          name: '@',
+          content: content,
+          ttl: 3600
+        });
+
+        // Reload domain to get updated records
+        await loadDomain();
+        input.value = '';
+        showSuccess(`${type} 记录添加成功！DNS 生效可能需要几分钟。`);
       } catch (e) {
-        showError('保存失败: ' + e.message);
+        showError('添加失败: ' + e.message);
       } finally {
         btn.disabled = false;
-        btn.textContent = '保存 NS 记录';
+        btn.textContent = '添加';
       }
     }
 
-    // Clear all NS records
-    async function clearNS() {
-      if (!confirm('确定要清除所有 NS 记录吗？这将取消域名委派。')) {
+    // Delete DNS record
+    async function deleteDNSRecord(recordId) {
+      if (!confirm('确定要删除这条 DNS 记录吗？')) {
         return;
       }
 
-      const btn = document.getElementById('clear-ns-btn');
+      clearMessages();
+
+      try {
+        await api('DELETE', `/api/dns-records/${recordId}`);
+        await loadDomain();
+        showSuccess('DNS 记录已删除');
+      } catch (e) {
+        showError('删除失败: ' + e.message);
+      }
+    }
+
+    // Clear all DNS records
+    async function clearAllDNS() {
+      if (!confirm('确定要清除所有 DNS 记录吗？这将删除所有解析记录。')) {
+        return;
+      }
+
+      const btn = document.getElementById('clear-dns-btn');
       btn.disabled = true;
       btn.textContent = '清除中...';
       clearMessages();
 
       try {
-        await api('DELETE', '/api/ns');
-        currentNS = [];
-        pendingNS = [];
-        renderNSList();
-        renderPendingNS();
-        showSuccess('NS 记录已清除');
+        // Delete all records one by one
+        for (const record of currentDNSRecords) {
+          await api('DELETE', `/api/dns-records/${record.id}`);
+        }
+        await loadDomain();
+        showSuccess('所有 DNS 记录已清除');
       } catch (e) {
         showError('清除失败: ' + e.message);
       } finally {
         btn.disabled = false;
-        btn.textContent = '清除所有 NS 记录';
+        btn.textContent = '清除所有 DNS 记录';
       }
     }
 
@@ -975,17 +975,19 @@
       }
     });
 
-    // Event listeners
-    document.getElementById('add-ns-btn').addEventListener('click', addPendingNS);
-    document.getElementById('ns-input').addEventListener('keypress', (e) => {
+    // Event listeners for DNS records
+    document.getElementById('dns-type-select').addEventListener('change', updateDNSTypeHint);
+    document.getElementById('add-dns-btn').addEventListener('click', addDNSRecord);
+    document.getElementById('dns-content-input').addEventListener('keypress', (e) => {
       if (e.key === 'Enter') {
         e.preventDefault();
-        addPendingNS();
+        addDNSRecord();
       }
     });
-    document.getElementById('save-ns-btn').addEventListener('click', saveNS);
-    document.getElementById('cancel-ns-btn').addEventListener('click', cancelPendingNS);
-    document.getElementById('clear-ns-btn').addEventListener('click', clearNS);
+    document.getElementById('clear-dns-btn').addEventListener('click', clearAllDNS);
+
+    // Initialize DNS type hint
+    updateDNSTypeHint();
 
     // Continue payment for pending order
     document.getElementById('continue-pay-btn').addEventListener('click', async () => {

@@ -111,8 +111,8 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
 
     switch (action) {
       case 'suspend':
-        // Delete NS records from Cloudflare
-        await cfClient.deleteAllNSRecords(domain.fqdn);
+        // Delete all DNS records from Cloudflare
+        await cfClient.deleteAllRecords(domain.fqdn);
 
         await env.DB.prepare(`
           UPDATE domains SET status = 'suspended', review_reason = ?
@@ -128,8 +128,8 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
         break;
 
       case 'delete':
-        // Delete NS records from Cloudflare
-        await cfClient.deleteAllNSRecords(domain.fqdn);
+        // Delete all DNS records from Cloudflare
+        await cfClient.deleteAllRecords(domain.fqdn);
 
         await env.DB.prepare('DELETE FROM domains WHERE id = ?').bind(id).run();
         break;

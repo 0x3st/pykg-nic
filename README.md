@@ -1,4 +1,4 @@
-# py.kg NIC - 子域名注册局
+# PY.KG NIC - 子域名注册局
 
 基于 Cloudflare Pages + D1 + Cloudflare DNS 的子域名注册与 NS 委派平台，支持 LinuxDO Credit 支付。
 
@@ -54,7 +54,7 @@ pykg-nic/
 1. Cloudflare 账号
 2. LinuxDO Connect OAuth2 应用（需要 client_id 和 client_secret）
 3. LinuxDO Credit 商户账号（用于支付）
-4. py.kg 域名已托管在 Cloudflare DNS
+4. PY.KG 域名已托管在 Cloudflare DNS
 
 ## 部署步骤
 
@@ -89,7 +89,7 @@ wrangler d1 execute pykg-nic-db --remote --file=./schema.sql
 | `LINUXDO_CLIENT_SECRET` | LinuxDO Connect OAuth2 Client Secret |
 | `JWT_SIGNING_KEY` | JWT 签名密钥（建议 32+ 字符随机字符串） |
 | `CLOUDFLARE_API_TOKEN` | Cloudflare API Token（需要 DNS 编辑权限） |
-| `CLOUDFLARE_ZONE_ID` | py.kg 域名的 Zone ID |
+| `CLOUDFLARE_ZONE_ID` | PY.KG 域名的 Zone ID |
 | `CREDIT_PID` | LinuxDO Credit 商户 Client ID |
 | `CREDIT_KEY` | LinuxDO Credit 商户 Client Secret |
 

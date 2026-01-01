@@ -1,4 +1,4 @@
-// Shared type definitions for py.kg NIC
+// Shared type definitions for PY.KG NIC
 
 export interface Env {
   DB: D1Database;
@@ -56,7 +56,20 @@ export interface Domain {
   review_reason: string | null;
   python_praise: string | null;
   usage_purpose: string | null;
+  dns_mode: 'ns' | 'direct' | null;
   created_at: string;
+}
+
+export interface DnsRecord {
+  id: number;
+  domain_id: number;
+  type: 'A' | 'AAAA' | 'CNAME' | 'NS';
+  name: string;
+  content: string;
+  ttl: number;
+  cloudflare_record_id: string | null;
+  created_at: string;
+  updated_at: string;
 }
 
 // 订单表
@@ -137,7 +150,9 @@ export interface DomainResponse {
   label: string;
   fqdn: string;
   status: string;
+  dns_mode: 'ns' | 'direct' | null;
   nameservers: string[];
+  dns_records: DnsRecord[];
   python_praise?: string;
   usage_purpose?: string;
   created_at: string;
