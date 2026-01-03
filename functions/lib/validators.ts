@@ -239,3 +239,92 @@ export function validateRRSetsForConflicts(rrsets: RRSetInput[]): RRSetValidatio
 
   return { valid: true };
 }
+
+// Email-related TXT record detection
+export interface EmailRelatedTxtCheckResult {
+  isEmailRelated: boolean;
+  reason?: string;
+}
+
+/**
+ * Check if a TXT record is email-related (SPF, DKIM, DMARC, etc.)
+ * These records should be blocked to prevent email spam/abuse
+ */
+export function isEmailRelatedTxtRecord(name: string, content: string): EmailRelatedTxtCheckResult {
+  const normalizedName = name.toLowerCase();
+  const normalizedContent = content.toLowerCase();
+
+  // Check for email-related subdomains
+  const emailRelatedSubdomains = [
+    '_dmarc',           // DMARC records
+    '_domainkey',       // DKIM records
+    'dkim',             // DKIM variant
+    '_spf',             // SPF record subdomain
+    'mail',             // General mail subdomain
+    'smtp',             // SMTP subdomain
+    'email',            // Email subdomain
+    '_mta-sts',         // MTA-STS policy
+    '_smtp._tls',       // SMTP TLS reporting
+    'default._domainkey', // Common DKIM selector
+  ];
+
+  for (const subdomain of emailRelatedSubdomains) {
+    if (normalizedName === subdomain || normalizedName.startsWith(subdomain + '.') || normalizedName.endsWith('.' + subdomain)) {
+      return {
+        isEmailRelated: true,
+        reason: `TXT records under "${subdomain}" are reserved for email authentication and not allowed`
+      };
+    }
+  }
+
+  // Check for SPF record content patterns
+  const spfPatterns = [
+    'v=spf1',           // Standard SPF record
+    'spf2.0/',          // SPF v2 (Sender ID)
+  ];
+
+  for (const pattern of spfPatterns) {
+    if (normalizedContent.includes(pattern)) {
+      return {
+        isEmailRelated: true,
+        reason: 'SPF records are not allowed to prevent email abuse'
+      };
+    }
+  }
+
+  // Check for DKIM record content patterns
+  if (normalizedContent.includes('v=dkim1') || normalizedContent.includes('k=rsa')) {
+    return {
+      isEmailRelated: true,
+      reason: 'DKIM records are not allowed to prevent email abuse'
+    };
+  }
+
+  // Check for DMARC record content patterns
+  if (normalizedContent.includes('v=dmarc1')) {
+    return {
+      isEmailRelated: true,
+      reason: 'DMARC records are not allowed to prevent email abuse'
+    };
+  }
+
+  // Check for other email verification patterns
+  // Note: Site verification tokens are generally allowed unless specifically for email
+  const emailPatterns = [
+    'protonmail-verification=',   // ProtonMail verification
+    'zoho-verification=',          // Zoho verification (email provider)
+    'mailgun-verification=',       // Mailgun verification
+    'sendgrid-verification=',      // SendGrid verification
+  ];
+
+  for (const pattern of emailPatterns) {
+    if (normalizedContent.includes(pattern)) {
+      return {
+        isEmailRelated: true,
+        reason: 'Email service verification records are not allowed'
+      };
+    }
+  }
+
+  return { isEmailRelated: false };
+}

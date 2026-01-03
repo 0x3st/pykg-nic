@@ -852,9 +852,10 @@
                         <td>${new Date(domain.created_at).toLocaleString('zh-CN')}</td>
                         <td>
                           <div class="action-buttons">
-                            ${domain.status === 'active' ? `<button class="btn btn-warning" onclick="suspendDomain(${domain.id})">暂停</button>` : ''}
-                            ${domain.status === 'suspended' ? `<button class="btn btn-success" onclick="activateDomain(${domain.id})">激活</button>` : ''}
-                            <button class="btn btn-danger" onclick="deleteDomain(${domain.id})">删除</button>
+                            <button class="btn btn-info btn-sm" onclick="manageDNSRecords(${domain.id}, '${domain.fqdn}')">DNS记录</button>
+                            ${domain.status === 'active' ? `<button class="btn btn-warning btn-sm" onclick="suspendDomain(${domain.id})">暂停</button>` : ''}
+                            ${domain.status === 'suspended' ? `<button class="btn btn-success btn-sm" onclick="activateDomain(${domain.id})">激活</button>` : ''}
+                            <button class="btn btn-danger btn-sm" onclick="deleteDomain(${domain.id})">删除</button>
                           </div>
                         </td>
                       </tr>
@@ -995,7 +996,7 @@
                       return `
                       <tr>
                         ${status === 'pending' && canApprove ? `<td><input type="checkbox" class="review-checkbox" value="${review.id}"></td>` : (status === 'pending' ? '<td></td>' : '')}
-                        <td>${review.label}.PY.KG</td>
+                        <td>${review.label}.py.kg</td>
                         <td>${review.username} (${review.linuxdo_id})</td>
                         <td style="max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${review.python_praise || '-'}">${review.python_praise || '-'}</td>
                         <td style="max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${review.usage_purpose || '-'}">${review.usage_purpose || '-'}</td>
@@ -1179,6 +1180,7 @@
                         <td>
                           ${appeal.status === 'pending' ? `
                             <div class="action-buttons">
+                              <button class="btn btn-info btn-sm" onclick="manageDNSRecords(${appeal.domain_id}, '${appeal.fqdn}')">DNS记录</button>
                               <button class="btn btn-success btn-sm" onclick="approveAppeal(${appeal.id})">批准（解封）</button>
                               <button class="btn btn-danger btn-sm" onclick="rejectAppeal(${appeal.id})">拒绝</button>
                             </div>
@@ -1287,8 +1289,8 @@
                   <tbody>
                     ${reports.length === 0 ? '<tr><td colspan="6" class="empty-state">无数据</td></tr>' : reports.map(report => `
                       <tr>
-                        <td>${report.label}.PY.KG</td>
-                        <td>用户 ${report.reporter_linuxdo_id}</td>
+                        <td>${report.label}.py.kg</td>
+                        <td>${report.reporter_username || report.reporter_linuxdo_id}</td>
                         <td style="max-width: 300px;">${report.reason}</td>
                         <td>${new Date(report.created_at).toLocaleString('zh-CN')}</td>
                         <td>
@@ -1299,7 +1301,8 @@
                         <td>
                           ${report.status === 'pending' ? `
                             <div class="action-buttons">
-                              <button class="btn btn-success btn-sm" onclick="resolveReport(${report.id})">处理（删除域名）</button>
+                              <button class="btn btn-warning btn-sm" onclick="suspendReportedDomain(${report.id})">暂停解析</button>
+                              <button class="btn btn-danger btn-sm" onclick="deleteReportedDomain(${report.id})">删除域名</button>
                               <button class="btn btn-secondary btn-sm" onclick="rejectReport(${report.id})">拒绝举报</button>
                             </div>
                           ` : '-'}
@@ -1322,14 +1325,54 @@
       loadReports(status);
     }
 
-    async function resolveReport(id) {
-      if (!confirm('确定要处理此举报吗？这将删除被举报的域名。')) return;
+    async function suspendReportedDomain(id) {
+      const reason = prompt('请输入暂停原因（可选）:');
+      if (reason === null) return; // 用户点击取消
 
       try {
         const res = await fetch('/api/admin/reports', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id, action: 'resolve' })
+          body: JSON.stringify({
+            ids: [id],
+            actions: {
+              suspend_domain: true,
+              close_report: true
+            },
+            reason: reason || '举报确认违规'
+          })
+        });
+
+        const data = await res.json();
+        if (data.success) {
+          showAlert('reports-alert', '举报已处理，域名已暂停', 'success');
+          loadReports();
+        } else {
+          showAlert('reports-alert', data.error || '操作失败', 'error');
+        }
+      } catch (error) {
+        showAlert('reports-alert', '操作失败', 'error');
+      }
+    }
+
+    async function deleteReportedDomain(id) {
+      if (!confirm('确定要删除被举报的域名吗？此操作无法撤销。')) return;
+
+      const reason = prompt('请输入删除原因（可选）:');
+      if (reason === null) return; // 用户点击取消
+
+      try {
+        const res = await fetch('/api/admin/reports', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            ids: [id],
+            actions: {
+              delete_domain: true,
+              close_report: true
+            },
+            reason: reason || '举报确认违规'
+          })
         });
 
         const data = await res.json();
@@ -1351,7 +1394,12 @@
         const res = await fetch('/api/admin/reports', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id, action: 'reject' })
+          body: JSON.stringify({
+            ids: [id],
+            actions: {
+              close_report: true
+            }
+          })
         });
 
         const data = await res.json();
@@ -1380,8 +1428,15 @@
           page.innerHTML = `
             <h1 style="margin-bottom: 1.5rem;">敏感词管理</h1>
             <div id="banned-words-alert"></div>
+
+            <div class="card" style="background: #fff3cd; border-left: 4px solid #ffc107; margin-bottom: 1.5rem;">
+              <h3 style="margin-top: 0; color: #856404;">📋 政策说明</h3>
+              <p style="margin-bottom: 0.5rem;"><strong>系统保留词：</strong>参考 <a href="https://github.com/js-org/js.org" target="_blank" style="color: #0066cc;">js.org 政策</a>，包含 470+ 个常见技术词汇（如 api、admin、www 等），由系统自动管理，硬性阻止注册。</p>
+              <p style="margin-bottom: 0;"><strong>自定义敏感词：</strong>下方可添加不当内容相关词汇（如色情、赌博等），触发后需人工审核。</p>
+            </div>
+
             <div class="card">
-              <h2>添加敏感词</h2>
+              <h2>添加自定义敏感词</h2>
               <form id="add-word-form">
                 <div style="display: flex; gap: 0.5rem; align-items: flex-end;">
                   <div class="form-group" style="flex: 1; margin-bottom: 0;">
@@ -1391,9 +1446,8 @@
                   <div class="form-group" style="width: 200px; margin-bottom: 0;">
                     <label>分类</label>
                     <select name="category">
-                      <option value="general">一般</option>
-                      <option value="reserved">保留词</option>
                       <option value="inappropriate">不当内容</option>
+                      <option value="general">一般</option>
                     </select>
                   </div>
                   <button type="submit" class="btn btn-primary">添加</button>
@@ -1401,7 +1455,7 @@
               </form>
             </div>
             <div class="card">
-              <h2>敏感词列表 (${words.length})</h2>
+              <h2>自定义敏感词列表 (${words.length})</h2>
               <div class="table-container">
                 <table>
                   <thead>
@@ -1417,13 +1471,12 @@
                       <tr>
                         <td>${word.word}</td>
                         <td>
-                          ${word.category === 'reserved' ? '<span class="badge badge-info">保留词</span>' : ''}
                           ${word.category === 'inappropriate' ? '<span class="badge badge-danger">不当内容</span>' : ''}
                           ${word.category === 'general' ? '<span class="badge badge-warning">一般</span>' : ''}
                         </td>
                         <td>${new Date(word.created_at).toLocaleString('zh-CN')}</td>
                         <td>
-                          <button class="btn btn-danger" onclick="deleteBannedWord(${word.id})">删除</button>
+                          <button class="btn btn-danger btn-sm" onclick="deleteBannedWord(${word.id})">删除</button>
                         </td>
                       </tr>
                     `).join('')}
@@ -1487,6 +1540,160 @@
         }
       } catch (error) {
         showAlert('banned-words-alert', '删除失败', 'error');
+      }
+    }
+
+    // DNS记录管理
+    async function manageDNSRecords(domainId, fqdn) {
+      const modal = document.createElement('div');
+      modal.id = 'dns-modal';
+      modal.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; display: flex; align-items: center; justify-content: center;';
+
+      modal.innerHTML = `
+        <div style="background: white; border-radius: 8px; width: 90%; max-width: 900px; max-height: 90vh; overflow-y: auto; padding: 2rem;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+            <h2 style="margin: 0;">DNS记录管理 - ${fqdn}</h2>
+            <button onclick="closeDNSModal()" style="background: none; border: none; font-size: 24px; cursor: pointer;">&times;</button>
+          </div>
+          <div id="dns-modal-alert"></div>
+          <div id="dns-records-content">
+            <div class="loading">加载中...</div>
+          </div>
+        </div>
+      `;
+
+      document.body.appendChild(modal);
+
+      // Load DNS records
+      try {
+        const res = await fetch(`/api/admin/dns-records?domain_id=${domainId}`);
+        const data = await res.json();
+
+        if (data.success) {
+          const records = data.data.records;
+          const domain = data.data.domain;
+
+          document.getElementById('dns-records-content').innerHTML = `
+            <div class="card" style="margin-bottom: 1rem;">
+              <p><strong>域名状态:</strong> ${domain.status === 'active' ? '活跃' : domain.status === 'suspended' ? '已暂停' : domain.status}</p>
+              <p><strong>所有者ID:</strong> ${domain.owner_linuxdo_id}</p>
+              <p style="margin-bottom: 0; color: #856404;">提示：管理员可以在此删除或修改违规的DNS记录，然后恢复域名状态。</p>
+            </div>
+            <div class="table-container">
+              <table>
+                <thead>
+                  <tr>
+                    <th>类型</th>
+                    <th>记录名</th>
+                    <th>记录值</th>
+                    <th>TTL</th>
+                    <th>Proxied</th>
+                    <th>CF同步</th>
+                    <th>操作</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${records.length === 0 ? '<tr><td colspan="7" class="empty-state">无DNS记录</td></tr>' : records.map(record => `
+                    <tr>
+                      <td><span class="badge badge-info">${record.type}</span></td>
+                      <td>${record.name}</td>
+                      <td style="max-width: 300px; word-break: break-all;">${record.content}</td>
+                      <td>${record.ttl}</td>
+                      <td>${record.proxied ? '是' : '否'}</td>
+                      <td>${record.cf_synced ? '✓' : '✗'}</td>
+                      <td>
+                        <div class="action-buttons">
+                          <button class="btn btn-warning btn-sm" onclick="editDNSRecord(${record.id}, '${record.content}', ${record.ttl}, ${record.proxied})">编辑</button>
+                          <button class="btn btn-danger btn-sm" onclick="deleteDNSRecord(${record.id}, ${domainId}, '${fqdn}')">删除</button>
+                        </div>
+                      </td>
+                    </tr>
+                  `).join('')}
+                </tbody>
+              </table>
+            </div>
+          `;
+        } else {
+          document.getElementById('dns-records-content').innerHTML = `<div class="alert alert-error">${data.error || '加载失败'}</div>`;
+        }
+      } catch (error) {
+        document.getElementById('dns-records-content').innerHTML = '<div class="alert alert-error">加载失败</div>';
+      }
+    }
+
+    function closeDNSModal() {
+      const modal = document.getElementById('dns-modal');
+      if (modal) {
+        modal.remove();
+      }
+    }
+
+    async function editDNSRecord(id, currentContent, currentTtl, currentProxied) {
+      const newContent = prompt('请输入新的记录值:', currentContent);
+      if (newContent === null || newContent === currentContent) return;
+
+      const reason = prompt('请输入修改原因（可选）:');
+
+      try {
+        const res = await fetch('/api/admin/dns-records', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            id,
+            content: newContent,
+            ttl: currentTtl,
+            proxied: currentProxied === 1,
+            reason
+          })
+        });
+
+        const data = await res.json();
+        if (data.success) {
+          showAlert('dns-modal-alert', 'DNS记录已更新', 'success');
+          // Reload the modal content
+          const modal = document.getElementById('dns-modal');
+          const fqdn = modal.querySelector('h2').textContent.split(' - ')[1];
+          const domainIdMatch = modal.querySelector('[onclick*="deleteDNSRecord"]');
+          if (domainIdMatch) {
+            const domainId = domainIdMatch.getAttribute('onclick').match(/deleteDNSRecord\(\d+,\s*(\d+)/)[1];
+            setTimeout(() => {
+              closeDNSModal();
+              manageDNSRecords(parseInt(domainId), fqdn);
+            }, 1000);
+          }
+        } else {
+          showAlert('dns-modal-alert', data.error || '更新失败', 'error');
+        }
+      } catch (error) {
+        showAlert('dns-modal-alert', '更新失败', 'error');
+      }
+    }
+
+    async function deleteDNSRecord(id, domainId, fqdn) {
+      if (!confirm('确定要删除此DNS记录吗？')) return;
+
+      const reason = prompt('请输入删除原因（可选）:');
+
+      try {
+        const res = await fetch('/api/admin/dns-records', {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id, reason })
+        });
+
+        const data = await res.json();
+        if (data.success) {
+          showAlert('dns-modal-alert', 'DNS记录已删除', 'success');
+          // Reload the modal content
+          setTimeout(() => {
+            closeDNSModal();
+            manageDNSRecords(domainId, fqdn);
+          }, 1000);
+        } else {
+          showAlert('dns-modal-alert', data.error || '删除失败', 'error');
+        }
+      } catch (error) {
+        showAlert('dns-modal-alert', '删除失败', 'error');
       }
     }
 

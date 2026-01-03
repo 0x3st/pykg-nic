@@ -338,6 +338,17 @@
       text-decoration: none;
     }
 
+    .back-link {
+      display: inline-block;
+      margin-bottom: 1rem;
+      color: var(--primary);
+      text-decoration: none;
+    }
+
+    .back-link:hover {
+      text-decoration: underline;
+    }
+
     @media (max-width: 640px) {
       .user-info {
         flex-direction: column;
@@ -348,6 +359,8 @@
 </head>
 <body>
   <div class="container">
+    <a href="/" class="back-link">&larr; 返回首页</a>
+
     <header>
       <h1>WHOIS 查询</h1>
       <p>查询 PY.KG 子域名注册信息</p>
@@ -367,7 +380,6 @@
             <span class="badge badge-success" id="user-trust">TL?</span>
           </div>
         </div>
-        <a href="/" class="btn btn-secondary">返回首页</a>
       </div>
     </div>
 

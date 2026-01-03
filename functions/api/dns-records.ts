@@ -3,9 +3,9 @@
 import type { Env, Domain, DnsRecord } from '../lib/types';
 import { requireAuth, successResponse, errorResponse } from '../lib/auth';
 import { CloudflareDNSClient, validateDNSRecordContent } from '../lib/cloudflare-dns';
+import { isEmailRelatedTxtRecord } from '../lib/validators';
 
 const MAX_RECORDS = 10;
-const ALLOWED_TXT_PREFIXES = ['_acme-challenge'];
 
 // GET /api/dns-records - Get all DNS records for user's domain
 export const onRequestGet: PagesFunction<Env> = async (context) => {
@@ -74,11 +74,16 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
   // Normalize name: empty string becomes @
   const normalizedName = name.trim().toLowerCase() || '@';
 
-  // TXT records: only allow specific prefixes
+  // Validate content first (needed for TXT email check)
+  if (!content || typeof content !== 'string') {
+    return errorResponse('Missing or invalid content', 400);
+  }
+
+  // TXT records: block email-related records only
   if (type === 'TXT') {
-    const isAllowedPrefix = ALLOWED_TXT_PREFIXES.some(prefix => normalizedName === prefix || normalizedName.startsWith(prefix + '.'));
-    if (!isAllowedPrefix) {
-      return errorResponse(`TXT records are only allowed for certificate validation. Name must start with: ${ALLOWED_TXT_PREFIXES.join(', ')}`, 400);
+    const emailCheck = isEmailRelatedTxtRecord(normalizedName, content);
+    if (emailCheck.isEmailRelated) {
+      return errorResponse(emailCheck.reason || 'Email-related TXT records are not allowed', 400);
     }
   }
 
@@ -102,10 +107,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     }
   }
 
-  // Validate content
-  if (!content || typeof content !== 'string') {
-    return errorResponse('Missing or invalid content', 400);
-  }
+  // Validate content format
 
   const contentValidation = validateDNSRecordContent(type as 'A' | 'AAAA' | 'CNAME' | 'TXT', content);
   if (!contentValidation.valid) {

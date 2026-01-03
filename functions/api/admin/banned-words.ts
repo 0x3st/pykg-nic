@@ -57,9 +57,11 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     return errorResponse('Word must be 2-50 characters', 400);
   }
 
-  const validCategories = ['reserved', 'inappropriate', 'general'];
+  // Only allow 'inappropriate' and 'general' categories
+  // 'reserved' words are managed by js.org policy in code
+  const validCategories = ['inappropriate', 'general'];
   if (!validCategories.includes(category)) {
-    return errorResponse('Invalid category', 400);
+    return errorResponse('Invalid category. Only "inappropriate" and "general" are allowed. Reserved words are managed by js.org policy.', 400);
   }
 
   try {

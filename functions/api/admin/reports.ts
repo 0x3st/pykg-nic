@@ -30,9 +30,14 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
   const limit = parseInt(url.searchParams.get('limit') || '100', 10);
 
   try {
-    const { results: reports } = await env.DB.prepare(
-      'SELECT * FROM reports WHERE status = ? ORDER BY created_at DESC LIMIT ?'
-    ).bind(status, limit).all<Report>();
+    const { results: reports } = await env.DB.prepare(`
+      SELECT r.*, u.username as reporter_username
+      FROM reports r
+      LEFT JOIN users u ON r.reporter_linuxdo_id = u.linuxdo_id
+      WHERE r.status = ?
+      ORDER BY r.created_at DESC
+      LIMIT ?
+    `).bind(status, limit).all<Report & { reporter_username?: string }>();
 
     return successResponse({ reports: reports || [] });
   } catch (error) {
@@ -166,6 +171,15 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
           // Delete from Cloudflare
           await cfClient.deleteAllRecords(domain.fqdn);
 
+          // Send notification to domain owner
+          await createNotification(
+            env.DB,
+            domain.owner_linuxdo_id,
+            'domain_suspended',
+            '域名已被删除',
+            `您的域名 ${domain.fqdn} 因举报被删除。${reason ? `删除原因：${reason}` : ''}`
+          );
+
           // Delete from database
           await env.DB.prepare('DELETE FROM domains WHERE id = ?').bind(domain.id).run();
         }
@@ -179,13 +193,26 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
           `).bind(reportStatus, adminId, id).run();
 
           // Send notification to reporter
-          await createNotification(
-            env.DB,
-            report.reporter_linuxdo_id,
-            'report_processed',
-            '举报已处理',
-            `您对域名 ${report.label}.py.kg 的举报已被处理。处理结果：${reportStatus === 'resolved' ? '举报属实，已采取措施' : '举报不成立'}`
-          );
+          if (reportStatus === 'resolved') {
+            // Report was accepted - notify reporter with details
+            const actionTaken = actions.delete_domain ? '已删除域名' : actions.suspend_domain ? '已暂停域名' : '已采取措施';
+            await createNotification(
+              env.DB,
+              report.reporter_linuxdo_id,
+              'report_processed',
+              '举报已处理',
+              `您对域名 ${report.label}.py.kg 的举报已被处理。处理结果：举报属实，${actionTaken}。${reason ? `处理原因：${reason}` : ''}`
+            );
+          } else {
+            // Report was rejected - notify reporter
+            await createNotification(
+              env.DB,
+              report.reporter_linuxdo_id,
+              'report_processed',
+              '举报已处理',
+              `您对域名 ${report.label}.py.kg 的举报已被审核。处理结果：举报不成立，未采取措施。`
+            );
+          }
         }
 
         results.processed++;

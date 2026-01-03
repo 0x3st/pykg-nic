@@ -1,6 +1,7 @@
 // Content moderation for domain labels
 
 import type { Env, BannedWord } from './types';
+import { isReservedWord } from './reserved-words';
 
 export interface ModerationResult {
   allowed: boolean;
@@ -17,40 +18,38 @@ export async function checkLabel(
 ): Promise<ModerationResult> {
   const normalizedLabel = label.toLowerCase();
 
-  // Get all banned words from database
-  const { results: bannedWords } = await db.prepare(
-    'SELECT word, category FROM banned_words'
-  ).all<BannedWord>();
-
-  if (!bannedWords || bannedWords.length === 0) {
-    return { allowed: true };
+  // First check against js.org reserved words (hard block)
+  if (isReservedWord(normalizedLabel)) {
+    return {
+      allowed: false,
+      reason: `该域名为系统保留词，无法注册（参考 js.org 政策）`,
+      matchedWord: normalizedLabel,
+      category: 'reserved',
+      requiresReview: false,
+    };
   }
 
-  // Check for exact match or substring match
-  for (const { word, category } of bannedWords) {
-    const normalizedWord = word.toLowerCase();
+  // Then check custom banned words from database (for inappropriate content)
+  const { results: bannedWords } = await db.prepare(
+    'SELECT word, category FROM banned_words WHERE category != ?'
+  ).bind('reserved').all<BannedWord>();
 
-    // Check if label contains the banned word
-    if (normalizedLabel.includes(normalizedWord)) {
-      // Reserved words are hard blocked
-      if (category === 'reserved') {
+  if (bannedWords && bannedWords.length > 0) {
+    // Check for exact match or substring match
+    for (const { word, category } of bannedWords) {
+      const normalizedWord = word.toLowerCase();
+
+      // Check if label contains the banned word
+      if (normalizedLabel.includes(normalizedWord)) {
+        // Inappropriate words require review
         return {
           allowed: false,
-          reason: `域名包含保留词: ${word}`,
+          reason: `域名包含敏感词，需要人工审核`,
           matchedWord: word,
           category,
-          requiresReview: false,
+          requiresReview: true,
         };
       }
-
-      // Inappropriate words require review
-      return {
-        allowed: false,
-        reason: `域名包含敏感词，需要人工审核`,
-        matchedWord: word,
-        category,
-        requiresReview: true,
-      };
     }
   }
 
