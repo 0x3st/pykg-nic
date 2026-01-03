@@ -2,6 +2,7 @@
 
 import type { Env, User, AdminUserListItem } from '../../lib/types';
 import { requireAdmin, successResponse, errorResponse } from '../../lib/auth';
+import { addBlockchainLog, BlockchainActions } from '../../lib/blockchain';
 
 // GET /api/admin/users - Get users list
 export const onRequestGet: PagesFunction<Env> = async (context) => {
@@ -145,6 +146,25 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       JSON.stringify({ reason }),
       request.headers.get('CF-Connecting-IP')
     ).run();
+
+    // Get admin username for blockchain log
+    const adminUser = await env.DB.prepare(
+      'SELECT username FROM users WHERE linuxdo_id = ?'
+    ).bind(adminId).first<{ username: string }>();
+
+    // Add blockchain log
+    const blockchainAction = action === 'ban' ? BlockchainActions.USER_BAN
+      : action === 'unban' ? BlockchainActions.USER_UNBAN
+      : action === 'set_admin' ? BlockchainActions.ADMIN_GRANT
+      : BlockchainActions.ADMIN_REVOKE;
+
+    await addBlockchainLog(env.DB, {
+      action: blockchainAction,
+      actorName: adminUser?.username || null,
+      targetType: 'user',
+      targetName: user.username,
+      details: { reason },
+    });
 
     return successResponse({ updated: true, action });
   } catch (e) {

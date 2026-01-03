@@ -3,6 +3,7 @@
 import type { Env, Setting } from '../../lib/types';
 import { requireAdmin, successResponse, errorResponse } from '../../lib/auth';
 import { getSetting, setSetting } from '../../lib/moderation';
+import { addBlockchainLog, BlockchainActions } from '../../lib/blockchain';
 
 // GET /api/admin/settings - Get all settings
 export const onRequestGet: PagesFunction<Env> = async (context) => {
@@ -91,6 +92,20 @@ export const onRequestPut: PagesFunction<Env> = async (context) => {
       JSON.stringify(body),
       request.headers.get('CF-Connecting-IP')
     ).run();
+
+    // Get admin username for blockchain log
+    const adminUser = await env.DB.prepare(
+      'SELECT username FROM users WHERE linuxdo_id = ?'
+    ).bind(linuxdoId).first<{ username: string }>();
+
+    // Add blockchain log for settings update
+    await addBlockchainLog(env.DB, {
+      action: BlockchainActions.SETTING_UPDATE,
+      actorName: adminUser?.username || null,
+      targetType: 'setting',
+      targetName: 'System Settings',
+      details: body,
+    });
 
     return successResponse({ updated: true });
   } catch (e) {

@@ -2,6 +2,7 @@
 
 import type { Env, Domain, Appeal } from '../lib/types';
 import { requireAuth, successResponse, errorResponse } from '../lib/auth';
+import { addBlockchainLog, BlockchainActions } from '../lib/blockchain';
 
 // GET /api/appeals - Get user's appeals
 export const onRequestGet: PagesFunction<Env> = async (context) => {
@@ -80,6 +81,15 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       INSERT INTO appeals (domain_id, linuxdo_id, reason, status, created_at)
       VALUES (?, ?, ?, 'pending', datetime('now'))
     `).bind(domain.id, linuxdoId, reason.trim()).run();
+
+    // Add blockchain log for appeal submission
+    await addBlockchainLog(env.DB, {
+      action: BlockchainActions.APPEAL_SUBMIT,
+      actorName: user.username,
+      targetType: 'domain',
+      targetName: domain.fqdn,
+      details: { reason: reason.trim() },
+    });
 
     return successResponse({ message: '申诉已提交，请等待管理员审核' });
   } catch (e) {

@@ -3,6 +3,7 @@
 import type { Env, Order } from '../../lib/types';
 import { LinuxDOCreditClient, NotifyParams } from '../../lib/credit';
 import { createNotification } from '../../lib/notifications';
+import { addBlockchainLog, BlockchainActions } from '../../lib/blockchain';
 
 // GET /api/payment/notify - Handle payment callback from LinuxDO Credit
 export const onRequestGet: PagesFunction<Env> = async (context) => {
@@ -239,6 +240,22 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
         }),
         request.headers.get('CF-Connecting-IP')
       ).run();
+
+      // Get user info for blockchain log
+      const user = await env.DB.prepare(
+        'SELECT username FROM users WHERE linuxdo_id = ?'
+      ).bind(order.linuxdo_id).first<{ username: string }>();
+
+      // Add blockchain log for domain registration
+      await addBlockchainLog(env.DB, {
+        action: BlockchainActions.DOMAIN_REGISTER,
+        actorName: user?.username || null,
+        targetType: 'domain',
+        targetName: fqdn,
+        details: {
+          amount: params.money,
+        },
+      });
 
       console.log('[Payment Notify] ✅ Audit log created');
       console.log('[Payment Notify] 🎉 Domain registered successfully:', fqdn);

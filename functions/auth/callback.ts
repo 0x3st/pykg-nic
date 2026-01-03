@@ -3,6 +3,7 @@
 import type { Env, LinuxDOUser } from '../lib/types';
 import { signJWT, parseCookies } from '../lib/jwt';
 import { setSessionCookie, clearOAuthCookies, getCookieName } from '../lib/auth';
+import { addBlockchainLog, BlockchainActions } from '../lib/blockchain';
 
 const LINUXDO_TOKEN_URL = 'https://connect.linux.do/oauth2/token';
 const LINUXDO_USER_URL = 'https://connect.linux.do/api/user';
@@ -203,6 +204,13 @@ async function fetchUserInfo(accessToken: string): Promise<UserResult> {
 }
 
 async function upsertUser(db: D1Database, user: LinuxDOUser): Promise<void> {
+  // Check if user already exists
+  const existingUser = await db.prepare(
+    'SELECT linuxdo_id FROM users WHERE linuxdo_id = ?'
+  ).bind(user.id).first();
+
+  const isNewUser = !existingUser;
+
   await db.prepare(`
     INSERT INTO users (linuxdo_id, username, trust_level, silenced, active, updated_at)
     VALUES (?, ?, ?, ?, ?, datetime('now'))
@@ -219,4 +227,15 @@ async function upsertUser(db: D1Database, user: LinuxDOUser): Promise<void> {
     user.silenced ? 1 : 0,
     user.active ? 1 : 0
   ).run();
+
+  // Log new user registration to blockchain
+  if (isNewUser) {
+    await addBlockchainLog(db, {
+      action: BlockchainActions.USER_REGISTER,
+      actorName: user.username,
+      targetType: 'user',
+      targetName: user.username,
+      details: { trust_level: user.trust_level },
+    });
+  }
 }

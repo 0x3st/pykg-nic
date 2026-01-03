@@ -257,34 +257,66 @@ export class LinuxDOCreditClient {
 
   // Refund order
   async refundOrder(tradeNo: string, money: number, outTradeNo?: string): Promise<{ success: boolean; msg: string }> {
-    const body: Record<string, string> = {
+    const params: Record<string, string> = {
+      act: 'refund',
       pid: this.config.pid,
       key: this.config.key,
       trade_no: tradeNo,
       money: money.toFixed(2),
     };
     if (outTradeNo) {
-      body.out_trade_no = outTradeNo;
+      params.out_trade_no = outTradeNo;
     }
 
     try {
+      console.log('[Credit API] Refunding order:', { tradeNo, outTradeNo, money });
+
+      // Use POST with application/x-www-form-urlencoded (traditional form format)
       const response = await fetch(`${CREDIT_API_BASE}/api.php`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          'Accept': 'application/json, text/plain, */*',
+          'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
+          'Referer': 'https://credit.linux.do/',
         },
-        body: new URLSearchParams(body).toString(),
+        body: new URLSearchParams(params).toString(),
       });
 
-      const data = await response.json() as { code: number; msg: string };
-      return {
-        success: data.code === 1,
-        msg: data.msg,
-      };
+      const responseText = await response.text();
+      console.log('[Credit API] Refund response status:', response.status);
+      console.log('[Credit API] Refund response text:', responseText.substring(0, 500));
+
+      // Check if response is HTML (error page)
+      if (responseText.trim().startsWith('<!DOCTYPE') || responseText.trim().startsWith('<html')) {
+        console.error('[Credit API] Received HTML instead of JSON, API may be unavailable');
+        return {
+          success: false,
+          msg: '退款接口被 Cloudflare 保护，请联系管理员手动退款',
+        };
+      }
+
+      try {
+        const data = JSON.parse(responseText) as { code: number; msg: string };
+        console.log('[Credit API] Refund parsed response:', data);
+
+        return {
+          success: data.code === 1,
+          msg: data.msg,
+        };
+      } catch (parseError) {
+        console.error('[Credit API] Failed to parse response:', parseError);
+        return {
+          success: false,
+          msg: '退款接口返回格式错误，请联系管理员',
+        };
+      }
     } catch (e) {
+      console.error('[Credit API] Refund failed:', e);
       return {
         success: false,
-        msg: `Request failed: ${e}`,
+        msg: `退款请求失败: ${e instanceof Error ? e.message : String(e)}`,
       };
     }
   }

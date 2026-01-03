@@ -842,7 +842,7 @@
                     ${domains.length === 0 ? '<tr><td colspan="5" class="empty-state">无数据</td></tr>' : domains.map(domain => `
                       <tr>
                         <td>${domain.fqdn}</td>
-                        <td>${domain.username} (${domain.owner_linuxdo_id})</td>
+                        <td>${domain.owner_username || '未知'} (${domain.owner_linuxdo_id})</td>
                         <td>
                           ${domain.status === 'active' ? '<span class="badge badge-success">活跃</span>' : ''}
                           ${domain.status === 'suspended' ? '<span class="badge badge-danger">已暂停</span>' : ''}
@@ -1117,9 +1117,58 @@
 
         const data = await res.json();
         if (data.success) {
-          showAlert('reviews-alert', banUser ? '已拒绝并封禁用户' : '已拒绝', 'success');
-          loadReviews();
-          loadStats();
+          if (data.requires_refund) {
+            // Need to submit refund form via browser
+            showAlert('reviews-alert', '正在处理退款...', 'info');
+
+            // Open refund in new window and wait for it
+            const refundWindow = window.open('', '_blank', 'width=600,height=400');
+            if (refundWindow) {
+              // Create form in new window
+              refundWindow.document.write(`
+                <!DOCTYPE html>
+                <html>
+                <head><title>退款处理中...</title></head>
+                <body>
+                  <h3>正在处理退款，请稍候...</h3>
+                  <form id="refundForm" method="POST" action="${data.refund_url}">
+                    ${Object.entries(data.refund_form_data).map(([k, v]) =>
+                      `<input type="hidden" name="${k}" value="${v}">`
+                    ).join('')}
+                  </form>
+                  <script>document.getElementById('refundForm').submit();</script>
+                </body>
+                </html>
+              `);
+
+              // After a delay, confirm the refund and close
+              setTimeout(async () => {
+                try {
+                  await fetch('/api/admin/reviews', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                      id: data.review_id,
+                      action: 'confirm_refund',
+                      banUser: data.ban_user,
+                      reason: data.reason
+                    })
+                  });
+                  showAlert('reviews-alert', banUser ? '已拒绝并封禁用户，退款已处理' : '已拒绝，退款已处理', 'success');
+                  loadReviews();
+                  loadStats();
+                } catch (e) {
+                  showAlert('reviews-alert', '退款确认失败，请检查', 'error');
+                }
+              }, 3000);
+            } else {
+              showAlert('reviews-alert', '无法打开退款窗口，请允许弹窗', 'error');
+            }
+          } else {
+            showAlert('reviews-alert', banUser ? '已拒绝并封禁用户' : '已拒绝', 'success');
+            loadReviews();
+            loadStats();
+          }
         } else {
           showAlert('reviews-alert', data.error || '操作失败', 'error');
         }

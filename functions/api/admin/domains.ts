@@ -4,6 +4,7 @@ import type { Env, Domain, AdminDomainListItem, DnsRecord } from '../../lib/type
 import { requireAdmin, successResponse, errorResponse } from '../../lib/auth';
 import { CloudflareDNSClient } from '../../lib/cloudflare-dns';
 import { createNotification } from '../../lib/notifications';
+import { addBlockchainLog, BlockchainActions } from '../../lib/blockchain';
 
 // GET /api/admin/domains - Get domains list
 export const onRequestGet: PagesFunction<Env> = async (context) => {
@@ -98,6 +99,8 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
   }
 
   try {
+    console.log('[Admin Domains POST] Starting action:', action, 'for id:', id);
+
     // Get domain
     const domain = await env.DB.prepare(
       'SELECT * FROM domains WHERE id = ?'
@@ -107,18 +110,25 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       return errorResponse('Domain not found', 404);
     }
 
+    console.log('[Admin Domains POST] Found domain:', domain.fqdn, 'status:', domain.status);
+
     const adminId = parseInt(authResult.user.sub, 10);
     const cfClient = new CloudflareDNSClient(env.CLOUDFLARE_API_TOKEN, env.CLOUDFLARE_ZONE_ID);
 
     switch (action) {
       case 'suspend':
+        console.log('[Admin Domains POST] Suspending domain:', domain.fqdn);
+
         // Get all DNS records for this domain
         const { results: dnsRecords } = await env.DB.prepare(
           'SELECT * FROM dns_records WHERE domain_id = ?'
         ).bind(id).all<DnsRecord>();
 
+        console.log('[Admin Domains POST] DNS records count:', dnsRecords?.length || 0);
+
         // Delete all DNS records from Cloudflare
-        await cfClient.deleteAllRecords(domain.fqdn);
+        const deleteResult = await cfClient.deleteAllRecords(domain.fqdn);
+        console.log('[Admin Domains POST] CF deleteAllRecords result:', JSON.stringify(deleteResult));
 
         // Mark all DNS records as not synced in database (keep them as evidence)
         if (dnsRecords && dnsRecords.length > 0) {
@@ -128,10 +138,13 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
         }
 
         // Update domain status to suspended
-        await env.DB.prepare(`
+        const suspendReason = reason?.trim() || null;
+        console.log('[Admin Domains POST] Updating DB status to suspended, reason:', suspendReason);
+        const updateResult = await env.DB.prepare(`
           UPDATE domains SET status = 'suspended', suspend_reason = ?
           WHERE id = ?
-        `).bind(reason.trim(), id).run();
+        `).bind(suspendReason, id).run();
+        console.log('[Admin Domains POST] DB update result:', JSON.stringify(updateResult));
 
         // Send notification to user
         await createNotification(
@@ -139,7 +152,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
           domain.owner_linuxdo_id,
           'domain_suspended',
           '域名已被暂停',
-          `您的域名 ${domain.fqdn} 已被暂停使用。暂停原因：${reason.trim()}`
+          `您的域名 ${domain.fqdn} 已被暂停使用。${suspendReason ? `暂停原因：${suspendReason}` : ''}`
         );
         break;
 
@@ -190,8 +203,11 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
         break;
 
       case 'delete':
+        console.log('[Admin Domains POST] Deleting domain:', domain.fqdn);
+
         // Delete all DNS records from Cloudflare
-        await cfClient.deleteAllRecords(domain.fqdn);
+        const deleteAllResult = await cfClient.deleteAllRecords(domain.fqdn);
+        console.log('[Admin Domains POST] CF delete result:', JSON.stringify(deleteAllResult));
 
         // Send notification to user about deletion
         await createNotification(
@@ -202,12 +218,22 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
           `您的域名 ${domain.fqdn} 已被管理员删除。${reason ? `删除原因：${reason}` : ''}`
         );
 
+        // Delete related records first (to avoid foreign key constraint errors)
+        console.log('[Admin Domains POST] Deleting related appeals for domain id:', id);
+        await env.DB.prepare('DELETE FROM appeals WHERE domain_id = ?').bind(id).run();
+
+        console.log('[Admin Domains POST] Deleting related dns_records for domain id:', id);
+        await env.DB.prepare('DELETE FROM dns_records WHERE domain_id = ?').bind(id).run();
+
         // Delete from database
-        await env.DB.prepare('DELETE FROM domains WHERE id = ?').bind(id).run();
+        console.log('[Admin Domains POST] Deleting from DB, id:', id);
+        const dbDeleteResult = await env.DB.prepare('DELETE FROM domains WHERE id = ?').bind(id).run();
+        console.log('[Admin Domains POST] DB delete result:', JSON.stringify(dbDeleteResult));
         break;
     }
 
     // Log the action
+    console.log('[Admin Domains POST] Writing audit log');
     await env.DB.prepare(`
       INSERT INTO audit_logs (linuxdo_id, action, target, details, ip_address, created_at)
       VALUES (?, ?, ?, ?, ?, datetime('now'))
@@ -219,9 +245,30 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       request.headers.get('CF-Connecting-IP')
     ).run();
 
+    // Get admin username for blockchain log
+    const adminUser = await env.DB.prepare(
+      'SELECT username FROM users WHERE linuxdo_id = ?'
+    ).bind(adminId).first<{ username: string }>();
+
+    // Add blockchain log
+    const blockchainAction = action === 'suspend' ? BlockchainActions.DOMAIN_SUSPEND
+      : action === 'activate' ? BlockchainActions.DOMAIN_ACTIVATE
+      : BlockchainActions.DOMAIN_DELETE;
+
+    await addBlockchainLog(env.DB, {
+      action: blockchainAction,
+      actorName: adminUser?.username || null,
+      targetType: 'domain',
+      targetName: domain.fqdn,
+      details: { reason },
+    });
+
+    console.log('[Admin Domains POST] Action completed successfully');
     return successResponse({ updated: true, action });
   } catch (e) {
-    console.error('Failed to update domain:', e);
+    console.error('[Admin Domains POST] Failed to update domain:', e);
+    console.error('[Admin Domains POST] Error message:', e instanceof Error ? e.message : String(e));
+    console.error('[Admin Domains POST] Error stack:', e instanceof Error ? e.stack : 'No stack');
     return errorResponse('Failed to update domain', 500);
   }
 };

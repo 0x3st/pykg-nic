@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>操作日志 - PY.KG NIC</title>
+  <style>
+    :root {
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --success: #16a34a;
+      --danger: #dc2626;
+      --warning: #d97706;
+      --bg: #f8fafc;
+      --card-bg: #ffffff;
+      --text: #1e293b;
+      --text-muted: #64748b;
+      --border: #e2e8f0;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 2rem 1rem;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+
+    header h1 {
+      font-size: 2rem;
+      margin-bottom: 0.5rem;
+    }
+
+    header p {
+      color: var(--text-muted);
+    }
+
+    .card {
+      background: var(--card-bg);
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .verification-status {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 1rem;
+      border-radius: 6px;
+      margin-bottom: 1rem;
+    }
+
+    .verification-status.valid {
+      background: #dcfce7;
+      color: #166534;
+    }
+
+    .verification-status.invalid {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+
+    .verification-status.loading {
+      background: #fef3c7;
+      color: #92400e;
+    }
+
+    .filters {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .filters select {
+      padding: 0.5rem;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 0.875rem;
+    }
+
+    .btn {
+      display: inline-block;
+      padding: 0.5rem 1rem;
+      border-radius: 6px;
+      font-size: 0.875rem;
+      font-weight: 500;
+      text-decoration: none;
+      cursor: pointer;
+      border: none;
+      transition: background-color 0.2s;
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: var(--primary-hover);
+    }
+
+    .log-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .log-item {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1rem;
+      cursor: pointer;
+      transition: box-shadow 0.2s;
+    }
+
+    .log-item:hover {
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    .log-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 0.5rem;
+    }
+
+    .log-action {
+      display: inline-block;
+      padding: 0.25rem 0.5rem;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+
+    .log-action.user { background: #dbeafe; color: #1e40af; }
+    .log-action.domain { background: #dcfce7; color: #166534; }
+    .log-action.appeal { background: #fef3c7; color: #92400e; }
+    .log-action.setting { background: #f3e8ff; color: #7c3aed; }
+
+    .log-time {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    .log-content {
+      font-size: 0.875rem;
+    }
+
+    .log-actor {
+      font-weight: 500;
+    }
+
+    .log-target {
+      color: var(--primary);
+      font-weight: 500;
+    }
+
+    .log-details {
+      display: none;
+      margin-top: 1rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--border);
+      font-size: 0.8rem;
+    }
+
+    .log-item.expanded .log-details {
+      display: block;
+    }
+
+    .hash-display {
+      font-family: monospace;
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      word-break: break-all;
+      background: #f1f5f9;
+      padding: 0.5rem;
+      border-radius: 4px;
+      margin-top: 0.5rem;
+    }
+
+    .pagination {
+      display: flex;
+      justify-content: center;
+      gap: 0.5rem;
+      margin-top: 1.5rem;
+    }
+
+    .pagination button {
+      padding: 0.5rem 1rem;
+      border: 1px solid var(--border);
+      background: white;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    .pagination button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .pagination button:not(:disabled):hover {
+      background: var(--bg);
+    }
+
+    .stats {
+      display: flex;
+      gap: 2rem;
+      margin-bottom: 1rem;
+      font-size: 0.875rem;
+      color: var(--text-muted);
+    }
+
+    .loading {
+      text-align: center;
+      padding: 2rem;
+      color: var(--text-muted);
+    }
+
+    .back-link {
+      display: inline-block;
+      margin-bottom: 1rem;
+      color: var(--primary);
+      text-decoration: none;
+    }
+
+    .back-link:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <a href="/" class="back-link">← 返回首页</a>
+
+    <header>
+      <h1>操作日志</h1>
+      <p>所有操作记录均使用区块链技术存储，不可篡改</p>
+    </header>
+
+    <div id="verification" class="verification-status loading">
+      正在验证区块链完整性...
+    </div>
+
+    <div class="card">
+      <div class="filters">
+        <select id="action-filter">
+          <option value="">全部操作</option>
+          <option value="user_register">用户注册</option>
+          <option value="user_ban">用户封禁</option>
+          <option value="user_unban">用户解封</option>
+          <option value="admin_grant">授予管理员</option>
+          <option value="admin_revoke">移除管理员</option>
+          <option value="domain_register">域名注册</option>
+          <option value="domain_approve">审核通过</option>
+          <option value="domain_reject">审核拒绝</option>
+          <option value="domain_suspend">域名暂停</option>
+          <option value="domain_activate">域名激活</option>
+          <option value="domain_delete">域名删除</option>
+          <option value="appeal_submit">申诉提交</option>
+          <option value="appeal_approve">申诉通过</option>
+          <option value="appeal_reject">申诉拒绝</option>
+          <option value="setting_update">设置变更</option>
+        </select>
+        <button class="btn btn-primary" onclick="loadLogs()">筛选</button>
+      </div>
+
+      <div class="stats">
+        <span>总记录: <strong id="total-count">0</strong></span>
+        <span>当前页: <strong id="current-page">1</strong></span>
+      </div>
+
+      <div id="log-list" class="log-list">
+        <div class="loading">加载中...</div>
+      </div>
+
+      <div class="pagination">
+        <button id="prev-btn" onclick="prevPage()" disabled>上一页</button>
+        <button id="next-btn" onclick="nextPage()" disabled>下一页</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const PAGE_SIZE = 20;
+    let currentOffset = 0;
+    let totalLogs = 0;
+
+    const actionLabels = {
+      user_register: '用户注册',
+      user_ban: '用户封禁',
+      user_unban: '用户解封',
+      admin_grant: '授予管理员',
+      admin_revoke: '移除管理员',
+      domain_register: '域名注册',
+      domain_approve: '审核通过',
+      domain_reject: '审核拒绝',
+      domain_suspend: '域名暂停',
+      domain_activate: '域名激活',
+      domain_delete: '域名删除',
+      appeal_submit: '申诉提交',
+      appeal_approve: '申诉通过',
+      appeal_reject: '申诉拒绝',
+      setting_update: '设置变更',
+    };
+
+    function getActionCategory(action) {
+      if (action.startsWith('user_') || action.startsWith('admin_')) return 'user';
+      if (action.startsWith('domain_')) return 'domain';
+      if (action.startsWith('appeal_')) return 'appeal';
+      if (action.startsWith('setting_')) return 'setting';
+      return 'domain';
+    }
+
+    function formatTime(timestamp) {
+      const date = new Date(timestamp);
+      return date.toLocaleString('zh-CN', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+      });
+    }
+
+    function truncateHash(hash) {
+      if (!hash) return '';
+      return hash.substring(0, 8) + '...' + hash.substring(hash.length - 8);
+    }
+
+    function renderLog(log) {
+      const category = getActionCategory(log.action);
+      const actionLabel = actionLabels[log.action] || log.action;
+      let details = {};
+      try {
+        details = log.details ? JSON.parse(log.details) : {};
+      } catch (e) {}
+
+      let description = '';
+      if (log.actor_name) {
+        description += `<span class="log-actor">${log.actor_name}</span> `;
+      }
+      description += actionLabel;
+      if (log.target_name) {
+        description += ` <span class="log-target">${log.target_name}</span>`;
+      }
+
+      return `
+        <div class="log-item" onclick="this.classList.toggle('expanded')">
+          <div class="log-header">
+            <span class="log-action ${category}">${actionLabel}</span>
+            <span class="log-time">${formatTime(log.timestamp)}</span>
+          </div>
+          <div class="log-content">${description}</div>
+          <div class="log-details">
+            <div><strong>区块哈希:</strong></div>
+            <div class="hash-display">${log.block_hash}</div>
+            <div style="margin-top: 0.5rem;"><strong>上一区块:</strong></div>
+            <div class="hash-display">${log.prev_hash}</div>
+            ${log.target_type ? `<div style="margin-top: 0.5rem;"><strong>目标类型:</strong> ${log.target_type}</div>` : ''}
+            ${Object.keys(details).length > 0 ? `<div style="margin-top: 0.5rem;"><strong>详细信息:</strong><pre style="margin-top: 0.25rem; white-space: pre-wrap;">${JSON.stringify(details, null, 2)}</pre></div>` : ''}
+          </div>
+        </div>
+      `;
+    }
+
+    async function verifyChain() {
+      const el = document.getElementById('verification');
+      try {
+        const res = await fetch('/api/logs?verify=true&limit=1');
+        const data = await res.json();
+        if (data.success && data.data.verification) {
+          const v = data.data.verification;
+          if (v.valid) {
+            el.className = 'verification-status valid';
+            el.innerHTML = `✓ 区块链完整性验证通过 (共 ${v.totalBlocks} 个区块)`;
+          } else {
+            el.className = 'verification-status invalid';
+            el.innerHTML = `✗ 区块链完整性验证失败！在区块 #${v.invalidAt} 处发现异常`;
+          }
+        }
+      } catch (e) {
+        el.className = 'verification-status invalid';
+        el.innerHTML = '验证失败: ' + e.message;
+      }
+    }
+
+    async function loadLogs() {
+      const action = document.getElementById('action-filter').value;
+      const listEl = document.getElementById('log-list');
+      listEl.innerHTML = '<div class="loading">加载中...</div>';
+
+      try {
+        const params = new URLSearchParams({
+          limit: PAGE_SIZE,
+          offset: currentOffset,
+        });
+        if (action) params.set('action', action);
+
+        const res = await fetch(`/api/logs?${params}`);
+        const data = await res.json();
+
+        if (data.success) {
+          totalLogs = data.data.total;
+          document.getElementById('total-count').textContent = totalLogs;
+          document.getElementById('current-page').textContent = Math.floor(currentOffset / PAGE_SIZE) + 1;
+
+          if (data.data.logs.length === 0) {
+            listEl.innerHTML = '<div class="loading">暂无日志记录</div>';
+          } else {
+            listEl.innerHTML = data.data.logs.map(renderLog).join('');
+          }
+
+          document.getElementById('prev-btn').disabled = currentOffset === 0;
+          document.getElementById('next-btn').disabled = currentOffset + PAGE_SIZE >= totalLogs;
+        } else {
+          listEl.innerHTML = '<div class="loading">加载失败</div>';
+        }
+      } catch (e) {
+        listEl.innerHTML = '<div class="loading">加载失败: ' + e.message + '</div>';
+      }
+    }
+
+    function prevPage() {
+      if (currentOffset >= PAGE_SIZE) {
+        currentOffset -= PAGE_SIZE;
+        loadLogs();
+      }
+    }
+
+    function nextPage() {
+      if (currentOffset + PAGE_SIZE < totalLogs) {
+        currentOffset += PAGE_SIZE;
+        loadLogs();
+      }
+    }
+
+    // Initialize
+    verifyChain();
+    loadLogs();
+  </script>
+</body>
+</html>
