@@ -513,12 +513,42 @@
 
     // Display query result
     function displayResult(data) {
+      // Check if domain is reserved
+      if (data.status === 'reserved') {
+        resultSection.innerHTML = `
+          <div class="card">
+            <h2>查询结果</h2>
+            <div class="domain-display">${escapeHtml(data.label)}.py.kg</div>
+
+            <div class="alert alert-error" style="margin-bottom: 1rem;">
+              <strong>域名已被保留，无法注册</strong><br>
+              ${escapeHtml(data.reason)}
+            </div>
+
+            <div class="info-row">
+              <strong>域名标签:</strong>
+              ${escapeHtml(data.label)}
+            </div>
+
+            <div class="info-row">
+              <strong>状态:</strong>
+              <span class="badge badge-danger">reserved</span>
+            </div>
+          </div>
+        `;
+        resultSection.classList.remove('hidden');
+        return;
+      }
+
+      // Regular domain display (already registered)
       const createdDate = new Date(data.created_at).toLocaleString('zh-CN', {
         year: 'numeric',
         month: '2-digit',
         day: '2-digit',
         hour: '2-digit',
-        minute: '2-digit'
+        minute: '2-digit',
+        timeZone: 'Asia/Shanghai',
+        hour12: false
       });
 
       // Format TTL for display

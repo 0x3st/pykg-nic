@@ -269,7 +269,7 @@
                       <span class="badge badge-danger">${escapeHtml(user.username)}</span>
                     </td>
                     <td>${escapeHtml(user.ban_reason || '违规操作')}</td>
-                    <td>${new Date(user.updated_at).toLocaleString('zh-CN')}</td>
+                    <td>${new Date(user.updated_at).toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai', hour12: false })}</td>
                   </tr>
                 `).join('')}
               </tbody>

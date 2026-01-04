@@ -469,6 +469,7 @@
         <h2 style="margin: 0;">消息通知</h2>
         <div style="display: flex; gap: 0.5rem;">
           <button class="btn btn-secondary btn-sm" id="mark-all-read-btn">全部标记已读</button>
+          <button class="btn btn-danger btn-sm" id="delete-all-read-btn">删除所有已读</button>
           <button class="btn btn-secondary btn-sm" id="close-notifications-btn">关闭</button>
         </div>
       </div>
@@ -1048,7 +1049,7 @@
           document.getElementById('pending-review-label').textContent = data.pendingReview.label;
           document.getElementById('pending-review-reason').textContent = data.pendingReview.reason || '需要人工审核';
           document.getElementById('pending-review-created').textContent =
-            new Date(data.pendingReview.created_at).toLocaleString('zh-CN');
+            new Date(data.pendingReview.created_at).toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai', hour12: false });
 
           registerSection.classList.add('hidden');
           pendingReviewSection.classList.remove('hidden');
@@ -1064,7 +1065,7 @@
           document.getElementById('pending-amount').textContent = pendingOrder.amount;
           document.getElementById('pending-order-no').textContent = pendingOrder.order_no;
           document.getElementById('pending-created').textContent =
-            new Date(pendingOrder.created_at).toLocaleString('zh-CN');
+            new Date(pendingOrder.created_at).toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai', hour12: false });
 
           registerSection.classList.add('hidden');
           pendingOrderSection.classList.remove('hidden');
@@ -1333,10 +1334,11 @@
       form.submit();
     }
 
-    // Register domain - Step 1: Show detail form
+    // Register domain - Step 1: Check availability then show detail form
     document.getElementById('register-form').addEventListener('submit', async (e) => {
       e.preventDefault();
       const input = document.getElementById('label-input');
+      const btn = document.getElementById('register-btn');
       const label = input.value.toLowerCase().trim();
 
       // Basic validation
@@ -1350,14 +1352,51 @@
         return;
       }
 
-      // Store label and show detail form
-      pendingLabel = label;
-      document.getElementById('register-domain-display').textContent = `${label}.py.kg`;
-
-      // Hide register section, show detail section
-      registerSection.classList.add('hidden');
-      registerDetailSection.classList.remove('hidden');
+      // Check domain availability via WHOIS API
+      btn.disabled = true;
+      btn.textContent = '检查中...';
       clearMessages();
+
+      try {
+        const response = await fetch(`/api/whois?domain=${encodeURIComponent(label)}`);
+        const data = await response.json();
+
+        if (data.success) {
+          // Check if domain is reserved or already taken
+          if (data.data.status === 'reserved') {
+            showError(data.data.reason || '域名包含被禁止的词汇');
+            btn.disabled = false;
+            btn.textContent = '注册';
+            return;
+          }
+
+          if (data.data.status === 'active' || data.data.status === 'suspended' || data.data.status === 'review') {
+            showError('该域名已被注册');
+            btn.disabled = false;
+            btn.textContent = '注册';
+            return;
+          }
+        } else {
+          // Domain not found (404) means it's available
+          if (response.status === 404 || data.error === 'Domain not found') {
+            // Domain is available, proceed to detail form
+            pendingLabel = label;
+            document.getElementById('register-domain-display').textContent = `${label}.py.kg`;
+
+            // Hide register section, show detail section
+            registerSection.classList.add('hidden');
+            registerDetailSection.classList.remove('hidden');
+            clearMessages();
+          } else {
+            showError(data.error || '检查域名失败');
+          }
+        }
+      } catch (error) {
+        showError('检查域名失败，请重试');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '注册';
+      }
     });
 
     // Back to label selection
@@ -1494,10 +1533,13 @@
             <div class="card" style="margin-bottom: 0.75rem; padding: 1rem; ${n.is_read === 0 ? 'border-left: 3px solid var(--primary);' : ''}">
               <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 0.5rem;">
                 <strong style="color: ${n.is_read === 0 ? 'var(--primary)' : 'var(--text)'};">${escapeHtml(n.title)}</strong>
-                <span style="font-size: 0.75rem; color: var(--text-muted);">${new Date(n.created_at).toLocaleString('zh-CN')}</span>
+                <span style="font-size: 0.75rem; color: var(--text-muted);">${new Date(n.created_at).toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai', hour12: false })}</span>
               </div>
               <p style="margin: 0; font-size: 0.875rem; color: var(--text-muted);">${escapeHtml(n.message)}</p>
-              ${n.is_read === 0 ? `<button class="btn btn-secondary btn-sm" style="margin-top: 0.5rem;" onclick="markAsRead(${n.id})">标记已读</button>` : ''}
+              <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">
+                ${n.is_read === 0 ? `<button class="btn btn-secondary btn-sm" onclick="markAsRead(${n.id})">标记已读</button>` : ''}
+                <button class="btn btn-danger btn-sm" onclick="deleteNotification(${n.id})">删除</button>
+              </div>
             </div>
           `).join('');
         }
@@ -1524,7 +1566,31 @@
       }
     }
 
+    async function deleteNotification(id) {
+      try {
+        await api('DELETE', '/api/notifications', { id });
+        await loadNotifications();
+      } catch (e) {
+        showError('删除失败: ' + e.message);
+      }
+    }
+
+    async function deleteAllReadNotifications() {
+      if (!confirm('确定要删除所有已读通知吗？')) {
+        return;
+      }
+
+      try {
+        await api('DELETE', '/api/notifications', { delete_all_read: true });
+        await loadNotifications();
+        showSuccess('所有已读通知已删除');
+      } catch (e) {
+        showError('删除失败: ' + e.message);
+      }
+    }
+
     window.markAsRead = markAsRead;
+    window.deleteNotification = deleteNotification;
 
     document.getElementById('notifications-btn').addEventListener('click', () => {
       document.getElementById('notifications-panel').classList.toggle('hidden');
@@ -1538,6 +1604,7 @@
     });
 
     document.getElementById('mark-all-read-btn').addEventListener('click', markAllAsRead);
+    document.getElementById('delete-all-read-btn').addEventListener('click', deleteAllReadNotifications);
 
     // Load appeal status for suspended domains
     async function loadAppealStatus() {
@@ -1559,7 +1626,7 @@
               <p><strong>申诉原因：</strong></p>
               <p style="background: var(--bg); padding: 0.75rem; border-radius: 6px; margin-top: 0.5rem;">${escapeHtml(pendingAppeal.reason)}</p>
               <p style="color: var(--text-muted); font-size: 0.875rem; margin-top: 0.5rem;">
-                <strong>提交时间：</strong>${new Date(pendingAppeal.created_at).toLocaleString('zh-CN')}
+                <strong>提交时间：</strong>${new Date(pendingAppeal.created_at).toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai', hour12: false })}
               </p>
             </div>
           `;
