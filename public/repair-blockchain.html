@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>区块链修复工具 - PY.KG Admin</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 2rem;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+      padding: 2rem;
+    }
+
+    h1 {
+      color: #333;
+      margin-bottom: 0.5rem;
+    }
+
+    .subtitle {
+      color: #666;
+      margin-bottom: 2rem;
+    }
+
+    .section {
+      margin-bottom: 2rem;
+      padding: 1.5rem;
+      background: #f8f9fa;
+      border-radius: 8px;
+    }
+
+    .section h2 {
+      color: #444;
+      margin-bottom: 1rem;
+      font-size: 1.25rem;
+    }
+
+    .btn {
+      padding: 0.75rem 1.5rem;
+      border: none;
+      border-radius: 6px;
+      font-size: 1rem;
+      cursor: pointer;
+      font-weight: 500;
+      transition: all 0.3s;
+      margin-right: 0.5rem;
+    }
+
+    .btn-primary {
+      background: #667eea;
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: #5568d3;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    }
+
+    .btn-danger {
+      background: #e74c3c;
+      color: white;
+    }
+
+    .btn-danger:hover {
+      background: #c0392b;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(231, 76, 60, 0.4);
+    }
+
+    .btn-secondary {
+      background: #6c757d;
+      color: white;
+    }
+
+    .btn-secondary:hover {
+      background: #545b62;
+    }
+
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none !important;
+    }
+
+    .input-group {
+      margin-bottom: 1rem;
+    }
+
+    .input-group label {
+      display: block;
+      margin-bottom: 0.5rem;
+      color: #555;
+      font-weight: 500;
+    }
+
+    .input-group input {
+      width: 200px;
+      padding: 0.5rem;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 1rem;
+    }
+
+    .alert {
+      padding: 1rem;
+      border-radius: 6px;
+      margin-bottom: 1rem;
+    }
+
+    .alert-info {
+      background: #d1ecf1;
+      border: 1px solid #bee5eb;
+      color: #0c5460;
+    }
+
+    .alert-success {
+      background: #d4edda;
+      border: 1px solid #c3e6cb;
+      color: #155724;
+    }
+
+    .alert-danger {
+      background: #f8d7da;
+      border: 1px solid #f5c6cb;
+      color: #721c24;
+    }
+
+    .alert-warning {
+      background: #fff3cd;
+      border: 1px solid #ffeaa7;
+      color: #856404;
+    }
+
+    pre {
+      background: #282c34;
+      color: #abb2bf;
+      padding: 1rem;
+      border-radius: 6px;
+      overflow-x: auto;
+      font-size: 0.875rem;
+      line-height: 1.5;
+    }
+
+    .loading {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border: 2px solid #f3f3f3;
+      border-top: 2px solid #667eea;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-right: 0.5rem;
+      vertical-align: middle;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .stat-card {
+      background: white;
+      padding: 1rem;
+      border-radius: 6px;
+      border: 1px solid #e0e0e0;
+    }
+
+    .stat-label {
+      color: #666;
+      font-size: 0.875rem;
+      margin-bottom: 0.25rem;
+    }
+
+    .stat-value {
+      color: #333;
+      font-size: 1.5rem;
+      font-weight: bold;
+    }
+
+    .update-list {
+      max-height: 400px;
+      overflow-y: auto;
+      background: white;
+      padding: 1rem;
+      border-radius: 6px;
+    }
+
+    .update-item {
+      padding: 0.75rem;
+      border-bottom: 1px solid #eee;
+      font-family: monospace;
+      font-size: 0.875rem;
+    }
+
+    .update-item:last-child {
+      border-bottom: none;
+    }
+
+    .changed {
+      color: #e74c3c;
+      font-weight: bold;
+    }
+
+    .unchanged {
+      color: #27ae60;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🔧 区块链修复工具</h1>
+    <p class="subtitle">管理员专用 - 修复区块链完整性问题</p>
+
+    <div class="section">
+      <h2>📊 当前状态</h2>
+      <div id="status-container">
+        <div class="alert alert-info">
+          <div class="loading"></div> 正在检查区块链状态...
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>🔍 预览修复（Dry Run）</h2>
+      <div class="input-group">
+        <label for="start-block">从区块 ID 开始修复:</label>
+        <input type="number" id="start-block" value="141" min="1">
+      </div>
+      <button class="btn btn-primary" id="dry-run-btn" onclick="runDryRun()">
+        预览需要修复的区块
+      </button>
+      <div id="dry-run-result"></div>
+    </div>
+
+    <div class="section">
+      <h2>⚠️ 执行修复</h2>
+      <div class="alert alert-warning">
+        <strong>警告：</strong> 此操作将直接修改数据库中的区块链数据。请先运行预览确认无误后再执行。
+      </div>
+      <button class="btn btn-danger" id="repair-btn" onclick="runRepair()" disabled>
+        执行修复（需先预览）
+      </button>
+      <div id="repair-result"></div>
+    </div>
+  </div>
+
+  <script>
+    let dryRunCompleted = false;
+
+    async function checkStatus() {
+      const container = document.getElementById('status-container');
+      try {
+        const res = await fetch('/api/logs?verify=true&limit=1');
+        const data = await res.json();
+
+        if (data.success && data.data.verification) {
+          const v = data.data.verification;
+          if (v.valid) {
+            container.innerHTML = `
+              <div class="alert alert-success">
+                ✓ 区块链完整性验证通过 (共 ${v.totalBlocks} 个区块)
+              </div>
+            `;
+          } else {
+            container.innerHTML = `
+              <div class="alert alert-danger">
+                ✗ 区块链完整性验证失败！在区块 #${v.invalidAt} 处发现异常
+              </div>
+              <div class="stats">
+                <div class="stat-card">
+                  <div class="stat-label">总区块数</div>
+                  <div class="stat-value">${v.totalBlocks}</div>
+                </div>
+                <div class="stat-card">
+                  <div class="stat-label">异常区块</div>
+                  <div class="stat-value">#${v.invalidAt}</div>
+                </div>
+              </div>
+            `;
+            document.getElementById('start-block').value = v.invalidAt;
+          }
+        }
+      } catch (e) {
+        container.innerHTML = `
+          <div class="alert alert-danger">
+            验证失败: ${e.message}
+          </div>
+        `;
+      }
+    }
+
+    async function runDryRun() {
+      const btn = document.getElementById('dry-run-btn');
+      const resultDiv = document.getElementById('dry-run-result');
+      const startBlock = parseInt(document.getElementById('start-block').value);
+
+      btn.disabled = true;
+      btn.innerHTML = '<span class="loading"></span> 正在预览...';
+      resultDiv.innerHTML = '';
+
+      try {
+        const res = await fetch('/api/admin/repair-blockchain', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ startFromId: startBlock, dryRun: true })
+        });
+
+        const response = await res.json();
+
+        if (!res.ok) {
+          throw new Error(response.error || '请求失败');
+        }
+
+        // API returns { success: true, data: {...} }
+        const data = response.data || response;
+
+        if (data.blocksToRepair === 0) {
+          resultDiv.innerHTML = `
+            <div class="alert alert-success" style="margin-top: 1rem;">
+              ✓ 没有需要修复的区块！区块链从 #${startBlock} 开始是完整的。
+            </div>
+          `;
+        } else {
+          let html = `
+            <div class="alert alert-info" style="margin-top: 1rem;">
+              找到 ${data.blocksToRepair} 个需要修复的区块（共 ${data.totalBlocks} 个区块）
+            </div>
+            <div class="update-list">
+          `;
+
+          data.updates.forEach(update => {
+            const prevChanged = update.changes.prev_hash.changed;
+            const hashChanged = update.changes.block_hash.changed;
+
+            html += `
+              <div class="update-item">
+                <strong>区块 #${update.id}</strong><br>
+                prev_hash: ${update.changes.prev_hash.from} →
+                <span class="${prevChanged ? 'changed' : 'unchanged'}">
+                  ${update.changes.prev_hash.to}
+                </span>
+                ${prevChanged ? '⚠️' : '✓'}<br>
+                block_hash: ${update.changes.block_hash.from} →
+                <span class="${hashChanged ? 'changed' : 'unchanged'}">
+                  ${update.changes.block_hash.to}
+                </span>
+                ${hashChanged ? '⚠️' : '✓'}
+              </div>
+            `;
+          });
+
+          html += `</div>`;
+          resultDiv.innerHTML = html;
+
+          dryRunCompleted = true;
+          document.getElementById('repair-btn').disabled = false;
+        }
+      } catch (e) {
+        resultDiv.innerHTML = `
+          <div class="alert alert-danger" style="margin-top: 1rem;">
+            ❌ 预览失败: ${e.message}
+          </div>
+        `;
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '预览需要修复的区块';
+      }
+    }
+
+    async function runRepair() {
+      if (!dryRunCompleted) {
+        alert('请先运行预览！');
+        return;
+      }
+
+      if (!confirm('确定要执行修复吗？此操作将修改数据库中的区块链数据。')) {
+        return;
+      }
+
+      const btn = document.getElementById('repair-btn');
+      const resultDiv = document.getElementById('repair-result');
+      const startBlock = parseInt(document.getElementById('start-block').value);
+
+      btn.disabled = true;
+      btn.innerHTML = '<span class="loading"></span> 正在修复...';
+      resultDiv.innerHTML = '';
+
+      try {
+        const res = await fetch('/api/admin/repair-blockchain', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ startFromId: startBlock, dryRun: false })
+        });
+
+        const response = await res.json();
+
+        if (!res.ok) {
+          throw new Error(response.error || '请求失败');
+        }
+
+        // API returns { success: true, data: {...} }
+        const data = response.data || response;
+
+        resultDiv.innerHTML = `
+          <div class="alert alert-success" style="margin-top: 1rem;">
+            ✅ 修复完成！
+          </div>
+          <div class="stats">
+            <div class="stat-card">
+              <div class="stat-label">修复的区块</div>
+              <div class="stat-value">${data.repaired}</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">总处理区块</div>
+              <div class="stat-value">${data.totalBlocks}</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">起始区块</div>
+              <div class="stat-value">#${data.startedFrom}</div>
+            </div>
+          </div>
+        `;
+
+        // 重新检查状态
+        setTimeout(() => {
+          checkStatus();
+          dryRunCompleted = false;
+          btn.disabled = true;
+        }, 1000);
+      } catch (e) {
+        resultDiv.innerHTML = `
+          <div class="alert alert-danger" style="margin-top: 1rem;">
+            ❌ 修复失败: ${e.message}
+          </div>
+        `;
+        btn.disabled = false;
+        btn.innerHTML = '执行修复（需先预览）';
+      }
+    }
+
+    // 页面加载时检查状态
+    checkStatus();
+  </script>
+</body>
+</html>

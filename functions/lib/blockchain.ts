@@ -60,44 +60,89 @@ export async function addBlockchainLog(
   db: D1Database,
   params: AddLogParams
 ): Promise<{ success: boolean; blockHash?: string; error?: string }> {
-  try {
-    const timestamp = new Date().toISOString();
-    const prevHash = await getLatestBlockHash(db);
-    const detailsStr = params.details ? JSON.stringify(params.details) : null;
-    const resultStr = params.result ?? 'success';
+  const MAX_RETRIES = 5;
+  const RETRY_DELAY_MS = 50;
 
-    const blockHash = await calculateBlockHash(
-      prevHash,
-      params.action,
-      params.actorName ?? null,
-      params.targetType ?? null,
-      params.targetName ?? null,
-      resultStr,
-      detailsStr,
-      timestamp
-    );
+  for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+    try {
+      const timestamp = new Date().toISOString();
 
-    await db.prepare(`
-      INSERT INTO blockchain_logs
-      (block_hash, prev_hash, action, actor_name, target_type, target_name, result, details, timestamp)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `).bind(
-      blockHash,
-      prevHash,
-      params.action,
-      params.actorName ?? null,
-      params.targetType ?? null,
-      params.targetName ?? null,
-      resultStr,
-      detailsStr,
-      timestamp
-    ).run();
+      // Get the latest block hash within a batch operation for better atomicity
+      const prevHash = await getLatestBlockHash(db);
+      const detailsStr = params.details ? JSON.stringify(params.details) : null;
+      const resultStr = params.result ?? 'success';
 
-    return { success: true, blockHash };
-  } catch (e) {
-    console.error('Failed to add blockchain log:', e);
-    return { success: false, error: e instanceof Error ? e.message : String(e) };
+      const blockHash = await calculateBlockHash(
+        prevHash,
+        params.action,
+        params.actorName ?? null,
+        params.targetType ?? null,
+        params.targetName ?? null,
+        resultStr,
+        detailsStr,
+        timestamp
+      );
+
+      // Insert the new block
+      await db.prepare(`
+        INSERT INTO blockchain_logs
+        (block_hash, prev_hash, action, actor_name, target_type, target_name, result, details, timestamp)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `).bind(
+        blockHash,
+        prevHash,
+        params.action,
+        params.actorName ?? null,
+        params.targetType ?? null,
+        params.targetName ?? null,
+        resultStr,
+        detailsStr,
+        timestamp
+      ).run();
+
+      // Verify the chain integrity after insertion
+      // Get the block we just inserted and the one before it
+      const insertedBlock = await db.prepare(
+        'SELECT * FROM blockchain_logs WHERE block_hash = ?'
+      ).bind(blockHash).first<BlockchainLog>();
+
+      if (!insertedBlock) {
+        throw new Error('Failed to verify inserted block');
+      }
+
+      // If this is not the genesis block, verify the prev_hash points to the actual previous block
+      if (insertedBlock.id > 1) {
+        const actualPrevBlock = await db.prepare(
+          'SELECT * FROM blockchain_logs WHERE id = ?'
+        ).bind(insertedBlock.id - 1).first<BlockchainLog>();
+
+        if (actualPrevBlock && actualPrevBlock.block_hash !== insertedBlock.prev_hash) {
+          // Race condition detected! Delete this block and retry
+          console.warn(`[Blockchain] Race condition detected on attempt ${attempt + 1}, retrying...`);
+          await db.prepare('DELETE FROM blockchain_logs WHERE id = ?').bind(insertedBlock.id).run();
+
+          // Wait a bit before retrying
+          if (attempt < MAX_RETRIES - 1) {
+            await new Promise(resolve => setTimeout(resolve, RETRY_DELAY_MS * (attempt + 1)));
+            continue;
+          } else {
+            throw new Error('Max retries reached due to race conditions');
+          }
+        }
+      }
+
+      return { success: true, blockHash };
+    } catch (e) {
+      if (attempt === MAX_RETRIES - 1) {
+        console.error('Failed to add blockchain log after retries:', e);
+        return { success: false, error: e instanceof Error ? e.message : String(e) };
+      }
+      // Wait before retrying
+      await new Promise(resolve => setTimeout(resolve, RETRY_DELAY_MS * (attempt + 1)));
+    }
   }
+
+  return { success: false, error: 'Failed after max retries' };
 }
 
 // Verify the integrity of the blockchain

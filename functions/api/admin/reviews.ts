@@ -186,6 +186,19 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
         console.log('[Admin Review] Domain deleted due to rejection:', review.label);
       }
 
+      // Delete pending order if it exists
+      const pendingOrder = await env.DB.prepare(
+        'SELECT * FROM orders WHERE order_no = ? AND status = ?'
+      ).bind(review.order_no, 'pending').first<Order>();
+
+      if (pendingOrder) {
+        await env.DB.prepare(
+          'DELETE FROM orders WHERE order_no = ? AND status = ?'
+        ).bind(review.order_no, 'pending').run();
+
+        console.log('[Admin Review] Pending order deleted due to rejection:', review.order_no);
+      }
+
       // Send notification to user
       await createNotification(
         env.DB,
