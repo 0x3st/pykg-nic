@@ -16,7 +16,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
     console.log('[Admin Banned Words] Fetching banned words...');
 
     const { results } = await env.DB.prepare(
-      'SELECT id, word, category, created_at FROM banned_words ORDER BY category, word'
+      'SELECT id, word, created_at FROM banned_words ORDER BY word'
     ).all<BannedWord>();
 
     console.log('[Admin Banned Words] Found', results?.length || 0, 'words');
@@ -39,14 +39,14 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     return authResult;
   }
 
-  let body: { word?: string; category?: string };
+  let body: { word?: string };
   try {
     body = await request.json();
   } catch {
     return errorResponse('Invalid JSON body', 400);
   }
 
-  const { word, category = 'general' } = body;
+  const { word } = body;
 
   if (!word || typeof word !== 'string') {
     return errorResponse('Missing or invalid word', 400);
@@ -57,18 +57,11 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     return errorResponse('Word must be 2-50 characters', 400);
   }
 
-  // Only allow 'inappropriate' and 'general' categories
-  // 'reserved' words are managed by js.org policy in code
-  const validCategories = ['inappropriate', 'general'];
-  if (!validCategories.includes(category)) {
-    return errorResponse('Invalid category. Only "inappropriate" and "general" are allowed. Reserved words are managed by js.org policy.', 400);
-  }
-
   try {
     await env.DB.prepare(`
-      INSERT INTO banned_words (word, category, created_at)
-      VALUES (?, ?, datetime('now'))
-    `).bind(normalizedWord, category).run();
+      INSERT INTO banned_words (word, created_at)
+      VALUES (?, datetime('now'))
+    `).bind(normalizedWord).run();
 
     // Log the action
     const linuxdoId = parseInt(authResult.user.sub, 10);
@@ -79,11 +72,11 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       linuxdoId,
       'banned_word_add',
       normalizedWord,
-      JSON.stringify({ category }),
+      JSON.stringify({ word: normalizedWord }),
       request.headers.get('CF-Connecting-IP')
     ).run();
 
-    return successResponse({ added: true, word: normalizedWord, category });
+    return successResponse({ added: true, word: normalizedWord });
   } catch (e: any) {
     if (e.message?.includes('UNIQUE constraint')) {
       return errorResponse('Word already exists', 409);
@@ -118,7 +111,7 @@ export const onRequestDelete: PagesFunction<Env> = async (context) => {
   try {
     // Get word before deleting for audit log
     const word = await env.DB.prepare(
-      'SELECT word, category FROM banned_words WHERE id = ?'
+      'SELECT word FROM banned_words WHERE id = ?'
     ).bind(id).first<BannedWord>();
 
     if (!word) {
@@ -136,7 +129,7 @@ export const onRequestDelete: PagesFunction<Env> = async (context) => {
       linuxdoId,
       'banned_word_delete',
       word.word,
-      JSON.stringify({ category: word.category }),
+      JSON.stringify({ word: word.word }),
       request.headers.get('CF-Connecting-IP')
     ).run();
 

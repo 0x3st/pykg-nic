@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>WHOIS 查询 - PY.KG</title>
+  <title>WHOIS Lookup - PY.KG</title>
   <style>
     :root {
       --primary: #2563eb;
@@ -359,11 +359,11 @@
 </head>
 <body>
   <div class="container">
-    <a href="/" class="back-link">&larr; 返回首页</a>
+    <a href="/" class="back-link">&larr; Back to Home</a>
 
     <header>
-      <h1>WHOIS 查询</h1>
-      <p>查询 PY.KG 子域名注册信息</p>
+      <h1>WHOIS Lookup</h1>
+      <p>Query PY.KG subdomain registration information</p>
     </header>
 
     <!-- Error/Message display -->
@@ -375,7 +375,7 @@
         <div class="user-details">
           <div class="avatar" id="user-avatar">?</div>
           <div>
-            <strong id="user-name">加载中...</strong>
+            <strong id="user-name">Loading...</strong>
             <br>
             <span class="badge badge-success" id="user-trust">TL?</span>
           </div>
@@ -385,10 +385,10 @@
 
     <!-- Query form -->
     <div id="query-section" class="card hidden">
-      <h2>域名查询</h2>
+      <h2>Domain Query</h2>
       <form id="query-form">
         <div class="form-group">
-          <label for="domain-input">输入子域名标签</label>
+          <label for="domain-input">Enter subdomain label</label>
           <div class="input-group">
             <input
               type="text"
@@ -398,10 +398,10 @@
               required
               autocomplete="off"
             >
-            <button type="submit" class="btn btn-primary" id="query-btn">查询</button>
+            <button type="submit" class="btn btn-primary" id="query-btn">Query</button>
           </div>
           <small style="color: var(--text-muted); margin-top: 0.25rem; display: block;">
-            只允许小写字母、数字和连字符
+            Only lowercase letters, numbers, and hyphens allowed
           </small>
         </div>
       </form>
@@ -414,7 +414,7 @@
 
     <footer>
       <p>
-        <a href="/">首页</a> | <a href="/whois.html">WHOIS 查询</a> | <a href="/blacklist.html">小黑屋</a> | <a href="/logs.html">操作日志</a> | <a href="/terms.html">服务条款</a>
+        <a href="/">Home</a> | <a href="/whois.html">WHOIS Lookup</a> | <a href="/blacklist.html">Blacklist</a> | <a href="/logs.html">Operation Logs</a> | <a href="/terms.html">Terms of Service</a>
       </p>
     </footer>
   </div>
@@ -459,13 +459,13 @@
         const response = await fetch('/api/me');
         if (!response.ok) {
           // Not logged in, redirect to home
-          window.location.href = '/?error=' + encodeURIComponent('请先登录');
+          window.location.href = '/?error=' + encodeURIComponent('Please log in first');
           return false;
         }
 
         const data = await response.json();
         if (!data.success) {
-          window.location.href = '/?error=' + encodeURIComponent('请先登录');
+          window.location.href = '/?error=' + encodeURIComponent('Please log in first');
           return false;
         }
 
@@ -481,7 +481,7 @@
 
         return true;
       } catch (e) {
-        window.location.href = '/?error=' + encodeURIComponent('加载失败，请重试');
+        window.location.href = '/?error=' + encodeURIComponent('Loading failed, please try again');
         return false;
       }
     }
@@ -490,7 +490,7 @@
     async function queryWhois(domain) {
       clearMessages();
       queryBtn.disabled = true;
-      queryBtn.textContent = '查询中...';
+      queryBtn.textContent = 'Querying...';
       resultSection.classList.add('hidden');
 
       try {
@@ -498,16 +498,16 @@
         const data = await response.json();
 
         if (!data.success) {
-          showMessage(data.error || '查询失败', 'error');
+          showMessage(data.error || 'Query failed', 'error');
           return;
         }
 
         displayResult(data.data);
       } catch (e) {
-        showMessage('查询失败: ' + e.message, 'error');
+        showMessage('Query failed: ' + e.message, 'error');
       } finally {
         queryBtn.disabled = false;
-        queryBtn.textContent = '查询';
+        queryBtn.textContent = 'Query';
       }
     }
 
@@ -517,21 +517,21 @@
       if (data.status === 'reserved') {
         resultSection.innerHTML = `
           <div class="card">
-            <h2>查询结果</h2>
+            <h2>Query Result</h2>
             <div class="domain-display">${escapeHtml(data.label)}.py.kg</div>
 
             <div class="alert alert-error" style="margin-bottom: 1rem;">
-              <strong>域名已被保留，无法注册</strong><br>
+              <strong>Domain is reserved and cannot be registered</strong><br>
               ${escapeHtml(data.reason)}
             </div>
 
             <div class="info-row">
-              <strong>域名标签:</strong>
+              <strong>Domain Label:</strong>
               ${escapeHtml(data.label)}
             </div>
 
             <div class="info-row">
-              <strong>状态:</strong>
+              <strong>Status:</strong>
               <span class="badge badge-danger">reserved</span>
             </div>
           </div>
@@ -553,17 +553,17 @@
 
       // Format TTL for display
       function formatTTL(seconds) {
-        if (seconds < 60) return `${seconds}秒`;
-        if (seconds < 3600) return `${Math.floor(seconds / 60)}分钟`;
-        if (seconds < 86400) return `${Math.floor(seconds / 3600)}小时`;
-        return `${Math.floor(seconds / 86400)}天`;
+        if (seconds < 60) return `${seconds} seconds`;
+        if (seconds < 3600) return `${Math.floor(seconds / 60)} minutes`;
+        if (seconds < 86400) return `${Math.floor(seconds / 3600)} hours`;
+        return `${Math.floor(seconds / 86400)} days`;
       }
 
       let dnsRecordsHtml = '';
       if (data.dns_records && data.dns_records.length > 0) {
         dnsRecordsHtml = `
           <div class="info-row">
-            <strong>DNS 记录:</strong>
+            <strong>DNS Records:</strong>
             <table class="dns-table">
               <thead>
                 <tr>
@@ -604,56 +604,56 @@
 
       resultSection.innerHTML = `
         <div class="card">
-          <h2>查询结果</h2>
+          <h2>Query Result</h2>
           <div class="domain-display">${escapeHtml(data.fqdn)}</div>
 
           ${isSuspended && data.suspend_reason ? `
           <div class="alert alert-error" style="margin-bottom: 1rem;">
-            <strong>域名已被暂停</strong><br>
-            暂停原因: ${escapeHtml(data.suspend_reason)}
+            <strong>Domain has been suspended</strong><br>
+            Suspension reason: ${escapeHtml(data.suspend_reason)}
           </div>
           ` : ''}
 
           ${isReview ? `
           <div class="alert alert-info" style="margin-bottom: 1rem;">
-            <strong>域名待审核</strong><br>
-            该域名正在等待管理员审核，审核通过后即可使用。
-            ${data.review_reason ? `<br>审核原因: ${escapeHtml(data.review_reason)}` : ''}
+            <strong>Domain pending review</strong><br>
+            This domain is awaiting administrator review and will be available after approval.
+            ${data.review_reason ? `<br>Review reason: ${escapeHtml(data.review_reason)}` : ''}
           </div>
           ` : ''}
 
           <div class="info-row">
-            <strong>域名标签:</strong>
+            <strong>Domain Label:</strong>
             ${escapeHtml(data.label)}
           </div>
 
           <div class="info-row">
-            <strong>状态:</strong>
+            <strong>Status:</strong>
             <span class="badge ${statusBadgeClass}">${escapeHtml(data.status)}</span>
           </div>
 
           <div class="info-row">
-            <strong>注册时间:</strong>
+            <strong>Registration Time:</strong>
             ${createdDate}
           </div>
 
           <div class="info-row">
-            <strong>所有者:</strong>
+            <strong>Owner:</strong>
             ${escapeHtml(data.owner.username)}
           </div>
 
           ${data.python_praise ? `
           <div class="info-row">
-            <strong>Python 赞美:</strong>
+            <strong>Python Praise:</strong>
             ${escapeHtml(data.python_praise)}
           </div>
           ` : ''}
 
           ${data.usage_purpose ? `
           <div class="info-row">
-            <strong>使用用途:</strong>
+            <strong>Usage Purpose:</strong>
             ${escapeHtml(data.usage_purpose)}
-            ${!isSuspended && !isReview ? `<button class="btn btn-danger btn-sm" style="margin-left: 1rem;" onclick="reportDomain('${escapeHtml(data.label)}')">举报滥用</button>` : ''}
+            ${!isSuspended && !isReview ? `<button class="btn btn-danger btn-sm" style="margin-left: 1rem;" onclick="reportDomain('${escapeHtml(data.label)}')">Report Abuse</button>` : ''}
           </div>
           ` : ''}
         </div>
@@ -668,13 +668,13 @@
       const domain = domainInput.value.toLowerCase().trim();
 
       if (!domain) {
-        showMessage('请输入域名', 'error');
+        showMessage('Please enter a domain', 'error');
         return;
       }
 
       // Basic validation
       if (!/^[a-z0-9-]+$/.test(domain)) {
-        showMessage('域名格式错误：只允许小写字母、数字和连字符', 'error');
+        showMessage('Invalid domain format: only lowercase letters, numbers, and hyphens allowed', 'error');
         return;
       }
 
@@ -683,7 +683,7 @@
 
     // Report domain abuse
     async function reportDomain(label) {
-      const reason = prompt('请说明举报原因（滥用、非法内容等）：');
+      const reason = prompt('Please explain the reason for reporting (abuse, illegal content, etc.):');
       if (!reason || !reason.trim()) {
         return;
       }
@@ -697,12 +697,12 @@
 
         const data = await response.json();
         if (data.success) {
-          alert('举报已提交，管理员将尽快处理。感谢您的监督！');
+          alert('Report submitted. Administrators will handle it as soon as possible. Thank you for your supervision!');
         } else {
-          alert('举报失败: ' + (data.error || '未知错误'));
+          alert('Report failed: ' + (data.error || 'Unknown error'));
         }
       } catch (e) {
-        alert('举报失败: ' + e.message);
+        alert('Report failed: ' + e.message);
       }
     }
     window.reportDomain = reportDomain;

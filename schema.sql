@@ -64,7 +64,6 @@ CREATE TABLE IF NOT EXISTS settings (
 CREATE TABLE IF NOT EXISTS banned_words (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     word TEXT NOT NULL UNIQUE,
-    category TEXT NOT NULL DEFAULT 'general',
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 

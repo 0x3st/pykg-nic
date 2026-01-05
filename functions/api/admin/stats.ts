@@ -37,12 +37,18 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
       'SELECT COALESCE(SUM(amount), 0) as total FROM orders WHERE status = ?'
     ).bind('paid').first<{ total: number }>();
 
+    // Get unread messages count
+    const unreadMessagesResult = await env.DB.prepare(
+      'SELECT COUNT(*) as count FROM conversations WHERE unread_admin_count > 0'
+    ).first<{ count: number }>();
+
     const stats: AdminStats = {
       totalUsers: usersResult?.count || 0,
       totalDomains: domainsResult?.count || 0,
       pendingReviews: reviewsResult?.count || 0,
       totalOrders: ordersResult?.count || 0,
       totalRevenue: revenueResult?.total || 0,
+      unreadMessages: unreadMessagesResult?.count || 0,
     };
 
     return successResponse(stats);

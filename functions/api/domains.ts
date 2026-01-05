@@ -27,23 +27,8 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
   ).bind(linuxdoId, 'active', 'suspended', 'review').first<Domain>();
 
   if (!domain) {
-    // Check if there's a pending review
-    const pendingReview = await env.DB.prepare(
-      'SELECT * FROM pending_reviews WHERE linuxdo_id = ? AND status = ? ORDER BY created_at DESC LIMIT 1'
-    ).bind(linuxdoId, 'pending').first<PendingReview>();
-
-    if (pendingReview) {
-      return successResponse({
-        domain: null,
-        pendingReview: {
-          label: pendingReview.label,
-          reason: pendingReview.reason,
-          created_at: pendingReview.created_at,
-        },
-      });
-    }
-
-    // Check if there's a pending order
+    // Check if there's a pending order first (higher priority)
+    // If user hasn't paid yet, they should see the pending order, not pending review
     const pendingOrder = await env.DB.prepare(
       'SELECT * FROM orders WHERE linuxdo_id = ? AND status = ? ORDER BY created_at DESC LIMIT 1'
     ).bind(linuxdoId, 'pending').first<Order>();
@@ -56,6 +41,23 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
           label: pendingOrder.label,
           amount: pendingOrder.amount,
           created_at: pendingOrder.created_at,
+        },
+      });
+    }
+
+    // Check if there's a pending review (only if no pending unpaid order)
+    // This means the user has paid but the domain is still waiting for admin approval
+    const pendingReview = await env.DB.prepare(
+      'SELECT * FROM pending_reviews WHERE linuxdo_id = ? AND status = ? ORDER BY created_at DESC LIMIT 1'
+    ).bind(linuxdoId, 'pending').first<PendingReview>();
+
+    if (pendingReview) {
+      return successResponse({
+        domain: null,
+        pendingReview: {
+          label: pendingReview.label,
+          reason: pendingReview.reason,
+          created_at: pendingReview.created_at,
         },
       });
     }
@@ -206,7 +208,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
 
       const formData = creditClient.createOrderParams({
         outTradeNo: orderNo,
-        name: `PY.KG 子域名: ${fqdn}（需审核）`,
+        name: `PY.KG 子域名: ${fqdn}`,
         money: price,
       });
 
@@ -261,7 +263,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
 
       const formData = creditClient.createOrderParams({
         outTradeNo: orderNo,
-        name: `PY.KG 子域名: ${fqdn}（需审核）`,
+        name: `PY.KG 子域名: ${fqdn}`,
         money: price,
       });
 

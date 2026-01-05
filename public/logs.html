@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>操作日志 - PY.KG</title>
+  <title>Operation Logs - PY.KG</title>
   <style>
     :root {
       --primary: #2563eb;
@@ -264,58 +264,58 @@
 </head>
 <body>
   <div class="container">
-    <a href="/" class="back-link">← 返回首页</a>
+    <a href="/" class="back-link">← Back to Home</a>
 
     <header>
-      <h1>操作日志</h1>
-      <p>所有操作记录均使用区块链技术存储，不可篡改</p>
+      <h1>Operation Logs</h1>
+      <p>All operation records are stored using blockchain technology and are immutable</p>
     </header>
 
     <div id="verification" class="verification-status loading">
-      正在验证区块链完整性...
+      Verifying blockchain integrity...
     </div>
 
     <div class="card">
       <div class="filters">
         <select id="action-filter">
-          <option value="">全部操作</option>
-          <option value="user_register">用户注册</option>
-          <option value="user_ban">用户封禁</option>
-          <option value="user_unban">用户解封</option>
-          <option value="admin_grant">授予管理员</option>
-          <option value="admin_revoke">移除管理员</option>
-          <option value="domain_register">域名注册</option>
-          <option value="domain_approve">审核通过</option>
-          <option value="domain_reject">审核拒绝</option>
-          <option value="domain_suspend">域名暂停</option>
-          <option value="domain_activate">域名激活</option>
-          <option value="domain_delete">域名删除</option>
-          <option value="appeal_submit">申诉提交</option>
-          <option value="appeal_approve">申诉通过</option>
-          <option value="appeal_reject">申诉拒绝</option>
-          <option value="setting_update">设置变更</option>
+          <option value="">All Operations</option>
+          <option value="user_register">User Registration</option>
+          <option value="user_ban">User Ban</option>
+          <option value="user_unban">User Unban</option>
+          <option value="admin_grant">Grant Admin</option>
+          <option value="admin_revoke">Revoke Admin</option>
+          <option value="domain_register">Domain Registration</option>
+          <option value="domain_approve">Approval</option>
+          <option value="domain_reject">Rejection</option>
+          <option value="domain_suspend">Domain Suspension</option>
+          <option value="domain_activate">Domain Activation</option>
+          <option value="domain_delete">Domain Deletion</option>
+          <option value="appeal_submit">Appeal Submission</option>
+          <option value="appeal_approve">Appeal Approval</option>
+          <option value="appeal_reject">Appeal Rejection</option>
+          <option value="setting_update">Setting Update</option>
         </select>
-        <button class="btn btn-primary" onclick="loadLogs()">筛选</button>
+        <button class="btn btn-primary" onclick="loadLogs()">Filter</button>
       </div>
 
       <div class="stats">
-        <span>总记录: <strong id="total-count">0</strong></span>
-        <span>当前页: <strong id="current-page">1</strong></span>
+        <span>Total Records: <strong id="total-count">0</strong></span>
+        <span>Current Page: <strong id="current-page">1</strong></span>
       </div>
 
       <div id="log-list" class="log-list">
-        <div class="loading">加载中...</div>
+        <div class="loading">Loading...</div>
       </div>
 
       <div class="pagination">
-        <button id="prev-btn" onclick="prevPage()" disabled>上一页</button>
-        <button id="next-btn" onclick="nextPage()" disabled>下一页</button>
+        <button id="prev-btn" onclick="prevPage()" disabled>Previous</button>
+        <button id="next-btn" onclick="nextPage()" disabled>Next</button>
       </div>
     </div>
 
     <footer>
       <p>
-        <a href="/">首页</a> | <a href="/whois.html">WHOIS 查询</a> | <a href="/blacklist.html">小黑屋</a> | <a href="/logs.html">操作日志</a> | <a href="/terms.html">服务条款</a>
+        <a href="/">Home</a> | <a href="/whois.html">WHOIS Query</a> | <a href="/blacklist.html">Blacklist</a> | <a href="/logs.html">Operation Logs</a> | <a href="/terms.html">Terms of Service</a>
       </p>
     </footer>
   </div>
@@ -326,21 +326,21 @@
     let totalLogs = 0;
 
     const actionLabels = {
-      user_register: '用户注册',
-      user_ban: '用户封禁',
-      user_unban: '用户解封',
-      admin_grant: '授予管理员',
-      admin_revoke: '移除管理员',
-      domain_register: '域名注册',
-      domain_approve: '审核通过',
-      domain_reject: '审核拒绝',
-      domain_suspend: '域名暂停',
-      domain_activate: '域名激活',
-      domain_delete: '域名删除',
-      appeal_submit: '申诉提交',
-      appeal_approve: '申诉通过',
-      appeal_reject: '申诉拒绝',
-      setting_update: '设置变更',
+      user_register: 'User Registration',
+      user_ban: 'User Ban',
+      user_unban: 'User Unban',
+      admin_grant: 'Grant Admin',
+      admin_revoke: 'Revoke Admin',
+      domain_register: 'Domain Registration',
+      domain_approve: 'Approval',
+      domain_reject: 'Rejection',
+      domain_suspend: 'Domain Suspension',
+      domain_activate: 'Domain Activation',
+      domain_delete: 'Domain Deletion',
+      appeal_submit: 'Appeal Submission',
+      appeal_approve: 'Appeal Approval',
+      appeal_reject: 'Appeal Rejection',
+      setting_update: 'Setting Update',
     };
 
     function getActionCategory(action) {
@@ -390,7 +390,7 @@
       // Build complete block data for display
       const blockData = {
         action: log.action,
-        actor: log.actor_name || '系统',
+        actor: log.actor_name || 'System',
         target: log.target_name || '-',
         target_type: log.target_type || '-',
         result: log.result || 'success',
@@ -406,16 +406,16 @@
           </div>
           <div class="log-content">${description}</div>
           <div class="log-result" style="font-size: 0.75rem; color: ${log.result === 'success' ? 'var(--success)' : 'var(--danger)'}; margin-top: 0.25rem;">
-            结果: ${log.result === 'success' ? '成功' : log.result}
+            Result: ${log.result === 'success' ? 'Success' : log.result}
           </div>
           <div class="log-details">
             <div style="margin-bottom: 1rem;">
-              <strong>完整区块数据:</strong>
+              <strong>Complete Block Data:</strong>
               <pre style="margin-top: 0.5rem; background: #f1f5f9; padding: 0.75rem; border-radius: 4px; white-space: pre-wrap; font-size: 0.75rem;">${JSON.stringify(blockData, null, 2)}</pre>
             </div>
-            <div><strong>区块哈希:</strong></div>
+            <div><strong>Block Hash:</strong></div>
             <div class="hash-display">${log.block_hash}</div>
-            <div style="margin-top: 0.5rem;"><strong>上一区块哈希:</strong></div>
+            <div style="margin-top: 0.5rem;"><strong>Previous Block Hash:</strong></div>
             <div class="hash-display">${log.prev_hash}</div>
           </div>
         </div>
@@ -431,22 +431,22 @@
           const v = data.data.verification;
           if (v.valid) {
             el.className = 'verification-status valid';
-            el.innerHTML = `✓ 区块链完整性验证通过 (共 ${v.totalBlocks} 个区块)`;
+            el.innerHTML = `✓ Blockchain integrity verification passed (${v.totalBlocks} blocks total)`;
           } else {
             el.className = 'verification-status invalid';
-            el.innerHTML = `✗ 区块链完整性验证失败！在区块 #${v.invalidAt} 处发现异常`;
+            el.innerHTML = `✗ Blockchain integrity verification failed! Anomaly detected at block #${v.invalidAt}`;
           }
         }
       } catch (e) {
         el.className = 'verification-status invalid';
-        el.innerHTML = '验证失败: ' + e.message;
+        el.innerHTML = 'Verification failed: ' + e.message;
       }
     }
 
     async function loadLogs() {
       const action = document.getElementById('action-filter').value;
       const listEl = document.getElementById('log-list');
-      listEl.innerHTML = '<div class="loading">加载中...</div>';
+      listEl.innerHTML = '<div class="loading">Loading...</div>';
 
       try {
         const params = new URLSearchParams({
@@ -464,7 +464,7 @@
           document.getElementById('current-page').textContent = Math.floor(currentOffset / PAGE_SIZE) + 1;
 
           if (data.data.logs.length === 0) {
-            listEl.innerHTML = '<div class="loading">暂无日志记录</div>';
+            listEl.innerHTML = '<div class="loading">No log records</div>';
           } else {
             listEl.innerHTML = data.data.logs.map(renderLog).join('');
           }
@@ -472,10 +472,10 @@
           document.getElementById('prev-btn').disabled = currentOffset === 0;
           document.getElementById('next-btn').disabled = currentOffset + PAGE_SIZE >= totalLogs;
         } else {
-          listEl.innerHTML = '<div class="loading">加载失败</div>';
+          listEl.innerHTML = '<div class="loading">Loading failed</div>';
         }
       } catch (e) {
-        listEl.innerHTML = '<div class="loading">加载失败: ' + e.message + '</div>';
+        listEl.innerHTML = '<div class="loading">Loading failed: ' + e.message + '</div>';
       }
     }
 

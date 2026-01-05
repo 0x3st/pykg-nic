@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>管理后台 - PY.KG</title>
+  <title>Admin Panel - PY.KG</title>
   <style>
     :root {
       --primary: #2563eb;
@@ -356,7 +356,7 @@
 </head>
 <body>
   <div id="app">
-    <div class="loading">正在加载...</div>
+    <div class="loading">Loading...</div>
   </div>
 
   <script>
@@ -364,7 +364,7 @@
     let currentUser = null;
     let stats = null;
 
-    // 检查管理员权限并初始化
+    // Check admin permissions and initialize
     async function init() {
       try {
         const res = await fetch('/api/me');
@@ -376,94 +376,101 @@
         currentUser = data.data.user;
 
         if (!currentUser.is_admin) {
-          alert('需要管理员权限');
+          alert('Admin permission required');
           window.location.href = '/';
           return;
         }
 
         renderLayout();
         await loadStats();
+        await updateMessagesLink();
         showPage('dashboard');
       } catch (error) {
-        console.error('初始化失败:', error);
-        alert('加载失败，请刷新页面重试');
+        console.error('Initialization failed:', error);
+        alert('Loading failed, please refresh the page');
       }
     }
 
-    // 渲染布局
+    // Render layout
     function renderLayout() {
       document.getElementById('app').innerHTML = `
         <div class="admin-layout">
           <div class="sidebar">
             <h1>PY.KG</h1>
-            <p>管理后台</p>
+            <p>Admin Panel</p>
             <ul class="nav-menu">
               <li class="nav-item">
-                <a class="nav-link active" onclick="showPage('dashboard', event)">仪表板</a>
+                <a class="nav-link active" onclick="showPage('dashboard', event)">Dashboard</a>
               </li>
               <li class="nav-item">
-                <a class="nav-link" onclick="showPage('settings', event)">系统设置</a>
+                <a class="nav-link" onclick="showPage('settings', event)">System Settings</a>
               </li>
               <li class="nav-item">
-                <a class="nav-link" onclick="showPage('users', event)">用户管理</a>
+                <a class="nav-link" onclick="showPage('users', event)">User Management</a>
               </li>
               <li class="nav-item">
-                <a class="nav-link" onclick="showPage('domains', event)">域名管理</a>
+                <a class="nav-link" onclick="showPage('domains', event)">Domain Management</a>
               </li>
               <li class="nav-item">
-                <a class="nav-link" onclick="showPage('reviews', event)">审核管理</a>
+                <a class="nav-link" onclick="showPage('reviews', event)">Review Management</a>
               </li>
               <li class="nav-item">
-                <a class="nav-link" onclick="showPage('appeals', event)">申诉管理</a>
+                <a class="nav-link" onclick="showPage('appeals', event)">Appeal Management</a>
               </li>
               <li class="nav-item">
-                <a class="nav-link" onclick="showPage('reports', event)">举报管理</a>
+                <a class="nav-link" onclick="showPage('reports', event)">Report Management</a>
               </li>
               <li class="nav-item">
-                <a class="nav-link" onclick="showPage('announcements', event)">公告管理</a>
+                <a class="nav-link" onclick="showPage('messages', event)">Message Management</a>
               </li>
               <li class="nav-item">
-                <a class="nav-link" onclick="showPage('banned-words', event)">敏感词管理</a>
+                <a class="nav-link" onclick="showPage('announcements', event)">Announcement Management</a>
               </li>
               <li class="nav-item">
-                <a class="nav-link" href="/">返回首页</a>
+                <a class="nav-link" onclick="showPage('banned-words', event)">Sensitive Words Management</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="/">Back to Home</a>
               </li>
             </ul>
           </div>
           <div class="main-content">
             <div id="dashboard" class="page active">
-              <div class="loading">加载中...</div>
+              <div class="loading">Loading...</div>
             </div>
             <div id="settings" class="page">
-              <div class="loading">加载中...</div>
+              <div class="loading">Loading...</div>
             </div>
             <div id="users" class="page">
-              <div class="loading">加载中...</div>
+              <div class="loading">Loading...</div>
             </div>
             <div id="domains" class="page">
-              <div class="loading">加载中...</div>
+              <div class="loading">Loading...</div>
             </div>
             <div id="reviews" class="page">
-              <div class="loading">加载中...</div>
+              <div class="loading">Loading...</div>
             </div>
             <div id="appeals" class="page">
-              <div class="loading">加载中...</div>
+              <div class="loading">Loading...</div>
             </div>
             <div id="reports" class="page">
-              <div class="loading">加载中...</div>
+              <div class="loading">Loading...</div>
+            </div>
+            <div id="messages" class="page">
+              <div class="loading">Loading...</div>
             </div>
             <div id="announcements" class="page">
-              <div class="loading">加载中...</div>
+              <div class="loading">Loading...</div>
             </div>
             <div id="banned-words" class="page">
-              <div class="loading">加载中...</div>
+              <div class="loading">Loading...</div>
             </div>
           </div>
         </div>
       `;
     }
 
-    // 切换页面
+    // Switch page
     function showPage(pageName, event) {
       document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
       document.querySelectorAll('.nav-link').forEach(link => link.classList.remove('active'));
@@ -472,11 +479,11 @@
       if (page) {
         page.classList.add('active');
 
-        // 激活对应的导航链接
+        // Activate corresponding navigation link
         if (event && event.target) {
           event.target.classList.add('active');
         } else {
-          // 没有 event 时，通过 pageName 找到对应的导航链接
+          // When no event, find corresponding navigation link by pageName
           const navLinks = document.querySelectorAll('.nav-link');
           navLinks.forEach(link => {
             if (link.textContent.includes(getPageTitle(pageName))) {
@@ -485,7 +492,7 @@
           });
         }
 
-        // 加载页面数据
+        // Load page data
         switch(pageName) {
           case 'dashboard':
             loadDashboard();
@@ -508,6 +515,9 @@
           case 'reports':
             loadReports();
             break;
+          case 'messages':
+            loadMessagesPage();
+            break;
           case 'announcements':
             loadAnnouncements();
             break;
@@ -520,26 +530,27 @@
 
     function getPageTitle(pageName) {
       const titles = {
-        'dashboard': '仪表板',
-        'settings': '系统设置',
-        'users': '用户管理',
-        'domains': '域名管理',
-        'reviews': '审核管理',
-        'appeals': '申诉管理',
-        'reports': '举报管理',
-        'announcements': '公告管理',
-        'banned-words': '敏感词管理'
+        'dashboard': 'Dashboard',
+        'settings': 'System Settings',
+        'users': 'User Management',
+        'domains': 'Domain Management',
+        'reviews': 'Review Management',
+        'appeals': 'Appeal Management',
+        'reports': 'Report Management',
+        'messages': 'Message Management',
+        'announcements': 'Announcement Management',
+        'banned-words': 'Sensitive Words Management'
       };
       return titles[pageName] || '';
     }
 
-    // 加载统计数据
+    // Load statistics
     async function loadStats() {
       try {
         const res = await fetch('/api/admin/stats');
         if (!res.ok) {
           console.warn('Stats API returned', res.status);
-          // 429 或其他错误时使用默认值
+          // Use default values on 429 or other errors
           stats = {
             totalUsers: 0,
             totalDomains: 0,
@@ -554,8 +565,8 @@
           stats = data.data;
         }
       } catch (error) {
-        console.error('加载统计数据失败:', error);
-        // 使用默认值
+        console.error('Failed to load statistics:', error);
+        // Use default values
         stats = {
           totalUsers: 0,
           totalDomains: 0,
@@ -566,40 +577,66 @@
       }
     }
 
-    // 仪表板页面
+    // Load unread messages count
+    async function loadUnreadMessagesCount() {
+      try {
+        const res = await fetch('/api/admin/messages');
+        if (!res.ok) return 0;
+        const data = await res.json();
+        if (data.success) {
+          const conversations = data.data.conversations || [];
+          return conversations.reduce((sum, conv) => sum + (conv.unread_admin_count || 0), 0);
+        }
+        return 0;
+      } catch (error) {
+        console.error('Failed to load unread messages count:', error);
+        return 0;
+      }
+    }
+
+    // Update messages link with unread count
+    async function updateMessagesLink() {
+      const unreadCount = await loadUnreadMessagesCount();
+      const messagesLink = document.querySelector('.nav-link[onclick*="messages"]');
+      if (messagesLink && unreadCount > 0) {
+        messagesLink.innerHTML = `Message Management <span class="badge badge-danger" style="margin-left: 0.5rem;">${unreadCount}</span>`;
+      }
+    }
+
+    // Dashboard page
     function loadDashboard() {
       const page = document.getElementById('dashboard');
       page.innerHTML = `
-        <h1 style="margin-bottom: 1.5rem;">仪表板</h1>
+        <h1 style="margin-bottom: 1.5rem;">Dashboard</h1>
         <div class="stats-grid">
           <div class="stat-card">
-            <h3>总用户数</h3>
+            <h3>Total Users</h3>
             <div class="value">${stats?.totalUsers || 0}</div>
           </div>
           <div class="stat-card">
-            <h3>总域名数</h3>
+            <h3>Total Domains</h3>
             <div class="value">${stats?.totalDomains || 0}</div>
           </div>
           <div class="stat-card">
-            <h3>待审核</h3>
+            <h3>Pending Reviews</h3>
             <div class="value">${stats?.pendingReviews || 0}</div>
           </div>
           <div class="stat-card">
-            <h3>总订单数</h3>
+            <h3>Total Orders</h3>
             <div class="value">${stats?.totalOrders || 0}</div>
           </div>
           <div class="stat-card">
-            <h3>总收入</h3>
+            <h3>Total Revenue</h3>
             <div class="value">${stats?.totalRevenue || 0}</div>
           </div>
         </div>
       `;
     }
 
-    // 系统设置页面
+    // System settings page
     async function loadSettings() {
       const page = document.getElementById('settings');
-      page.innerHTML = '<div class="loading">加载中...</div>';
+      page.innerHTML = '<div class="loading">Loading...</div>';
 
       try {
         const res = await fetch('/api/admin/settings');
@@ -608,29 +645,29 @@
         if (data.success) {
           const settings = data.data;
           page.innerHTML = `
-            <h1 style="margin-bottom: 1.5rem;">系统设置</h1>
+            <h1 style="margin-bottom: 1.5rem;">System Settings</h1>
             <div id="settings-alert"></div>
             <div class="card">
-              <h2>基本设置</h2>
+              <h2>Basic Settings</h2>
               <form id="settings-form">
                 <div class="form-group">
-                  <label>域名价格 (Credit)</label>
+                  <label>Domain Price (Credit)</label>
                   <input type="number" name="domain_price" value="${settings.domain_price}" required min="0" step="1">
                 </div>
                 <div class="form-group">
                   <label>
                     <input type="checkbox" name="require_review" ${settings.require_review === 'true' ? 'checked' : ''}>
-                    开启人工审核
+                    Enable Manual Review
                   </label>
                   <p style="font-size: 0.875rem; color: var(--text-muted); margin-top: 0.25rem;">
-                    开启后，所有域名注册都需要管理员审核
+                    When enabled, all domain registrations require admin approval
                   </p>
                 </div>
                 <div class="form-group">
-                  <label>每用户最大域名数</label>
+                  <label>Max Domains Per User</label>
                   <input type="number" name="max_domains_per_user" value="${settings.max_domains_per_user}" required min="1" step="1">
                 </div>
-                <button type="submit" class="btn btn-primary">保存设置</button>
+                <button type="submit" class="btn btn-primary">Save Settings</button>
               </form>
             </div>
           `;
@@ -638,7 +675,7 @@
           document.getElementById('settings-form').addEventListener('submit', saveSettings);
         }
       } catch (error) {
-        page.innerHTML = '<div class="alert alert-error">加载失败</div>';
+        page.innerHTML = '<div class="alert alert-error">Loading failed</div>';
       }
     }
 
@@ -664,20 +701,20 @@
         const alertDiv = document.getElementById('settings-alert');
 
         if (data.success) {
-          alertDiv.innerHTML = '<div class="alert alert-success">设置已保存</div>';
+          alertDiv.innerHTML = '<div class="alert alert-success">Settings saved</div>';
           setTimeout(() => alertDiv.innerHTML = '', 3000);
         } else {
-          alertDiv.innerHTML = `<div class="alert alert-error">${data.error || '保存失败'}</div>`;
+          alertDiv.innerHTML = `<div class="alert alert-error">${data.error || 'Save failed'}</div>`;
         }
       } catch (error) {
-        document.getElementById('settings-alert').innerHTML = '<div class="alert alert-error">保存失败</div>';
+        document.getElementById('settings-alert').innerHTML = '<div class="alert alert-error">Save failed</div>';
       }
     }
 
-    // 用户管理页面
+    // User management page
     async function loadUsers(search = '', filter = 'all') {
       const page = document.getElementById('users');
-      page.innerHTML = '<div class="loading">加载中...</div>';
+      page.innerHTML = '<div class="loading">Loading...</div>';
 
       try {
         const params = new URLSearchParams({ search, filter, limit: 100 });
@@ -687,43 +724,43 @@
         if (data.success) {
           const users = data.data.users;
           page.innerHTML = `
-            <h1 style="margin-bottom: 1.5rem;">用户管理</h1>
+            <h1 style="margin-bottom: 1.5rem;">User Management</h1>
             <div id="users-alert"></div>
             <div class="card">
               <div class="search-bar">
-                <input type="text" id="user-search" placeholder="搜索用户名或LinuxDO ID" value="${search}">
+                <input type="text" id="user-search" placeholder="Search username or LinuxDO ID" value="${search}">
                 <select id="user-filter" value="${filter}">
-                  <option value="all">全部</option>
-                  <option value="banned">已封禁</option>
-                  <option value="admin">管理员</option>
+                  <option value="all">All</option>
+                  <option value="banned">Banned</option>
+                  <option value="admin">Admin</option>
                 </select>
-                <button class="btn btn-primary" onclick="searchUsers()">搜索</button>
+                <button class="btn btn-primary" onclick="searchUsers()">Search</button>
               </div>
               <div class="table-container">
                 <table>
                   <thead>
                     <tr>
                       <th>LinuxDO ID</th>
-                      <th>用户名</th>
-                      <th>信任等级</th>
-                      <th>状态</th>
-                      <th>操作</th>
+                      <th>Username</th>
+                      <th>Trust Level</th>
+                      <th>Status</th>
+                      <th>Actions</th>
                     </tr>
                   </thead>
                   <tbody>
-                    ${users.length === 0 ? '<tr><td colspan="5" class="empty-state">无数据</td></tr>' : users.map(user => `
+                    ${users.length === 0 ? '<tr><td colspan="5" class="empty-state">No data</td></tr>' : users.map(user => `
                       <tr>
                         <td>${user.linuxdo_id}</td>
                         <td>${user.username}</td>
                         <td>TL${user.trust_level}</td>
                         <td>
-                          ${user.is_banned ? '<span class="badge badge-danger">已封禁</span>' : ''}
-                          ${user.is_admin ? '<span class="badge badge-info">管理员</span>' : ''}
+                          ${user.is_banned ? '<span class="badge badge-danger">Banned</span>' : ''}
+                          ${user.is_admin ? '<span class="badge badge-info">Admin</span>' : ''}
                         </td>
                         <td>
                           <div class="action-buttons">
-                            ${!user.is_banned ? `<button class="btn btn-danger" onclick="banUser(${user.linuxdo_id})">封禁</button>` : `<button class="btn btn-success" onclick="unbanUser(${user.linuxdo_id})">解封</button>`}
-                            ${!user.is_admin ? `<button class="btn btn-primary" onclick="setAdmin(${user.linuxdo_id}, true)">设为管理员</button>` : `<button class="btn btn-secondary" onclick="setAdmin(${user.linuxdo_id}, false)">取消管理员</button>`}
+                            ${!user.is_banned ? `<button class="btn btn-danger" onclick="banUser(${user.linuxdo_id})">Ban</button>` : `<button class="btn btn-success" onclick="unbanUser(${user.linuxdo_id})">Unban</button>`}
+                            ${!user.is_admin ? `<button class="btn btn-primary" onclick="setAdmin(${user.linuxdo_id}, true)">Set as Admin</button>` : `<button class="btn btn-secondary" onclick="setAdmin(${user.linuxdo_id}, false)">Remove Admin</button>`}
                           </div>
                         </td>
                       </tr>
@@ -735,7 +772,7 @@
           `;
         }
       } catch (error) {
-        page.innerHTML = '<div class="alert alert-error">加载失败</div>';
+        page.innerHTML = '<div class="alert alert-error">Loading failed</div>';
       }
     }
 
@@ -746,7 +783,7 @@
     }
 
     async function banUser(linuxdoId) {
-      const reason = prompt('请输入封禁原因:');
+      const reason = prompt('Enter ban reason:');
       if (!reason) return;
 
       try {
@@ -758,13 +795,13 @@
 
         const data = await res.json();
         if (data.success) {
-          showAlert('users-alert', '用户已封禁', 'success');
+          showAlert('users-alert', 'User banned', 'success');
           loadUsers();
         } else {
-          showAlert('users-alert', data.error || '操作失败', 'error');
+          showAlert('users-alert', data.error || 'Operation failed', 'error');
         }
       } catch (error) {
-        showAlert('users-alert', '操作失败', 'error');
+        showAlert('users-alert', 'Operation failed', 'error');
       }
     }
 
@@ -778,13 +815,13 @@
 
         const data = await res.json();
         if (data.success) {
-          showAlert('users-alert', '用户已解封', 'success');
+          showAlert('users-alert', 'User unbanned', 'success');
           loadUsers();
         } else {
-          showAlert('users-alert', data.error || '操作失败', 'error');
+          showAlert('users-alert', data.error || 'Operation failed', 'error');
         }
       } catch (error) {
-        showAlert('users-alert', '操作失败', 'error');
+        showAlert('users-alert', 'Operation failed', 'error');
       }
     }
 
@@ -800,20 +837,20 @@
 
         const data = await res.json();
         if (data.success) {
-          showAlert('users-alert', isAdmin ? '已设为管理员' : '已取消管理员', 'success');
+          showAlert('users-alert', isAdmin ? 'Set as admin' : 'Admin removed', 'success');
           loadUsers();
         } else {
-          showAlert('users-alert', data.error || '操作失败', 'error');
+          showAlert('users-alert', data.error || 'Operation failed', 'error');
         }
       } catch (error) {
-        showAlert('users-alert', '操作失败', 'error');
+        showAlert('users-alert', 'Operation failed', 'error');
       }
     }
 
-    // 域名管理页面
+    // Domain management page
     async function loadDomains(search = '', status = 'all') {
       const page = document.getElementById('domains');
-      page.innerHTML = '<div class="loading">加载中...</div>';
+      page.innerHTML = '<div class="loading">Loading...</div>';
 
       try {
         const params = new URLSearchParams({ search, status, limit: 100 });
@@ -823,49 +860,49 @@
         if (data.success) {
           const domains = data.data.domains;
           page.innerHTML = `
-            <h1 style="margin-bottom: 1.5rem;">域名管理</h1>
+            <h1 style="margin-bottom: 1.5rem;">Domain Management</h1>
             <div id="domains-alert"></div>
             <div class="card">
               <div class="search-bar">
-                <input type="text" id="domain-search" placeholder="搜索域名或用户名" value="${search}">
+                <input type="text" id="domain-search" placeholder="Search domain or username" value="${search}">
                 <select id="domain-status" value="${status}">
-                  <option value="all">全部</option>
-                  <option value="active">活跃</option>
-                  <option value="suspended">已暂停</option>
-                  <option value="pending">待支付</option>
-                  <option value="review">待审核</option>
+                  <option value="all">All</option>
+                  <option value="active">Active</option>
+                  <option value="suspended">Suspended</option>
+                  <option value="pending">Pending Payment</option>
+                  <option value="review">Pending Review</option>
                 </select>
-                <button class="btn btn-primary" onclick="searchDomains()">搜索</button>
+                <button class="btn btn-primary" onclick="searchDomains()">Search</button>
               </div>
               <div class="table-container">
                 <table>
                   <thead>
                     <tr>
-                      <th>域名</th>
-                      <th>所有者</th>
-                      <th>状态</th>
-                      <th>创建时间</th>
-                      <th>操作</th>
+                      <th>Domain</th>
+                      <th>Owner</th>
+                      <th>Status</th>
+                      <th>Created At</th>
+                      <th>Actions</th>
                     </tr>
                   </thead>
                   <tbody>
-                    ${domains.length === 0 ? '<tr><td colspan="5" class="empty-state">无数据</td></tr>' : domains.map(domain => `
+                    ${domains.length === 0 ? '<tr><td colspan="5" class="empty-state">No data</td></tr>' : domains.map(domain => `
                       <tr>
                         <td>${domain.fqdn}</td>
-                        <td>${domain.owner_username || '未知'} (${domain.owner_linuxdo_id})</td>
+                        <td>${domain.owner_username || 'Unknown'} (${domain.owner_linuxdo_id})</td>
                         <td>
-                          ${domain.status === 'active' ? '<span class="badge badge-success">活跃</span>' : ''}
-                          ${domain.status === 'suspended' ? '<span class="badge badge-danger">已暂停</span>' : ''}
-                          ${domain.status === 'pending' ? '<span class="badge badge-warning">待支付</span>' : ''}
-                          ${domain.status === 'review' ? '<span class="badge badge-info">待审核</span>' : ''}
+                          ${domain.status === 'active' ? '<span class="badge badge-success">Active</span>' : ''}
+                          ${domain.status === 'suspended' ? '<span class="badge badge-danger">Suspended</span>' : ''}
+                          ${domain.status === 'pending' ? '<span class="badge badge-warning">Pending Payment</span>' : ''}
+                          ${domain.status === 'review' ? '<span class="badge badge-info">Pending Review</span>' : ''}
                         </td>
                         <td>${new Date(domain.created_at).toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai', hour12: false })}</td>
                         <td>
                           <div class="action-buttons">
-                            <button class="btn btn-info btn-sm" onclick="manageDNSRecords(${domain.id}, '${domain.fqdn}')">DNS记录</button>
-                            ${domain.status === 'active' ? `<button class="btn btn-warning btn-sm" onclick="suspendDomain(${domain.id})">暂停</button>` : ''}
-                            ${domain.status === 'suspended' ? `<button class="btn btn-success btn-sm" onclick="activateDomain(${domain.id})">激活</button>` : ''}
-                            <button class="btn btn-danger btn-sm" onclick="deleteDomain(${domain.id})">删除</button>
+                            <button class="btn btn-info btn-sm" onclick="manageDNSRecords(${domain.id}, '${domain.fqdn}')">DNS Records</button>
+                            ${domain.status === 'active' ? `<button class="btn btn-warning btn-sm" onclick="suspendDomain(${domain.id})">Suspend</button>` : ''}
+                            ${domain.status === 'suspended' ? `<button class="btn btn-success btn-sm" onclick="activateDomain(${domain.id})">Activate</button>` : ''}
+                            <button class="btn btn-danger btn-sm" onclick="deleteDomain(${domain.id})">Delete</button>
                           </div>
                         </td>
                       </tr>
@@ -877,7 +914,7 @@
           `;
         }
       } catch (error) {
-        page.innerHTML = '<div class="alert alert-error">加载失败</div>';
+        page.innerHTML = '<div class="alert alert-error">Loading failed</div>';
       }
     }
 
@@ -888,7 +925,7 @@
     }
 
     async function suspendDomain(id) {
-      const reason = prompt('请输入暂停原因:');
+      const reason = prompt('Enter suspension reason:');
       if (!reason) return;
 
       try {
@@ -900,13 +937,13 @@
 
         const data = await res.json();
         if (data.success) {
-          showAlert('domains-alert', '域名已暂停', 'success');
+          showAlert('domains-alert', 'Domain suspended', 'success');
           loadDomains();
         } else {
-          showAlert('domains-alert', data.error || '操作失败', 'error');
+          showAlert('domains-alert', data.error || 'Operation failed', 'error');
         }
       } catch (error) {
-        showAlert('domains-alert', '操作失败', 'error');
+        showAlert('domains-alert', 'Operation failed', 'error');
       }
     }
 
@@ -920,19 +957,19 @@
 
         const data = await res.json();
         if (data.success) {
-          showAlert('domains-alert', '域名已激活', 'success');
+          showAlert('domains-alert', 'Domain activated', 'success');
           loadDomains();
         } else {
-          showAlert('domains-alert', data.error || '操作失败', 'error');
+          showAlert('domains-alert', data.error || 'Operation failed', 'error');
         }
       } catch (error) {
-        showAlert('domains-alert', '操作失败', 'error');
+        showAlert('domains-alert', 'Operation failed', 'error');
       }
     }
 
     async function deleteDomain(id) {
-      const reason = prompt('请输入删除理由:');
-      if (reason === null) return; // 用户点击取消
+      const reason = prompt('Enter deletion reason:');
+      if (reason === null) return; // User clicked cancel
 
       try {
         const res = await fetch('/api/admin/domains', {
@@ -943,20 +980,20 @@
 
         const data = await res.json();
         if (data.success) {
-          showAlert('domains-alert', '域名已删除', 'success');
+          showAlert('domains-alert', 'Domain deleted', 'success');
           loadDomains();
         } else {
-          showAlert('domains-alert', data.error || '操作失败', 'error');
+          showAlert('domains-alert', data.error || 'Operation failed', 'error');
         }
       } catch (error) {
-        showAlert('domains-alert', '操作失败', 'error');
+        showAlert('domains-alert', 'Operation failed', 'error');
       }
     }
 
-    // 审核管理页面
+    // Review management page
     async function loadReviews(status = 'pending') {
       const page = document.getElementById('reviews');
-      page.innerHTML = '<div class="loading">加载中...</div>';
+      page.innerHTML = '<div class="loading">Loading...</div>';
 
       try {
         const params = new URLSearchParams({ status, limit: 100 });
@@ -968,20 +1005,20 @@
           const hasPendingReviews = reviews.some(r => r.status === 'pending' && r.order_status === 'paid');
 
           page.innerHTML = `
-            <h1 style="margin-bottom: 1.5rem;">审核管理</h1>
+            <h1 style="margin-bottom: 1.5rem;">Review Management</h1>
             <div id="reviews-alert"></div>
             <div class="card">
               <div class="search-bar" style="display: flex; justify-content: space-between; align-items: center;">
                 <div>
                   <select id="review-status" value="${status}">
-                    <option value="pending">待审核</option>
-                    <option value="approved">已批准</option>
-                    <option value="rejected">已拒绝</option>
+                    <option value="pending">Pending</option>
+                    <option value="approved">Approved</option>
+                    <option value="rejected">Rejected</option>
                   </select>
-                  <button class="btn btn-primary" onclick="filterReviews()">筛选</button>
+                  <button class="btn btn-primary" onclick="filterReviews()">Filter</button>
                 </div>
                 ${status === 'pending' && hasPendingReviews ? `
-                  <button class="btn btn-success" onclick="batchApproveReviews()">批量通过选中项</button>
+                  <button class="btn btn-success" onclick="batchApproveReviews()">Batch Approve Selected</button>
                 ` : ''}
               </div>
               <div class="table-container">
@@ -989,18 +1026,18 @@
                   <thead>
                     <tr>
                       ${status === 'pending' ? '<th><input type="checkbox" id="select-all-reviews" onchange="toggleAllReviews(this)"></th>' : ''}
-                      <th>域名</th>
-                      <th>用户</th>
-                      <th>Python赞美</th>
-                      <th>用途说明</th>
-                      <th>支付状态</th>
-                      <th>提交时间</th>
-                      <th>状态</th>
-                      <th>操作</th>
+                      <th>Domain</th>
+                      <th>User</th>
+                      <th>Python Praise</th>
+                      <th>Usage Purpose</th>
+                      <th>Payment Status</th>
+                      <th>Submitted At</th>
+                      <th>Status</th>
+                      <th>Actions</th>
                     </tr>
                   </thead>
                   <tbody>
-                    ${reviews.length === 0 ? `<tr><td colspan="${status === 'pending' ? '9' : '8'}" class="empty-state">无数据</td></tr>` : reviews.map(review => {
+                    ${reviews.length === 0 ? `<tr><td colspan="${status === 'pending' ? '9' : '8'}" class="empty-state">No data</td></tr>` : reviews.map(review => {
                       const isPaid = review.order_status === 'paid';
                       const canApprove = review.status === 'pending' && isPaid;
                       return `
@@ -1011,23 +1048,23 @@
                         <td style="max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${review.python_praise || '-'}">${review.python_praise || '-'}</td>
                         <td style="max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${review.usage_purpose || '-'}">${review.usage_purpose || '-'}</td>
                         <td>
-                          ${review.order_status === 'paid' ? '<span class="badge badge-success">已支付</span>' : ''}
-                          ${review.order_status === 'pending' ? '<span class="badge badge-warning">待支付</span>' : ''}
-                          ${review.order_status === 'failed' ? '<span class="badge badge-danger">支付失败</span>' : ''}
-                          ${!review.order_status ? '<span class="badge badge-warning">无订单</span>' : ''}
+                          ${review.order_status === 'paid' ? '<span class="badge badge-success">Paid</span>' : ''}
+                          ${review.order_status === 'pending' ? '<span class="badge badge-warning">Pending Payment</span>' : ''}
+                          ${review.order_status === 'failed' ? '<span class="badge badge-danger">Payment Failed</span>' : ''}
+                          ${!review.order_status ? '<span class="badge badge-warning">No Order</span>' : ''}
                         </td>
                         <td>${new Date(review.created_at).toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai', hour12: false })}</td>
                         <td>
-                          ${review.status === 'pending' ? '<span class="badge badge-warning">待审核</span>' : ''}
-                          ${review.status === 'approved' ? '<span class="badge badge-success">已批准</span>' : ''}
-                          ${review.status === 'rejected' ? '<span class="badge badge-danger">已拒绝</span>' : ''}
+                          ${review.status === 'pending' ? '<span class="badge badge-warning">Pending</span>' : ''}
+                          ${review.status === 'approved' ? '<span class="badge badge-success">Approved</span>' : ''}
+                          ${review.status === 'rejected' ? '<span class="badge badge-danger">Rejected</span>' : ''}
                         </td>
                         <td>
                           ${review.status === 'pending' ? `
                             <div class="action-buttons">
-                              <button class="btn btn-success btn-sm" onclick="approveReview(${review.id})" ${!canApprove ? 'disabled title="订单未支付"' : ''}>批准</button>
-                              <button class="btn btn-danger btn-sm" onclick="rejectReview(${review.id}, false)">拒绝</button>
-                              <button class="btn btn-danger btn-sm" onclick="rejectReview(${review.id}, true)">拒绝并封禁</button>
+                              <button class="btn btn-success btn-sm" onclick="approveReview(${review.id})" ${!canApprove ? 'disabled title="Order not paid"' : ''}>Approve</button>
+                              <button class="btn btn-danger btn-sm" onclick="rejectReview(${review.id}, false)">Reject</button>
+                              <button class="btn btn-danger btn-sm" onclick="rejectReview(${review.id}, true)">Reject & Ban</button>
                             </div>
                           ` : '-'}
                         </td>
@@ -1040,7 +1077,7 @@
           `;
         }
       } catch (error) {
-        page.innerHTML = '<div class="alert alert-error">加载失败</div>';
+        page.innerHTML = '<div class="alert alert-error">Loading failed</div>';
       }
     }
 
@@ -1054,11 +1091,11 @@
       const ids = Array.from(checkboxes).map(cb => parseInt(cb.value));
 
       if (ids.length === 0) {
-        showAlert('reviews-alert', '请选择要批准的审核项', 'error');
+        showAlert('reviews-alert', 'Please select reviews to approve', 'error');
         return;
       }
 
-      if (!confirm(`确定要批准选中的 ${ids.length} 个域名吗？`)) return;
+      if (!confirm(`Are you sure you want to approve ${ids.length} selected domains?`)) return;
 
       try {
         let successCount = 0;
@@ -1079,10 +1116,10 @@
           }
         }
 
-        showAlert('reviews-alert', `批量审核完成：成功 ${successCount} 个，失败 ${failCount} 个`, successCount > 0 ? 'success' : 'error');
+        showAlert('reviews-alert', `Batch review completed: ${successCount} succeeded, ${failCount} failed`, successCount > 0 ? 'success' : 'error');
         loadReviews();
       } catch (error) {
-        showAlert('reviews-alert', '批量审核失败', 'error');
+        showAlert('reviews-alert', 'Batch review failed', 'error');
       }
     }
 
@@ -1092,8 +1129,8 @@
     }
 
     async function approveReview(id) {
-      const reason = prompt('请输入批准理由（可选）:');
-      if (reason === null) return; // 用户点击取消
+      const reason = prompt('Enter approval reason (optional):');
+      if (reason === null) return; // User clicked cancel
 
       try {
         const res = await fetch('/api/admin/reviews', {
@@ -1104,20 +1141,20 @@
 
         const data = await res.json();
         if (data.success) {
-          showAlert('reviews-alert', '已批准', 'success');
+          showAlert('reviews-alert', 'Approved', 'success');
           loadReviews();
           loadStats();
         } else {
-          showAlert('reviews-alert', data.error || '操作失败', 'error');
+          showAlert('reviews-alert', data.error || 'Operation failed', 'error');
         }
       } catch (error) {
-        showAlert('reviews-alert', '操作失败', 'error');
+        showAlert('reviews-alert', 'Operation failed', 'error');
       }
     }
 
     async function rejectReview(id, banUser) {
-      const reason = prompt('请输入拒绝理由:');
-      if (reason === null) return; // 用户点击取消
+      const reason = prompt('Enter rejection reason:');
+      if (reason === null) return; // User clicked cancel
 
       try {
         const res = await fetch('/api/admin/reviews', {
@@ -1128,21 +1165,21 @@
 
         const data = await res.json();
         if (data.success) {
-          showAlert('reviews-alert', banUser ? '已拒绝并封禁用户' : '已拒绝', 'success');
+          showAlert('reviews-alert', banUser ? 'Rejected and user banned' : 'Rejected', 'success');
           loadReviews();
           loadStats();
         } else {
-          showAlert('reviews-alert', data.error || '操作失败', 'error');
+          showAlert('reviews-alert', data.error || 'Operation failed', 'error');
         }
       } catch (error) {
-        showAlert('reviews-alert', '操作失败', 'error');
+        showAlert('reviews-alert', 'Operation failed', 'error');
       }
     }
 
-    // 申诉管理页面
+    // Appeal management page
     async function loadAppeals(status = 'pending') {
       const page = document.getElementById('appeals');
-      page.innerHTML = '<div class="loading">加载中...</div>';
+      page.innerHTML = '<div class="loading">Loading...</div>';
 
       try {
         const params = new URLSearchParams({ status, limit: 100 });
@@ -1152,47 +1189,47 @@
         if (data.success) {
           const appeals = data.data.appeals;
           page.innerHTML = `
-            <h1 style="margin-bottom: 1.5rem;">申诉管理</h1>
+            <h1 style="margin-bottom: 1.5rem;">Appeal Management</h1>
             <div id="appeals-alert"></div>
             <div class="card">
               <div class="search-bar">
                 <select id="appeal-status" value="${status}">
-                  <option value="pending">待处理</option>
-                  <option value="approved">已批准</option>
-                  <option value="rejected">已拒绝</option>
+                  <option value="pending">Pending</option>
+                  <option value="approved">Approved</option>
+                  <option value="rejected">Rejected</option>
                 </select>
-                <button class="btn btn-primary" onclick="filterAppeals()">筛选</button>
+                <button class="btn btn-primary" onclick="filterAppeals()">Filter</button>
               </div>
               <div class="table-container">
                 <table>
                   <thead>
                     <tr>
-                      <th>域名</th>
-                      <th>用户</th>
-                      <th>申诉原因</th>
-                      <th>提交时间</th>
-                      <th>状态</th>
-                      <th>操作</th>
+                      <th>Domain</th>
+                      <th>User</th>
+                      <th>Appeal Reason</th>
+                      <th>Submitted At</th>
+                      <th>Status</th>
+                      <th>Actions</th>
                     </tr>
                   </thead>
                   <tbody>
-                    ${appeals.length === 0 ? '<tr><td colspan="6" class="empty-state">无数据</td></tr>' : appeals.map(appeal => `
+                    ${appeals.length === 0 ? '<tr><td colspan="6" class="empty-state">No data</td></tr>' : appeals.map(appeal => `
                       <tr>
                         <td>${appeal.fqdn}</td>
                         <td>${appeal.username} (${appeal.linuxdo_id})</td>
                         <td style="max-width: 300px; white-space: pre-wrap; word-break: break-word;">${appeal.reason}</td>
                         <td>${new Date(appeal.created_at).toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai', hour12: false })}</td>
                         <td>
-                          ${appeal.status === 'pending' ? '<span class="badge badge-warning">待处理</span>' : ''}
-                          ${appeal.status === 'approved' ? '<span class="badge badge-success">已批准</span>' : ''}
-                          ${appeal.status === 'rejected' ? '<span class="badge badge-danger">已拒绝</span>' : ''}
+                          ${appeal.status === 'pending' ? '<span class="badge badge-warning">Pending</span>' : ''}
+                          ${appeal.status === 'approved' ? '<span class="badge badge-success">Approved</span>' : ''}
+                          ${appeal.status === 'rejected' ? '<span class="badge badge-danger">Rejected</span>' : ''}
                         </td>
                         <td>
                           ${appeal.status === 'pending' ? `
                             <div class="action-buttons">
-                              <button class="btn btn-info btn-sm" onclick="manageDNSRecords(${appeal.domain_id}, '${appeal.fqdn}')">DNS记录</button>
-                              <button class="btn btn-success btn-sm" onclick="approveAppeal(${appeal.id})">批准（解封）</button>
-                              <button class="btn btn-danger btn-sm" onclick="rejectAppeal(${appeal.id})">拒绝</button>
+                              <button class="btn btn-info btn-sm" onclick="manageDNSRecords(${appeal.domain_id}, '${appeal.fqdn}')">DNS Records</button>
+                              <button class="btn btn-success btn-sm" onclick="approveAppeal(${appeal.id})">Approve (Unsuspend)</button>
+                              <button class="btn btn-danger btn-sm" onclick="rejectAppeal(${appeal.id})">Reject</button>
                             </div>
                           ` : '-'}
                         </td>
@@ -1205,7 +1242,7 @@
           `;
         }
       } catch (error) {
-        page.innerHTML = '<div class="alert alert-error">加载失败</div>';
+        page.innerHTML = '<div class="alert alert-error">Loading failed</div>';
       }
     }
 
@@ -1215,7 +1252,7 @@
     }
 
     async function approveAppeal(id) {
-      const admin_note = prompt('请输入批准备注（可选）:');
+      const admin_note = prompt('Enter approval note (optional):');
       if (admin_note === null) return;
 
       try {
@@ -1227,18 +1264,18 @@
 
         const data = await res.json();
         if (data.success) {
-          showAlert('appeals-alert', '申诉已批准，域名已解封', 'success');
+          showAlert('appeals-alert', 'Appeal approved, domain unsuspended', 'success');
           loadAppeals();
         } else {
-          showAlert('appeals-alert', data.error || '操作失败', 'error');
+          showAlert('appeals-alert', data.error || 'Operation failed', 'error');
         }
       } catch (error) {
-        showAlert('appeals-alert', '操作失败', 'error');
+        showAlert('appeals-alert', 'Operation failed', 'error');
       }
     }
 
     async function rejectAppeal(id) {
-      const admin_note = prompt('请输入拒绝原因:');
+      const admin_note = prompt('Enter rejection reason:');
       if (admin_note === null) return;
 
       try {
@@ -1250,20 +1287,20 @@
 
         const data = await res.json();
         if (data.success) {
-          showAlert('appeals-alert', '申诉已拒绝', 'success');
+          showAlert('appeals-alert', 'Appeal rejected', 'success');
           loadAppeals();
         } else {
-          showAlert('appeals-alert', data.error || '操作失败', 'error');
+          showAlert('appeals-alert', data.error || 'Operation failed', 'error');
         }
       } catch (error) {
-        showAlert('appeals-alert', '操作失败', 'error');
+        showAlert('appeals-alert', 'Operation failed', 'error');
       }
     }
 
-    // 举报管理页面
+    // Report management page
     async function loadReports(status = 'pending') {
       const page = document.getElementById('reports');
-      page.innerHTML = '<div class="loading">加载中...</div>';
+      page.innerHTML = '<div class="loading">Loading...</div>';
 
       try {
         const params = new URLSearchParams({ status, limit: 100 });
@@ -1273,47 +1310,47 @@
         if (data.success) {
           const reports = data.data.reports;
           page.innerHTML = `
-            <h1 style="margin-bottom: 1.5rem;">举报管理</h1>
+            <h1 style="margin-bottom: 1.5rem;">Report Management</h1>
             <div id="reports-alert"></div>
             <div class="card">
               <div class="search-bar">
                 <select id="report-status" value="${status}">
-                  <option value="pending">待处理</option>
-                  <option value="resolved">已处理</option>
-                  <option value="rejected">已拒绝</option>
+                  <option value="pending">Pending</option>
+                  <option value="resolved">Resolved</option>
+                  <option value="rejected">Rejected</option>
                 </select>
-                <button class="btn btn-primary" onclick="filterReports()">筛选</button>
+                <button class="btn btn-primary" onclick="filterReports()">Filter</button>
               </div>
               <div class="table-container">
                 <table>
                   <thead>
                     <tr>
-                      <th>被举报域名</th>
-                      <th>举报人</th>
-                      <th>举报原因</th>
-                      <th>举报时间</th>
-                      <th>状态</th>
-                      <th>操作</th>
+                      <th>Reported Domain</th>
+                      <th>Reporter</th>
+                      <th>Report Reason</th>
+                      <th>Reported At</th>
+                      <th>Status</th>
+                      <th>Actions</th>
                     </tr>
                   </thead>
                   <tbody>
-                    ${reports.length === 0 ? '<tr><td colspan="6" class="empty-state">无数据</td></tr>' : reports.map(report => `
+                    ${reports.length === 0 ? '<tr><td colspan="6" class="empty-state">No data</td></tr>' : reports.map(report => `
                       <tr>
                         <td>${report.label}.py.kg</td>
                         <td>${report.reporter_username || report.reporter_linuxdo_id}</td>
                         <td style="max-width: 300px;">${report.reason}</td>
                         <td>${new Date(report.created_at).toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai', hour12: false })}</td>
                         <td>
-                          ${report.status === 'pending' ? '<span class="badge badge-warning">待处理</span>' : ''}
-                          ${report.status === 'resolved' ? '<span class="badge badge-success">已处理</span>' : ''}
-                          ${report.status === 'rejected' ? '<span class="badge badge-danger">已拒绝</span>' : ''}
+                          ${report.status === 'pending' ? '<span class="badge badge-warning">Pending</span>' : ''}
+                          ${report.status === 'resolved' ? '<span class="badge badge-success">Resolved</span>' : ''}
+                          ${report.status === 'rejected' ? '<span class="badge badge-danger">Rejected</span>' : ''}
                         </td>
                         <td>
                           ${report.status === 'pending' ? `
                             <div class="action-buttons">
-                              <button class="btn btn-warning btn-sm" onclick="suspendReportedDomain(${report.id})">暂停解析</button>
-                              <button class="btn btn-danger btn-sm" onclick="deleteReportedDomain(${report.id})">删除域名</button>
-                              <button class="btn btn-secondary btn-sm" onclick="rejectReport(${report.id})">拒绝举报</button>
+                              <button class="btn btn-warning btn-sm" onclick="suspendReportedDomain(${report.id})">Suspend Resolution</button>
+                              <button class="btn btn-danger btn-sm" onclick="deleteReportedDomain(${report.id})">Delete Domain</button>
+                              <button class="btn btn-secondary btn-sm" onclick="rejectReport(${report.id})">Reject Report</button>
                             </div>
                           ` : '-'}
                         </td>
@@ -1326,7 +1363,7 @@
           `;
         }
       } catch (error) {
-        page.innerHTML = '<div class="alert alert-error">加载失败</div>';
+        page.innerHTML = '<div class="alert alert-error">Loading failed</div>';
       }
     }
 
@@ -1336,8 +1373,8 @@
     }
 
     async function suspendReportedDomain(id) {
-      const reason = prompt('请输入暂停原因（可选）:');
-      if (reason === null) return; // 用户点击取消
+      const reason = prompt('Enter suspension reason (optional):');
+      if (reason === null) return; // User clicked cancel
 
       try {
         const res = await fetch('/api/admin/reports', {
@@ -1349,27 +1386,27 @@
               suspend_domain: true,
               close_report: true
             },
-            reason: reason || '举报确认违规'
+            reason: reason || 'Report confirmed violation'
           })
         });
 
         const data = await res.json();
         if (data.success) {
-          showAlert('reports-alert', '举报已处理，域名已暂停', 'success');
+          showAlert('reports-alert', 'Report processed, domain suspended', 'success');
           loadReports();
         } else {
-          showAlert('reports-alert', data.error || '操作失败', 'error');
+          showAlert('reports-alert', data.error || 'Operation failed', 'error');
         }
       } catch (error) {
-        showAlert('reports-alert', '操作失败', 'error');
+        showAlert('reports-alert', 'Operation failed', 'error');
       }
     }
 
     async function deleteReportedDomain(id) {
-      if (!confirm('确定要删除被举报的域名吗？此操作无法撤销。')) return;
+      if (!confirm('Are you sure you want to delete the reported domain? This action cannot be undone.')) return;
 
-      const reason = prompt('请输入删除原因（可选）:');
-      if (reason === null) return; // 用户点击取消
+      const reason = prompt('Enter deletion reason (optional):');
+      if (reason === null) return; // User clicked cancel
 
       try {
         const res = await fetch('/api/admin/reports', {
@@ -1381,24 +1418,24 @@
               delete_domain: true,
               close_report: true
             },
-            reason: reason || '举报确认违规'
+            reason: reason || 'Report confirmed violation'
           })
         });
 
         const data = await res.json();
         if (data.success) {
-          showAlert('reports-alert', '举报已处理，域名已删除', 'success');
+          showAlert('reports-alert', 'Report processed, domain deleted', 'success');
           loadReports();
         } else {
-          showAlert('reports-alert', data.error || '操作失败', 'error');
+          showAlert('reports-alert', data.error || 'Operation failed', 'error');
         }
       } catch (error) {
-        showAlert('reports-alert', '操作失败', 'error');
+        showAlert('reports-alert', 'Operation failed', 'error');
       }
     }
 
     async function rejectReport(id) {
-      if (!confirm('确定要拒绝此举报吗？')) return;
+      if (!confirm('Are you sure you want to reject this report?')) return;
 
       try {
         const res = await fetch('/api/admin/reports', {
@@ -1414,49 +1451,301 @@
 
         const data = await res.json();
         if (data.success) {
-          showAlert('reports-alert', '已拒绝举报', 'success');
+          showAlert('reports-alert', 'Report rejected', 'success');
           loadReports();
         } else {
-          showAlert('reports-alert', data.error || '操作失败', 'error');
+          showAlert('reports-alert', data.error || 'Operation failed', 'error');
         }
       } catch (error) {
-        showAlert('reports-alert', '操作失败', 'error');
+        showAlert('reports-alert', 'Operation failed', 'error');
       }
     }
 
-    // 公告管理页面
+    // Messages management page
+    async function loadMessagesPage() {
+      const page = document.getElementById('messages');
+      page.innerHTML = '<div class="loading">Loading...</div>';
+
+      try {
+        const res = await fetch('/api/admin/messages');
+        const data = await res.json();
+
+        if (data.success) {
+          const conversations = data.data.conversations || [];
+          const unreadConversations = conversations.filter(c => c.unread_admin_count > 0);
+
+          page.innerHTML = `
+            <h1 style="margin-bottom: 1.5rem;">Messages (${unreadConversations.length})</h1>
+            <div id="messages-alert"></div>
+
+            ${unreadConversations.length > 0 ? `
+              <div class="card" style="background: #fef3c7; border-left: 4px solid #d97706; margin-bottom: 1.5rem;">
+                <h3 style="margin-top: 0; color: #78350f;">💬 Unread Messages (${unreadConversations.length})</h3>
+                <div style="max-height: 400px; overflow-y: auto;">
+                  ${unreadConversations.map(conv => `
+                    <div class="card" style="margin-bottom: 0.75rem; padding: 1rem; border-left: 3px solid var(--warning); cursor: pointer;" onclick="openConversation(${conv.id}, '${conv.username}', ${conv.user_trust_level})">
+                      <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 0.5rem;">
+                        <div>
+                          <strong style="color: var(--text); font-size: 1rem;">${conv.username}</strong>
+                          <span class="badge badge-info" style="margin-left: 0.5rem;">TL${conv.user_trust_level}</span>
+                          <span class="badge badge-danger" style="margin-left: 0.5rem;">${conv.unread_admin_count} unread</span>
+                        </div>
+                        <span style="font-size: 0.75rem; color: var(--text-muted);">${new Date(conv.last_message_at).toLocaleString('en-US', { timeZone: 'Asia/Shanghai', hour12: false })}</span>
+                      </div>
+                      <p style="margin: 0; font-size: 0.875rem; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${conv.last_message_preview || 'No preview'}</p>
+                    </div>
+                  `).join('')}
+                </div>
+              </div>
+            ` : ''}
+
+            <div class="card">
+              <h2>All Conversations</h2>
+              <div class="table-container">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>User</th>
+                      <th>Trust Level</th>
+                      <th>Last Message</th>
+                      <th>Unread</th>
+                      <th>Time</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${conversations.length === 0 ? '<tr><td colspan="6" class="empty-state">No conversations yet</td></tr>' : conversations.map(conv => `
+                      <tr style="${conv.unread_admin_count > 0 ? 'background: #fef3c7;' : ''}">
+                        <td><strong>${conv.username}</strong></td>
+                        <td><span class="badge badge-info">TL${conv.user_trust_level}</span></td>
+                        <td style="max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${conv.last_message_preview || '-'}</td>
+                        <td>
+                          ${conv.unread_admin_count > 0 ? `<span class="badge badge-danger">${conv.unread_admin_count}</span>` : '-'}
+                        </td>
+                        <td>${new Date(conv.last_message_at).toLocaleString('en-US', { timeZone: 'Asia/Shanghai', hour12: false })}</td>
+                        <td>
+                          <button class="btn btn-primary btn-sm" onclick="openConversation(${conv.id}, '${conv.username}', ${conv.user_trust_level})">Open Chat</button>
+                        </td>
+                      </tr>
+                    `).join('')}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          `;
+        }
+      } catch (error) {
+        page.innerHTML = '<div class="alert alert-error">Loading failed</div>';
+      }
+    }
+
+    // Open conversation chat modal
+    async function openConversation(conversationId, username, trustLevel) {
+      const modal = document.createElement('div');
+      modal.id = 'conversation-modal';
+      modal.className = 'modal show';
+
+      modal.innerHTML = `
+        <div class="modal-content" style="max-width: 700px; max-height: 85vh; display: flex; flex-direction: column;">
+          <div class="modal-header" style="border-bottom: 1px solid var(--border); padding-bottom: 1rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <div>
+                <h3 style="margin: 0;">Chat with ${username}</h3>
+                <span class="badge badge-info" style="margin-top: 0.25rem;">TL${trustLevel}</span>
+              </div>
+              <button onclick="closeConversationModal()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: var(--text-muted);">&times;</button>
+            </div>
+          </div>
+          <div id="conversation-alert" style="margin-top: 1rem;"></div>
+          <div id="conversation-messages" style="flex: 1; overflow-y: auto; padding: 1rem; background: var(--bg); border-radius: 6px; margin: 1rem 0; min-height: 300px; max-height: 400px;">
+            <div class="loading">Loading messages...</div>
+          </div>
+          <div style="border-top: 1px solid var(--border); padding-top: 1rem;">
+            <textarea
+              id="admin-message-input"
+              placeholder="Type your reply..."
+              rows="3"
+              maxlength="2000"
+              style="width: 100%; padding: 0.625rem; border: 1px solid var(--border); border-radius: 6px; font-size: 0.875rem; font-family: inherit; resize: vertical; margin-bottom: 0.5rem;"
+            ></textarea>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <small style="color: var(--text-muted);">
+                <span id="admin-message-char-count">0</span>/2000 characters
+              </small>
+              <button class="btn btn-primary" id="send-admin-message-btn" onclick="sendAdminMessage(${conversationId})">Send</button>
+            </div>
+          </div>
+        </div>
+      `;
+
+      document.body.appendChild(modal);
+
+      // Load messages
+      loadConversationMessages(conversationId);
+
+      // Character counter
+      document.getElementById('admin-message-input').addEventListener('input', (e) => {
+        document.getElementById('admin-message-char-count').textContent = e.target.value.length;
+      });
+
+      // Enter key support (Ctrl+Enter or Cmd+Enter to send)
+      document.getElementById('admin-message-input').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+          e.preventDefault();
+          sendAdminMessage(conversationId);
+        }
+      });
+    }
+
+    // Close conversation modal
+    function closeConversationModal() {
+      const modal = document.getElementById('conversation-modal');
+      if (modal) {
+        modal.remove();
+        // Reload messages page to update unread counts
+        loadMessagesPage();
+        updateMessagesLink();
+      }
+    }
+
+    // Load conversation messages
+    async function loadConversationMessages(conversationId) {
+      const container = document.getElementById('conversation-messages');
+
+      try {
+        const res = await fetch(`/api/admin/messages?conversation_id=${conversationId}`);
+        const data = await res.json();
+
+        if (data.success) {
+          const messages = data.data.messages || [];
+          const conversation = data.data.conversation;
+
+          if (messages.length === 0) {
+            container.innerHTML = '<div style="text-align: center; padding: 2rem; color: var(--text-muted);">No messages yet</div>';
+          } else {
+            container.innerHTML = messages.map(m => {
+              const isAdmin = m.sender_type === 'admin';
+              const time = new Date(m.created_at).toLocaleString('en-US', {
+                timeZone: 'Asia/Shanghai',
+                hour12: false,
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+              });
+
+              return `
+                <div style="margin-bottom: 1rem; display: flex; flex-direction: column; align-items: ${isAdmin ? 'flex-end' : 'flex-start'};">
+                  <div style="max-width: 70%; background: ${isAdmin ? 'var(--primary)' : 'var(--card-bg)'}; color: ${isAdmin ? 'white' : 'var(--text)'}; padding: 0.75rem; border-radius: 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.1);">
+                    <div style="font-weight: 600; font-size: 0.75rem; margin-bottom: 0.25rem; opacity: 0.8;">
+                      ${isAdmin ? 'Admin' : conversation.username}
+                    </div>
+                    <div style="white-space: pre-wrap; word-break: break-word;">${escapeHtml(m.content)}</div>
+                    <div style="font-size: 0.7rem; margin-top: 0.25rem; opacity: 0.7;">
+                      ${time}
+                    </div>
+                  </div>
+                </div>
+              `;
+            }).join('');
+
+            // Scroll to bottom
+            container.scrollTop = container.scrollHeight;
+          }
+        } else {
+          container.innerHTML = `<div class="alert alert-error">Failed to load messages</div>`;
+        }
+      } catch (error) {
+        container.innerHTML = `<div class="alert alert-error">Failed to load messages</div>`;
+      }
+    }
+
+    // Send admin message
+    async function sendAdminMessage(conversationId) {
+      const input = document.getElementById('admin-message-input');
+      const content = input.value.trim();
+      const btn = document.getElementById('send-admin-message-btn');
+
+      if (!content) {
+        showAlert('conversation-alert', 'Message cannot be empty', 'error');
+        return;
+      }
+
+      if (content.length > 2000) {
+        showAlert('conversation-alert', 'Message too long (max 2000 characters)', 'error');
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = 'Sending...';
+
+      try {
+        const res = await fetch('/api/admin/messages', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            conversation_id: conversationId,
+            content: content
+          })
+        });
+
+        const data = await res.json();
+        if (data.success) {
+          input.value = '';
+          document.getElementById('admin-message-char-count').textContent = '0';
+          loadConversationMessages(conversationId);
+          showAlert('conversation-alert', 'Message sent', 'success');
+        } else {
+          showAlert('conversation-alert', data.error || 'Failed to send', 'error');
+        }
+      } catch (error) {
+        showAlert('conversation-alert', 'Failed to send message', 'error');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Send';
+      }
+    }
+
+    // Escape HTML
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    // Announcement management page
     async function loadAnnouncements() {
       const page = document.getElementById('announcements');
       page.innerHTML = `
-        <h1 style="margin-bottom: 1.5rem;">公告管理</h1>
+        <h1 style="margin-bottom: 1.5rem;">Announcement Management</h1>
 
         <div id="announcements-alert"></div>
 
         <div class="card">
-          <h2>发送系统公告</h2>
+          <h2>Send System Announcement</h2>
           <p style="margin-bottom: 1rem; color: var(--text-muted);">
-            向所有用户发送通知消息
+            Send notification message to all users
           </p>
           <form id="send-announcement-form">
             <div class="form-group">
-              <label>公告标题 <span style="color: var(--danger);">*</span></label>
-              <input type="text" name="title" placeholder="请输入公告标题（最多100字）" required maxlength="100">
+              <label>Announcement Title <span style="color: var(--danger);">*</span></label>
+              <input type="text" name="title" placeholder="Enter announcement title (max 100 characters)" required maxlength="100">
             </div>
             <div class="form-group">
-              <label>公告内容 <span style="color: var(--danger);">*</span></label>
-              <textarea name="message" rows="5" placeholder="请输入公告内容（最多500字）" required maxlength="500"></textarea>
+              <label>Announcement Content <span style="color: var(--danger);">*</span></label>
+              <textarea name="message" rows="5" placeholder="Enter announcement content (max 500 characters)" required maxlength="500"></textarea>
             </div>
-            <button type="submit" class="btn btn-primary">发送公告</button>
+            <button type="submit" class="btn btn-primary">Send Announcement</button>
           </form>
         </div>
 
         <div class="card">
-          <h2>说明</h2>
+          <h2>Instructions</h2>
           <ul style="margin-left: 1.5rem; color: var(--text-muted); font-size: 0.875rem;">
-            <li>公告将作为通知发送给所有注册用户</li>
-            <li>用户会在首页看到未读通知提醒</li>
-            <li>请谨慎使用此功能，避免打扰用户</li>
-            <li>发送后无法撤回，请仔细检查内容</li>
+            <li>Announcements will be sent as notifications to all registered users</li>
+            <li>Users will see unread notification alerts on the homepage</li>
+            <li>Use this feature carefully to avoid disturbing users</li>
+            <li>Cannot be recalled after sending, please check content carefully</li>
           </ul>
         </div>
       `;
@@ -1473,11 +1762,11 @@
       const message = formData.get('message').trim();
 
       if (!title || !message) {
-        showAlert('announcements-alert', '请填写完整信息', 'error');
+        showAlert('announcements-alert', 'Please fill in all information', 'error');
         return;
       }
 
-      if (!confirm(`确定要向所有用户发送公告吗？\n\n标题：${title}\n内容：${message}`)) {
+      if (!confirm(`Are you sure you want to send announcement to all users?\n\nTitle: ${title}\nContent: ${message}`)) {
         return;
       }
 
@@ -1490,20 +1779,20 @@
 
         const data = await res.json();
         if (data.success) {
-          showAlert('announcements-alert', `公告发送成功！已发送给 ${data.data.success_count} 位用户`, 'success');
+          showAlert('announcements-alert', `Announcement sent successfully! Sent to ${data.data.success_count} users`, 'success');
           form.reset();
         } else {
-          showAlert('announcements-alert', data.error || '发送失败', 'error');
+          showAlert('announcements-alert', data.error || 'Send failed', 'error');
         }
       } catch (error) {
-        showAlert('announcements-alert', '发送失败', 'error');
+        showAlert('announcements-alert', 'Send failed', 'error');
       }
     }
 
-    // 敏感词管理页面
+    // Sensitive words management page
     async function loadBannedWords() {
       const page = document.getElementById('banned-words');
-      page.innerHTML = '<div class="loading">加载中...</div>';
+      page.innerHTML = '<div class="loading">Loading...</div>';
 
       try {
         const res = await fetch('/api/admin/banned-words');
@@ -1512,45 +1801,45 @@
         if (data.success) {
           const words = data.data.words;
           page.innerHTML = `
-            <h1 style="margin-bottom: 1.5rem;">敏感词管理</h1>
+            <h1 style="margin-bottom: 1.5rem;">Sensitive Words Management</h1>
             <div id="banned-words-alert"></div>
 
             <div class="card" style="background: #fff3cd; border-left: 4px solid #ffc107; margin-bottom: 1.5rem;">
-              <h3 style="margin-top: 0; color: #856404;">📋 政策说明</h3>
-              <p style="margin-bottom: 0.5rem;"><strong>系统保留词：</strong>参考 <a href="https://github.com/js-org/js.org" target="_blank" style="color: #0066cc;">js.org 政策</a>，包含 470+ 个常见技术词汇（如 api、admin、www 等），由系统自动管理，硬性阻止注册。</p>
-              <p style="margin-bottom: 0;"><strong>自定义敏感词：</strong>下方可添加不当内容相关词汇（如色情、赌博等），触发后需人工审核。</p>
+              <h3 style="margin-top: 0; color: #856404;">📋 Policy Description</h3>
+              <p style="margin-bottom: 0.5rem;"><strong>System Reserved Words:</strong> Referencing <a href="https://github.com/js-org/js.org" target="_blank" style="color: #0066cc;">js.org policy</a>, includes 470+ common technical terms (such as api, admin, www, etc.), automatically managed by the system, hard-blocking registration.</p>
+              <p style="margin-bottom: 0;"><strong>Custom Sensitive Words:</strong> You can add inappropriate content-related words (such as pornography, gambling, etc.) below, which will trigger manual review when detected.</p>
             </div>
 
             <div class="card">
-              <h2>添加自定义敏感词</h2>
+              <h2>Add Custom Sensitive Word</h2>
               <form id="add-word-form">
                 <div style="display: flex; gap: 0.5rem; align-items: flex-end;">
                   <div class="form-group" style="flex: 1; margin-bottom: 0;">
-                    <label>敏感词</label>
-                    <input type="text" name="word" placeholder="输入敏感词" required>
+                    <label>Sensitive Word</label>
+                    <input type="text" name="word" placeholder="Enter sensitive word" required>
                   </div>
-                  <button type="submit" class="btn btn-primary">添加</button>
+                  <button type="submit" class="btn btn-primary">Add</button>
                 </div>
               </form>
             </div>
             <div class="card">
-              <h2>自定义敏感词列表 (${words.length})</h2>
+              <h2>Custom Sensitive Words List (${words.length})</h2>
               <div class="table-container">
                 <table>
                   <thead>
                     <tr>
-                      <th>敏感词</th>
-                      <th>添加时间</th>
-                      <th>操作</th>
+                      <th>Sensitive Word</th>
+                      <th>Added At</th>
+                      <th>Actions</th>
                     </tr>
                   </thead>
                   <tbody>
-                    ${words.length === 0 ? '<tr><td colspan="3" class="empty-state">无数据</td></tr>' : words.map(word => `
+                    ${words.length === 0 ? '<tr><td colspan="3" class="empty-state">No data</td></tr>' : words.map(word => `
                       <tr>
                         <td>${word.word}</td>
                         <td>${new Date(word.created_at).toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai', hour12: false })}</td>
                         <td>
-                          <button class="btn btn-danger btn-sm" onclick="deleteBannedWord(${word.id})">删除</button>
+                          <button class="btn btn-danger btn-sm" onclick="deleteBannedWord(${word.id})">Delete</button>
                         </td>
                       </tr>
                     `).join('')}
@@ -1563,7 +1852,7 @@
           document.getElementById('add-word-form').addEventListener('submit', addBannedWord);
         }
       } catch (error) {
-        page.innerHTML = '<div class="alert alert-error">加载失败</div>';
+        page.innerHTML = '<div class="alert alert-error">Loading failed</div>';
       }
     }
 
@@ -1583,19 +1872,19 @@
 
         const data = await res.json();
         if (data.success) {
-          showAlert('banned-words-alert', '敏感词已添加', 'success');
+          showAlert('banned-words-alert', 'Sensitive word added', 'success');
           form.reset();
           loadBannedWords();
         } else {
-          showAlert('banned-words-alert', data.error || '添加失败', 'error');
+          showAlert('banned-words-alert', data.error || 'Add failed', 'error');
         }
       } catch (error) {
-        showAlert('banned-words-alert', '添加失败', 'error');
+        showAlert('banned-words-alert', 'Add failed', 'error');
       }
     }
 
     async function deleteBannedWord(id) {
-      if (!confirm('确定要删除此敏感词吗？')) return;
+      if (!confirm('Are you sure you want to delete this sensitive word?')) return;
 
       try {
         const res = await fetch('/api/admin/banned-words', {
@@ -1606,17 +1895,17 @@
 
         const data = await res.json();
         if (data.success) {
-          showAlert('banned-words-alert', '敏感词已删除', 'success');
+          showAlert('banned-words-alert', 'Sensitive word deleted', 'success');
           loadBannedWords();
         } else {
-          showAlert('banned-words-alert', data.error || '删除失败', 'error');
+          showAlert('banned-words-alert', data.error || 'Delete failed', 'error');
         }
       } catch (error) {
-        showAlert('banned-words-alert', '删除失败', 'error');
+        showAlert('banned-words-alert', 'Delete failed', 'error');
       }
     }
 
-    // DNS记录管理
+    // DNS records management
     async function manageDNSRecords(domainId, fqdn) {
       const modal = document.createElement('div');
       modal.id = 'dns-modal';
@@ -1625,12 +1914,12 @@
       modal.innerHTML = `
         <div style="background: white; border-radius: 8px; width: 90%; max-width: 900px; max-height: 90vh; overflow-y: auto; padding: 2rem;">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-            <h2 style="margin: 0;">DNS记录管理 - ${fqdn}</h2>
+            <h2 style="margin: 0;">DNS Records Management - ${fqdn}</h2>
             <button onclick="closeDNSModal()" style="background: none; border: none; font-size: 24px; cursor: pointer;">&times;</button>
           </div>
           <div id="dns-modal-alert"></div>
           <div id="dns-records-content">
-            <div class="loading">加载中...</div>
+            <div class="loading">Loading...</div>
           </div>
         </div>
       `;
@@ -1648,36 +1937,36 @@
 
           document.getElementById('dns-records-content').innerHTML = `
             <div class="card" style="margin-bottom: 1rem;">
-              <p><strong>域名状态:</strong> ${domain.status === 'active' ? '活跃' : domain.status === 'suspended' ? '已暂停' : domain.status}</p>
-              <p><strong>所有者ID:</strong> ${domain.owner_linuxdo_id}</p>
-              <p style="margin-bottom: 0; color: #856404;">提示：管理员可以在此删除或修改违规的DNS记录，然后恢复域名状态。</p>
+              <p><strong>Domain Status:</strong> ${domain.status === 'active' ? 'Active' : domain.status === 'suspended' ? 'Suspended' : domain.status}</p>
+              <p><strong>Owner ID:</strong> ${domain.owner_linuxdo_id}</p>
+              <p style="margin-bottom: 0; color: #856404;">Tip: Admins can delete or modify violating DNS records here, then restore domain status.</p>
             </div>
             <div class="table-container">
               <table>
                 <thead>
                   <tr>
-                    <th>类型</th>
-                    <th>记录名</th>
-                    <th>记录值</th>
+                    <th>Type</th>
+                    <th>Record Name</th>
+                    <th>Record Value</th>
                     <th>TTL</th>
                     <th>Proxied</th>
-                    <th>CF同步</th>
-                    <th>操作</th>
+                    <th>CF Synced</th>
+                    <th>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
-                  ${records.length === 0 ? '<tr><td colspan="7" class="empty-state">无DNS记录</td></tr>' : records.map(record => `
+                  ${records.length === 0 ? '<tr><td colspan="7" class="empty-state">No DNS records</td></tr>' : records.map(record => `
                     <tr>
                       <td><span class="badge badge-info">${record.type}</span></td>
                       <td>${record.name}</td>
                       <td style="max-width: 300px; word-break: break-all;">${record.content}</td>
                       <td>${record.ttl}</td>
-                      <td>${record.proxied ? '是' : '否'}</td>
+                      <td>${record.proxied ? 'Yes' : 'No'}</td>
                       <td>${record.cf_synced ? '✓' : '✗'}</td>
                       <td>
                         <div class="action-buttons">
-                          <button class="btn btn-warning btn-sm" onclick="editDNSRecord(${record.id}, '${record.content}', ${record.ttl}, ${record.proxied})">编辑</button>
-                          <button class="btn btn-danger btn-sm" onclick="deleteDNSRecord(${record.id}, ${domainId}, '${fqdn}')">删除</button>
+                          <button class="btn btn-warning btn-sm" onclick="editDNSRecord(${record.id}, '${record.content}', ${record.ttl}, ${record.proxied})">Edit</button>
+                          <button class="btn btn-danger btn-sm" onclick="deleteDNSRecord(${record.id}, ${domainId}, '${fqdn}')">Delete</button>
                         </div>
                       </td>
                     </tr>
@@ -1687,10 +1976,10 @@
             </div>
           `;
         } else {
-          document.getElementById('dns-records-content').innerHTML = `<div class="alert alert-error">${data.error || '加载失败'}</div>`;
+          document.getElementById('dns-records-content').innerHTML = `<div class="alert alert-error">${data.error || 'Loading failed'}</div>`;
         }
       } catch (error) {
-        document.getElementById('dns-records-content').innerHTML = '<div class="alert alert-error">加载失败</div>';
+        document.getElementById('dns-records-content').innerHTML = '<div class="alert alert-error">Loading failed</div>';
       }
     }
 
@@ -1702,10 +1991,10 @@
     }
 
     async function editDNSRecord(id, currentContent, currentTtl, currentProxied) {
-      const newContent = prompt('请输入新的记录值:', currentContent);
+      const newContent = prompt('Enter new record value:', currentContent);
       if (newContent === null || newContent === currentContent) return;
 
-      const reason = prompt('请输入修改原因（可选）:');
+      const reason = prompt('Enter modification reason (optional):');
 
       try {
         const res = await fetch('/api/admin/dns-records', {
@@ -1722,7 +2011,7 @@
 
         const data = await res.json();
         if (data.success) {
-          showAlert('dns-modal-alert', 'DNS记录已更新', 'success');
+          showAlert('dns-modal-alert', 'DNS record updated', 'success');
           // Reload the modal content
           const modal = document.getElementById('dns-modal');
           const fqdn = modal.querySelector('h2').textContent.split(' - ')[1];
@@ -1735,17 +2024,17 @@
             }, 1000);
           }
         } else {
-          showAlert('dns-modal-alert', data.error || '更新失败', 'error');
+          showAlert('dns-modal-alert', data.error || 'Update failed', 'error');
         }
       } catch (error) {
-        showAlert('dns-modal-alert', '更新失败', 'error');
+        showAlert('dns-modal-alert', 'Update failed', 'error');
       }
     }
 
     async function deleteDNSRecord(id, domainId, fqdn) {
-      if (!confirm('确定要删除此DNS记录吗？')) return;
+      if (!confirm('Are you sure you want to delete this DNS record?')) return;
 
-      const reason = prompt('请输入删除原因（可选）:');
+      const reason = prompt('Enter deletion reason (optional):');
 
       try {
         const res = await fetch('/api/admin/dns-records', {
@@ -1756,21 +2045,21 @@
 
         const data = await res.json();
         if (data.success) {
-          showAlert('dns-modal-alert', 'DNS记录已删除', 'success');
+          showAlert('dns-modal-alert', 'DNS record deleted', 'success');
           // Reload the modal content
           setTimeout(() => {
             closeDNSModal();
             manageDNSRecords(domainId, fqdn);
           }, 1000);
         } else {
-          showAlert('dns-modal-alert', data.error || '删除失败', 'error');
+          showAlert('dns-modal-alert', data.error || 'Delete failed', 'error');
         }
       } catch (error) {
-        showAlert('dns-modal-alert', '删除失败', 'error');
+        showAlert('dns-modal-alert', 'Delete failed', 'error');
       }
     }
 
-    // 工具函数
+    // Utility functions
     function showAlert(elementId, message, type) {
       const element = document.getElementById(elementId);
       if (element) {
@@ -1779,7 +2068,7 @@
       }
     }
 
-    // 初始化
+    // Initialize
     init();
   </script>
 </body>

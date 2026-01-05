@@ -107,7 +107,6 @@ export interface Setting {
 export interface BannedWord {
   id: number;
   word: string;
-  category: string;
   created_at: string;
 }
 
@@ -174,6 +173,7 @@ export interface AdminStats {
   pendingReviews: number;
   totalOrders: number;
   totalRevenue: number;
+  unreadMessages: number;
 }
 
 export interface AdminUserListItem {
@@ -218,7 +218,7 @@ export interface AdminReviewListItem {
 export interface Notification {
   id: number;
   linuxdo_id: number;
-  type: 'domain_pending_review' | 'domain_approved' | 'domain_rejected' | 'domain_suspended' | 'domain_unsuspended' | 'report_processed';
+  type: 'domain_pending_review' | 'domain_approved' | 'domain_rejected' | 'domain_suspended' | 'domain_unsuspended' | 'report_processed' | 'announcement' | 'admin_message';
   title: string;
   message: string;
   is_read: number;
@@ -236,4 +236,34 @@ export interface Appeal {
   reviewed_at: string | null;
   admin_note: string | null;
   created_at: string;
+}
+
+// Message types
+export interface Conversation {
+  id: number;
+  user_id: number;
+  last_message_at: string;
+  last_message_preview: string | null;
+  unread_admin_count: number;
+  unread_user_count: number;
+  created_at: string;
+}
+
+export interface Message {
+  id: number;
+  conversation_id: number;
+  sender_id: number;
+  sender_type: 'user' | 'admin';
+  content: string;
+  is_read: number;
+  created_at: string;
+}
+
+export interface ConversationWithUser extends Conversation {
+  username: string;
+  user_trust_level: number;
+}
+
+export interface MessageWithSender extends Message {
+  sender_username: string;
 }

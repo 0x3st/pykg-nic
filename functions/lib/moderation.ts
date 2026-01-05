@@ -7,8 +7,36 @@ export interface ModerationResult {
   allowed: boolean;
   reason?: string;
   matchedWord?: string;
-  category?: string;
   requiresReview?: boolean;
+}
+
+// Common infrastructure subdomain patterns that should be reserved
+// Examples: ns1-99, mx1-99, www1-99, smtp1-99, mail1-99, etc.
+const INFRASTRUCTURE_PATTERNS = [
+  'ns',      // Name servers
+  'mx',      // Mail exchangers
+  'smtp',    // SMTP servers
+  'mail',    // Mail servers
+  'www',     // Web servers
+  'ftp',     // FTP servers
+  'pop',     // POP servers
+  'imap',    // IMAP servers
+  'dns',     // DNS servers
+  'web',     // Web servers
+  'host',    // Host servers
+  'server',  // Generic servers
+];
+
+// Check if label matches infrastructure pattern (e.g., ns1, mx2, www3)
+function isInfrastructurePattern(label: string): boolean {
+  for (const pattern of INFRASTRUCTURE_PATTERNS) {
+    // Match pattern + one or more digits (e.g., ns1, ns10, ns999)
+    const regex = new RegExp(`^${pattern}\\d+$`);
+    if (regex.test(label)) {
+      return true;
+    }
+  }
+  return false;
 }
 
 // Check if label contains banned words
@@ -22,32 +50,40 @@ export async function checkLabel(
   if (isReservedWord(normalizedLabel)) {
     return {
       allowed: false,
-      reason: `该域名为系统保留词，无法注册（参考 js.org 政策）`,
+      reason: `域名包含被禁止的词汇：${normalizedLabel}`,
       matchedWord: normalizedLabel,
-      category: 'reserved',
+      requiresReview: false,
+    };
+  }
+
+  // Check infrastructure patterns (ns1-99, mx1-99, etc.)
+  if (isInfrastructurePattern(normalizedLabel)) {
+    return {
+      allowed: false,
+      reason: `域名包含被禁止的词汇：${normalizedLabel}`,
+      matchedWord: normalizedLabel,
       requiresReview: false,
     };
   }
 
   // Then check custom banned words from database (for inappropriate content)
   const { results: bannedWords } = await db.prepare(
-    'SELECT word, category FROM banned_words WHERE category != ?'
-  ).bind('reserved').all<BannedWord>();
+    'SELECT word FROM banned_words'
+  ).all<BannedWord>();
 
   if (bannedWords && bannedWords.length > 0) {
     // Check for exact match or substring match
-    for (const { word, category } of bannedWords) {
+    for (const { word } of bannedWords) {
       const normalizedWord = word.toLowerCase();
 
       // Check if label contains the banned word
       if (normalizedLabel.includes(normalizedWord)) {
-        // Inappropriate words require review
+        // Custom banned words are now hard blocked (not requiring review)
         return {
           allowed: false,
-          reason: `域名包含敏感词，需要人工审核`,
+          reason: `域名包含被禁止的词汇：${word}`,
           matchedWord: word,
-          category,
-          requiresReview: true,
+          requiresReview: false,  // Changed from true to false - hard block instead of review
         };
       }
     }

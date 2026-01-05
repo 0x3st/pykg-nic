@@ -3,6 +3,7 @@
 import type { Env, Domain, DnsRecord } from '../lib/types';
 import { requireAuth, successResponse, errorResponse } from '../lib/auth';
 import { validateLabel } from '../lib/validators';
+import { checkLabel } from '../lib/moderation';
 
 interface WhoisDomainInfo {
   label: string;
@@ -24,6 +25,12 @@ interface WhoisDomainInfo {
     ttl: number;
     proxied: boolean;
   }>;
+}
+
+interface WhoisReservedInfo {
+  label: string;
+  status: 'reserved';
+  reason: string;
 }
 
 interface DomainQueryResult {
@@ -67,6 +74,18 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
   }
 
   try {
+    // First check if label is reserved or banned (hard block)
+    const moderationResult = await checkLabel(domain, env.DB);
+    if (!moderationResult.allowed && !moderationResult.requiresReview) {
+      // Domain is reserved or banned (hard block)
+      const reservedInfo: WhoisReservedInfo = {
+        label: domain,
+        status: 'reserved',
+        reason: moderationResult.reason || '域名包含被禁止的词汇',
+      };
+      return successResponse(reservedInfo);
+    }
+
     // Query database - JOIN with users table to get username
     // Query active, suspended, and review status domains
     const result = await env.DB.prepare(`

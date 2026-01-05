@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>区块链修复工具 - PY.KG Admin</title>
+  <title>Blockchain Repair Tool - PY.KG Admin</title>
   <style>
     * {
       margin: 0;
@@ -231,37 +231,37 @@
 </head>
 <body>
   <div class="container">
-    <h1>🔧 区块链修复工具</h1>
-    <p class="subtitle">管理员专用 - 修复区块链完整性问题</p>
+    <h1>🔧 Blockchain Repair Tool</h1>
+    <p class="subtitle">Admin Only - Repair blockchain integrity issues</p>
 
     <div class="section">
-      <h2>📊 当前状态</h2>
+      <h2>📊 Current Status</h2>
       <div id="status-container">
         <div class="alert alert-info">
-          <div class="loading"></div> 正在检查区块链状态...
+          <div class="loading"></div> Checking blockchain status...
         </div>
       </div>
     </div>
 
     <div class="section">
-      <h2>🔍 预览修复（Dry Run）</h2>
+      <h2>🔍 Preview Repair (Dry Run)</h2>
       <div class="input-group">
-        <label for="start-block">从区块 ID 开始修复:</label>
+        <label for="start-block">Start repair from block ID:</label>
         <input type="number" id="start-block" value="141" min="1">
       </div>
       <button class="btn btn-primary" id="dry-run-btn" onclick="runDryRun()">
-        预览需要修复的区块
+        Preview blocks to repair
       </button>
       <div id="dry-run-result"></div>
     </div>
 
     <div class="section">
-      <h2>⚠️ 执行修复</h2>
+      <h2>⚠️ Execute Repair</h2>
       <div class="alert alert-warning">
-        <strong>警告：</strong> 此操作将直接修改数据库中的区块链数据。请先运行预览确认无误后再执行。
+        <strong>Warning:</strong> This operation will directly modify blockchain data in the database. Please run preview first to confirm before executing.
       </div>
       <button class="btn btn-danger" id="repair-btn" onclick="runRepair()" disabled>
-        执行修复（需先预览）
+        Execute Repair (Preview Required)
       </button>
       <div id="repair-result"></div>
     </div>
@@ -281,21 +281,21 @@
           if (v.valid) {
             container.innerHTML = `
               <div class="alert alert-success">
-                ✓ 区块链完整性验证通过 (共 ${v.totalBlocks} 个区块)
+                ✓ Blockchain integrity verification passed (${v.totalBlocks} blocks total)
               </div>
             `;
           } else {
             container.innerHTML = `
               <div class="alert alert-danger">
-                ✗ 区块链完整性验证失败！在区块 #${v.invalidAt} 处发现异常
+                ✗ Blockchain integrity verification failed! Anomaly found at block #${v.invalidAt}
               </div>
               <div class="stats">
                 <div class="stat-card">
-                  <div class="stat-label">总区块数</div>
+                  <div class="stat-label">Total Blocks</div>
                   <div class="stat-value">${v.totalBlocks}</div>
                 </div>
                 <div class="stat-card">
-                  <div class="stat-label">异常区块</div>
+                  <div class="stat-label">Invalid Block</div>
                   <div class="stat-value">#${v.invalidAt}</div>
                 </div>
               </div>
@@ -306,7 +306,7 @@
       } catch (e) {
         container.innerHTML = `
           <div class="alert alert-danger">
-            验证失败: ${e.message}
+            Verification failed: ${e.message}
           </div>
         `;
       }
@@ -318,7 +318,7 @@
       const startBlock = parseInt(document.getElementById('start-block').value);
 
       btn.disabled = true;
-      btn.innerHTML = '<span class="loading"></span> 正在预览...';
+      btn.innerHTML = '<span class="loading"></span> Previewing...';
       resultDiv.innerHTML = '';
 
       try {
@@ -331,7 +331,7 @@
         const response = await res.json();
 
         if (!res.ok) {
-          throw new Error(response.error || '请求失败');
+          throw new Error(response.error || 'Request failed');
         }
 
         // API returns { success: true, data: {...} }
@@ -340,13 +340,13 @@
         if (data.blocksToRepair === 0) {
           resultDiv.innerHTML = `
             <div class="alert alert-success" style="margin-top: 1rem;">
-              ✓ 没有需要修复的区块！区块链从 #${startBlock} 开始是完整的。
+              ✓ No blocks need repair! Blockchain is intact starting from #${startBlock}.
             </div>
           `;
         } else {
           let html = `
             <div class="alert alert-info" style="margin-top: 1rem;">
-              找到 ${data.blocksToRepair} 个需要修复的区块（共 ${data.totalBlocks} 个区块）
+              Found ${data.blocksToRepair} blocks to repair (out of ${data.totalBlocks} blocks total)
             </div>
             <div class="update-list">
           `;
@@ -357,7 +357,7 @@
 
             html += `
               <div class="update-item">
-                <strong>区块 #${update.id}</strong><br>
+                <strong>Block #${update.id}</strong><br>
                 prev_hash: ${update.changes.prev_hash.from} →
                 <span class="${prevChanged ? 'changed' : 'unchanged'}">
                   ${update.changes.prev_hash.to}
@@ -381,22 +381,22 @@
       } catch (e) {
         resultDiv.innerHTML = `
           <div class="alert alert-danger" style="margin-top: 1rem;">
-            ❌ 预览失败: ${e.message}
+            ❌ Preview failed: ${e.message}
           </div>
         `;
       } finally {
         btn.disabled = false;
-        btn.innerHTML = '预览需要修复的区块';
+        btn.innerHTML = 'Preview blocks to repair';
       }
     }
 
     async function runRepair() {
       if (!dryRunCompleted) {
-        alert('请先运行预览！');
+        alert('Please run preview first!');
         return;
       }
 
-      if (!confirm('确定要执行修复吗？此操作将修改数据库中的区块链数据。')) {
+      if (!confirm('Are you sure you want to execute the repair? This operation will modify blockchain data in the database.')) {
         return;
       }
 
@@ -405,7 +405,7 @@
       const startBlock = parseInt(document.getElementById('start-block').value);
 
       btn.disabled = true;
-      btn.innerHTML = '<span class="loading"></span> 正在修复...';
+      btn.innerHTML = '<span class="loading"></span> Repairing...';
       resultDiv.innerHTML = '';
 
       try {
@@ -418,7 +418,7 @@
         const response = await res.json();
 
         if (!res.ok) {
-          throw new Error(response.error || '请求失败');
+          throw new Error(response.error || 'Request failed');
         }
 
         // API returns { success: true, data: {...} }
@@ -426,25 +426,25 @@
 
         resultDiv.innerHTML = `
           <div class="alert alert-success" style="margin-top: 1rem;">
-            ✅ 修复完成！
+            ✅ Repair completed!
           </div>
           <div class="stats">
             <div class="stat-card">
-              <div class="stat-label">修复的区块</div>
+              <div class="stat-label">Repaired Blocks</div>
               <div class="stat-value">${data.repaired}</div>
             </div>
             <div class="stat-card">
-              <div class="stat-label">总处理区块</div>
+              <div class="stat-label">Total Processed</div>
               <div class="stat-value">${data.totalBlocks}</div>
             </div>
             <div class="stat-card">
-              <div class="stat-label">起始区块</div>
+              <div class="stat-label">Started From</div>
               <div class="stat-value">#${data.startedFrom}</div>
             </div>
           </div>
         `;
 
-        // 重新检查状态
+        // Recheck status
         setTimeout(() => {
           checkStatus();
           dryRunCompleted = false;
@@ -453,15 +453,15 @@
       } catch (e) {
         resultDiv.innerHTML = `
           <div class="alert alert-danger" style="margin-top: 1rem;">
-            ❌ 修复失败: ${e.message}
+            ❌ Repair failed: ${e.message}
           </div>
         `;
         btn.disabled = false;
-        btn.innerHTML = '执行修复（需先预览）';
+        btn.innerHTML = 'Execute Repair (Preview Required)';
       }
     }
 
-    // 页面加载时检查状态
+    // Check status on page load
     checkStatus();
   </script>
 </body>

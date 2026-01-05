@@ -1,29 +1,5 @@
 // Domain label validation utilities
 
-// Reserved labels that cannot be registered
-export const RESERVED_LABELS: string[] = [
-  // Infrastructure
-  'www', 'mail', 'smtp', 'imap', 'pop', 'pop3', 'ftp', 'ns', 'ns1', 'ns2', 'dns', 'mx',
-  // Special use
-  'localhost', 'local', 'test', 'example', 'invalid',
-  // Auth/Security related
-  'login', 'signin', 'signup', 'account', 'accounts', 'verify', 'verification',
-  'secure', 'security', 'auth', 'authentication', 'password', 'reset',
-  // Financial
-  'billing', 'payment', 'pay', 'wallet',
-  // Administrative
-  'admin', 'administrator', 'support', 'help', 'service', 'services',
-  'official', 'system', 'status', 'root', 'owner', 'staff',
-  // Technical
-  'api', 'console', 'dashboard', 'manage', 'panel', 'docs', 'blog',
-  'static', 'cdn', 'assets', 'home',
-  // Additional common reserved
-  'nic', 'whois', 'registry', 'registrar', 'abuse', 'postmaster', 'webmaster',
-  'hostmaster', 'noc', 'info', 'contact', 'about', 'legal', 'terms', 'privacy',
-  'ssl', 'tls', 'cert', 'certificate', 'autoconfig', 'autodiscover',
-  '_dmarc', '_domainkey', '_acme-challenge',
-];
-
 export interface LabelValidationResult {
   valid: boolean;
   error?: string;
@@ -63,11 +39,6 @@ export function validateLabel(label: string): LabelValidationResult {
   // Cannot be purely numeric
   if (/^\d+$/.test(normalizedLabel)) {
     return { valid: false, error: 'Label cannot be purely numeric' };
-  }
-
-  // Check against reserved labels
-  if (RESERVED_LABELS.includes(normalizedLabel)) {
-    return { valid: false, error: 'This label is reserved and cannot be registered' };
   }
 
   // Check for labels starting with underscore (DNS special records)

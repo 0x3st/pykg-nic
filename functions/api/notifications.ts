@@ -76,3 +76,56 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     return errorResponse('Failed to mark notifications as read', 500);
   }
 };
+
+// DELETE /api/notifications - Delete a notification or all read notifications
+export const onRequestDelete: PagesFunction<Env> = async (context) => {
+  const { env, request } = context;
+
+  const authResult = await requireAuth(request, env);
+  if (authResult instanceof Response) {
+    return authResult;
+  }
+
+  const { user } = authResult;
+  const linuxdoId = parseInt(user.sub, 10);
+
+  let body: { id?: number; delete_all_read?: boolean };
+  try {
+    body = await request.json();
+  } catch {
+    return errorResponse('Invalid JSON body', 400);
+  }
+
+  try {
+    if (body.delete_all_read) {
+      // Delete all read notifications for this user
+      await env.DB.prepare(
+        'DELETE FROM notifications WHERE linuxdo_id = ? AND is_read = 1'
+      ).bind(linuxdoId).run();
+
+      return successResponse({ deleted: 'all_read' });
+    } else if (body.id && typeof body.id === 'number') {
+      // Delete single notification
+      // Verify notification belongs to user before deleting
+      const notification = await env.DB.prepare(
+        'SELECT * FROM notifications WHERE id = ? AND linuxdo_id = ?'
+      ).bind(body.id, linuxdoId).first<Notification>();
+
+      if (!notification) {
+        return errorResponse('Notification not found', 404);
+      }
+
+      // Delete notification
+      await env.DB.prepare(
+        'DELETE FROM notifications WHERE id = ? AND linuxdo_id = ?'
+      ).bind(body.id, linuxdoId).run();
+
+      return successResponse({ deleted: true });
+    } else {
+      return errorResponse('Missing id or delete_all_read parameter', 400);
+    }
+  } catch (e) {
+    console.error('Failed to delete notification:', e);
+    return errorResponse('Failed to delete notification', 500);
+  }
+};

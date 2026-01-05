@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>小黑屋 - PY.KG</title>
+  <title>Blacklist - PY.KG</title>
   <style>
     :root {
       --primary: #2563eb;
@@ -189,28 +189,28 @@
 </head>
 <body>
   <div class="container">
-    <a href="/" class="back-link">&larr; 返回首页</a>
+    <a href="/" class="back-link">&larr; Back to Home</a>
 
     <header>
-      <h1>小黑屋</h1>
-      <p>违规用户名单</p>
+      <h1>Blacklist</h1>
+      <p>List of Banned Users</p>
     </header>
 
     <div id="message-container" class="hidden"></div>
 
     <div class="card">
       <div class="alert alert-info">
-        <strong>说明：</strong>以下用户因违反 PY.KG 服务条款被封禁，已永久禁止注册域名。
+        <strong>Notice:</strong> The following users have been banned for violating PY.KG Terms of Service and are permanently prohibited from registering domains.
       </div>
 
       <div id="blacklist-content">
-        <div class="loading">加载中...</div>
+        <div class="loading">Loading...</div>
       </div>
     </div>
 
     <footer>
       <p>
-        <a href="/">首页</a> | <a href="/whois.html">WHOIS 查询</a> | <a href="/blacklist.html">小黑屋</a> | <a href="/logs.html">操作日志</a> | <a href="/terms.html">服务条款</a>
+        <a href="/">Home</a> | <a href="/whois.html">WHOIS Lookup</a> | <a href="/blacklist.html">Blacklist</a> | <a href="/logs.html">Operation Logs</a> | <a href="/terms.html">Terms of Service</a>
       </p>
     </footer>
   </div>
@@ -239,7 +239,7 @@
         const data = await response.json();
 
         if (!data.success) {
-          showMessage(data.error || '加载失败', 'error');
+          showMessage(data.error || 'Failed to load', 'error');
           return;
         }
 
@@ -247,19 +247,19 @@
         const content = document.getElementById('blacklist-content');
 
         if (users.length === 0) {
-          content.innerHTML = '<div class="empty-state">暂无封禁用户</div>';
+          content.innerHTML = '<div class="empty-state">No banned users</div>';
           return;
         }
 
         content.innerHTML = `
-          <h2>封禁用户列表 (${users.length})</h2>
+          <h2>Banned Users List (${users.length})</h2>
           <div class="table-container">
             <table>
               <thead>
                 <tr>
-                  <th>用户名</th>
-                  <th>封禁原因</th>
-                  <th>封禁时间</th>
+                  <th>Username</th>
+                  <th>Ban Reason</th>
+                  <th>Ban Time</th>
                 </tr>
               </thead>
               <tbody>
@@ -268,8 +268,8 @@
                     <td>
                       <span class="badge badge-danger">${escapeHtml(user.username)}</span>
                     </td>
-                    <td>${escapeHtml(user.ban_reason || '违规操作')}</td>
-                    <td>${new Date(user.updated_at).toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai', hour12: false })}</td>
+                    <td>${escapeHtml(user.ban_reason || 'Policy violation')}</td>
+                    <td>${new Date(user.updated_at).toLocaleString('en-US', { timeZone: 'Asia/Shanghai', hour12: false })}</td>
                   </tr>
                 `).join('')}
               </tbody>
@@ -277,7 +277,7 @@
           </div>
         `;
       } catch (e) {
-        showMessage('加载失败: ' + e.message, 'error');
+        showMessage('Failed to load: ' + e.message, 'error');
       }
     }
 

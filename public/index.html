@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -424,8 +424,8 @@
 <body>
   <div class="container">
     <header>
-      <h1>PY.KG 网络信息中心</h1>
-      <p>PY.KG 子域名注册服务</p>
+      <h1>PY.KG Network Information Center</h1>
+      <p>PY.KG Subdomain Registration Service</p>
     </header>
 
     <!-- Error display -->
@@ -433,13 +433,13 @@
 
     <!-- Login section (shown when not logged in) -->
     <div id="login-section" class="card hidden">
-      <h2>登录</h2>
+      <h2>Login</h2>
       <p style="margin-bottom: 1rem; color: var(--text-muted);">
-        使用 LinuxDO 账号登录以注册您的专属子域名。
+        Login with your LinuxDO account to register your exclusive subdomain.
         <br>
-        <small>要求：信任等级 ≥ 2</small>
+        <small>Requirement: Trust Level ≥ 2</small>
       </p>
-      <a href="/auth/login" class="btn btn-primary">使用 LinuxDO 登录</a>
+      <a href="/auth/login" class="btn btn-primary">Login with LinuxDO</a>
     </div>
 
     <!-- User section (shown when logged in) -->
@@ -448,17 +448,21 @@
         <div class="user-details">
           <div class="avatar" id="user-avatar">?</div>
           <div>
-            <strong id="user-name">加载中...</strong>
+            <strong id="user-name">Loading...</strong>
             <br>
             <span class="badge badge-success" id="user-trust">TL?</span>
           </div>
         </div>
         <div style="display: flex; gap: 0.5rem; align-items: center;">
           <button class="btn btn-secondary" id="notifications-btn" style="position: relative;">
-            通知
+            Notifications
             <span id="unread-badge" class="hidden" style="position: absolute; top: -5px; right: -5px; background: var(--danger); color: white; border-radius: 50%; width: 18px; height: 18px; font-size: 0.7rem; display: flex; align-items: center; justify-content: center;"></span>
           </button>
-          <a href="/auth/logout" class="btn btn-secondary">退出登录</a>
+          <button class="btn btn-secondary" id="messages-btn" style="position: relative;">
+            Messages
+            <span id="unread-messages-badge" class="hidden" style="position: absolute; top: -5px; right: -5px; background: var(--danger); color: white; border-radius: 50%; width: 18px; height: 18px; font-size: 0.7rem; display: flex; align-items: center; justify-content: center;"></span>
+          </button>
+          <a href="/auth/logout" class="btn btn-secondary">Logout</a>
         </div>
       </div>
     </div>
@@ -466,121 +470,147 @@
     <!-- Notifications panel -->
     <div id="notifications-panel" class="card hidden">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-        <h2 style="margin: 0;">消息通知</h2>
+        <h2 style="margin: 0;">Notifications</h2>
         <div style="display: flex; gap: 0.5rem;">
-          <button class="btn btn-secondary btn-sm" id="mark-all-read-btn">全部标记已读</button>
-          <button class="btn btn-danger btn-sm" id="delete-all-read-btn">删除所有已读</button>
-          <button class="btn btn-secondary btn-sm" id="close-notifications-btn">关闭</button>
+          <button class="btn btn-secondary btn-sm" id="mark-all-read-btn">Mark All as Read</button>
+          <button class="btn btn-danger btn-sm" id="delete-all-read-btn">Delete All Read</button>
+          <button class="btn btn-secondary btn-sm" id="close-notifications-btn">Close</button>
         </div>
       </div>
       <div id="notifications-list">
-        <div class="loading">加载中...</div>
+        <div class="loading">Loading...</div>
+      </div>
+    </div>
+
+    <!-- Messages panel -->
+    <div id="messages-panel" class="card hidden">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <h2 style="margin: 0;">Chat with Admin</h2>
+        <button class="btn btn-secondary btn-sm" id="close-messages-btn">Close</button>
+      </div>
+      <div id="messages-container" style="max-height: 400px; overflow-y: auto; margin-bottom: 1rem; padding: 1rem; background: var(--bg); border-radius: 6px;">
+        <div class="loading">Loading messages...</div>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+        <textarea
+          id="message-input"
+          placeholder="Type your message here..."
+          rows="3"
+          maxlength="2000"
+          style="width: 100%; padding: 0.625rem; border: 1px solid var(--border); border-radius: 6px; font-size: 0.875rem; font-family: inherit; resize: vertical;"
+        ></textarea>
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <small style="color: var(--text-muted);">
+            <span id="message-char-count">0</span>/2000 characters
+          </small>
+          <button class="btn btn-primary btn-sm" id="send-message-btn">Send</button>
+        </div>
       </div>
     </div>
 
     <!-- Appeal submission panel (shown when domain is suspended) -->
     <div id="appeal-section" class="card hidden">
-      <h2>申诉解封</h2>
+      <h2>Submit Appeal</h2>
       <div class="alert alert-warning" style="margin-bottom: 1rem;">
-        您的域名已被暂停，如果您认为这是误判，可以提交申诉。
+        Your domain has been suspended. If you believe this is a mistake, you can submit an appeal.
       </div>
       <form id="appeal-form">
         <div class="form-group">
-          <label for="appeal-reason">申诉原因 <span style="color: var(--danger);">*</span></label>
+          <label for="appeal-reason">Appeal Reason <span style="color: var(--danger);">*</span></label>
           <textarea
             id="appeal-reason"
             rows="5"
-            placeholder="请详细说明您认为域名被暂停的原因不成立，或者您已经整改完成..."
+            placeholder="Please explain in detail why you believe the suspension is unjustified, or that you have completed the necessary corrections..."
             required
             minlength="10"
             style="width: 100%; padding: 0.625rem; border: 1px solid var(--border); border-radius: 6px; font-size: 0.875rem; font-family: inherit; resize: vertical;"
           ></textarea>
           <small style="color: var(--text-muted); margin-top: 0.25rem; display: block;">
-            请至少输入 10 个字符
+            Please enter at least 10 characters
           </small>
         </div>
-        <button type="submit" class="btn btn-primary">提交申诉</button>
+        <button type="submit" class="btn btn-primary">Submit Appeal</button>
       </form>
     </div>
 
     <!-- Domain registration section -->
     <div id="register-section" class="card hidden">
-      <h2>注册子域名</h2>
+      <h2>Register Subdomain</h2>
       <p style="margin-bottom: 1rem; color: var(--text-muted);">
-        每位用户可注册一个子域名，请谨慎选择。
+        Each user can register one subdomain. Please choose carefully.
       </p>
       <div class="alert alert-info" style="margin-bottom: 1rem;">
-        <strong>价格：</strong><span id="domain-price">--</span> 积分（LinuxDO Credit）
+        <strong>Price:</strong><span id="domain-price">--</span> Credits (LinuxDO Credit)
       </div>
       <form id="register-form">
         <div class="form-group">
-          <label for="label-input">子域名</label>
+          <label for="label-input">Subdomain</label>
           <div class="input-group">
             <input type="text" id="label-input" placeholder="your-name" pattern="[a-z0-9-]+" required>
             <span class="suffix">.py.kg</span>
           </div>
           <small style="color: var(--text-muted); margin-top: 0.25rem; display: block;">
-            只允许小写字母、数字和连字符，长度 2-63 字符
+            Only lowercase letters, numbers, and hyphens allowed, 2-63 characters
           </small>
         </div>
         <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-          <button type="submit" class="btn btn-primary" id="register-btn">注册</button>
-          <a href="/whois.html" class="btn btn-secondary">WHOIS 查询</a>
+          <button type="submit" class="btn btn-primary" id="register-btn">Register</button>
+          <a href="/whois.html" class="btn btn-secondary">WHOIS Lookup</a>
         </div>
       </form>
     </div>
 
     <!-- Domain registration detail form section (Python praise + usage purpose) -->
     <div id="register-detail-section" class="card hidden">
-      <h2>完善注册信息</h2>
-      <div class="domain-display" id="register-domain-display">加载中...</div>
+      <h2>Complete Registration Information</h2>
+      <div class="domain-display" id="register-domain-display">Loading...</div>
 
       <!-- Service Terms -->
       <div style="margin-bottom: 1.5rem; padding: 1rem; background: var(--bg); border-left: 3px solid var(--danger); border-radius: 4px;">
-        <h3 style="font-size: 1rem; margin-bottom: 0.75rem; color: var(--danger);">PY.KG 服务条款</h3>
+        <h3 style="font-size: 1rem; margin-bottom: 0.75rem; color: var(--danger);">PY.KG Terms of Service</h3>
         <div style="font-size: 0.875rem; line-height: 1.6; color: var(--text);">
-          <p style="margin-bottom: 0.5rem;"><strong>一、使用规范</strong></p>
+          <p style="margin-bottom: 0.5rem;"><strong>1. Usage Guidelines</strong></p>
           <ul style="margin-left: 1.5rem; margin-bottom: 0.75rem;">
-            <li>严禁将域名用于任何非法网站、非法服务或违法活动</li>
-            <li>严禁发布、传播违法违规内容（包括但不限于色情、赌博、诈骗、暴力、恐怖主义等）</li>
-            <li>严禁利用域名进行网络攻击、钓鱼、诈骗、传播病毒木马等恶意行为</li>
-            <li>严禁滥用域名资源，包括恶意抢注、倒卖、囤积等行为</li>
-            <li>严禁发布虚假信息或用于误导性用途</li>
-            <li>需遵守中华人民共和国相关法律法规及当地法律法规</li>
+            <li>Strictly prohibited: Using domains for any illegal websites, illegal services, or unlawful activities</li>
+            <li>Strictly prohibited: Publishing or distributing illegal content (including but not limited to pornography, gambling, fraud, violence, terrorism, etc.)</li>
+            <li>Strictly prohibited: Using domains for network attacks, phishing, fraud, spreading viruses or malware</li>
+            <li>Strictly prohibited: Abusing domain resources, including malicious registration, reselling, or hoarding</li>
+            <li>Strictly prohibited: Publishing false information or using domains for misleading purposes</li>
+            <li>Must comply with relevant laws and regulations of the People's Republic of China and local jurisdictions</li>
           </ul>
 
-          <p style="margin-bottom: 0.5rem;"><strong style="color: var(--danger);">二、违规处理</strong></p>
+          <p style="margin-bottom: 0.5rem;"><strong style="color: var(--danger);">2. Violation Handling</strong></p>
           <ul style="margin-left: 1.5rem; margin-bottom: 0.75rem;">
-            <li><strong>发现与暂停：</strong>一经发现违规行为，管理员将立即暂停域名的全部 DNS 解析服务</li>
-            <li><strong>申诉机制：</strong>用户可在控制台提交申诉，管理员将重新评估后作出最终处理决定（包括恢复、部分删除或完全删除 DNS 记录）</li>
-            <li><strong>申诉限制：</strong>每个域名仅有一次申诉机会，请务必在申诉中完整、如实陈述情况</li>
-            <li><strong>域名删除：</strong>经评估确认违反服务条款的域名将被直接删除，不予恢复</li>
-            <li><strong>永久封禁：</strong>累计违规三次的用户将被永久加入黑名单，不再享有申诉权利</li>
+            <li><strong>Detection and Suspension:</strong> Upon discovery of violations, administrators will immediately suspend all DNS resolution services for the domain</li>
+            <li><strong>Appeal Mechanism:</strong> Users may submit an appeal through the console, and administrators will re-evaluate and make a final decision (including restoration, partial deletion, or complete deletion of DNS records)</li>
+            <li><strong>Appeal Limitation:</strong> Each domain has only one appeal opportunity. Please provide a complete and truthful statement in your appeal</li>
+            <li><strong>Domain Deletion:</strong> Domains confirmed to violate the Terms of Service will be deleted directly without restoration</li>
+            <li><strong>Permanent Ban:</strong> Users with three cumulative violations will be permanently blacklisted and will no longer have appeal rights</li>
           </ul>
 
-          <p style="margin-bottom: 0.5rem;"><strong>三、费用与退款</strong></p>
+          <p style="margin-bottom: 0.5rem;"><strong>3. Fees and Refunds</strong></p>
           <ul style="margin-left: 1.5rem; margin-bottom: 0.75rem;">
-            <li>域名注册需支付相应积分，一经支付即视为服务开始</li>
-            <li><strong style="color: var(--danger);">为防止滥用，所有费用均不予退还</strong>，包括但不限于：注册成功、审核未通过、违规删除等情况</li>
-            <li>请在注册前仔细阅读服务条款，确认后再进行支付</li>
+            <li>Domain registration requires payment of corresponding credits, and payment is considered the start of service</li>
+            <li><strong style="color: var(--danger);">To prevent abuse, all fees are non-refundable</strong>, including but not limited to: successful registration, failed review, violation deletion, etc.</li>
+            <li>Please read the Terms of Service carefully before registration and confirm before payment</li>
           </ul>
 
-          <p style="margin-bottom: 0.5rem;"><strong>四、隐私政策</strong></p>
+          <p style="margin-bottom: 0.5rem;"><strong>4. Privacy Policy</strong></p>
           <ul style="margin-left: 1.5rem; margin-bottom: 0.75rem;">
-            <li><strong>信息收集：</strong>我们通过 LinuxDO OAuth 获取您的用户 ID、用户名和信任等级，用于身份验证和服务提供</li>
-            <li><strong>信息使用：</strong>您的信息仅用于域名注册、管理及相关服务，不会用于其他商业目的</li>
-            <li><strong>信息公开：</strong>您注册的域名及用户名将在 WHOIS 查询中公开显示；违规记录将在小黑屋中公示</li>
-            <li><strong>信息存储：</strong>您的数据存储于 Cloudflare 基础设施，我们采取合理措施保护数据安全</li>
-            <li><strong>日志记录：</strong>系统会记录关键操作日志（如域名注册等），用于安全审计和问题排查</li>
+            <li><strong>Information Collection:</strong> We obtain your user ID, username, and trust level through LinuxDO OAuth for authentication and service provision</li>
+            <li><strong>Information Use:</strong> Your information is only used for domain registration, management, and related services, and will not be used for other commercial purposes</li>
+            <li><strong>Information Disclosure:</strong> Your registered domain and username will be publicly displayed in WHOIS queries; violation records will be published in the blacklist</li>
+            <li><strong>Information Storage:</strong> Your data is stored on Cloudflare infrastructure, and we take reasonable measures to protect data security</li>
+            <li><strong>Logging:</strong> The system records key operation logs (such as domain registration) for security audits and troubleshooting</li>
           </ul>
 
-          <p style="margin-bottom: 0.5rem;"><strong>五、社区文化</strong></p>
-          <p style="margin-bottom: 0;">让我们践行 LINUX DO 的社区文化：</p>
-          <p style="margin: 0.5rem 0; font-weight: 600; font-size: 0.95rem;">真诚、友善、团结、专业</p>
-          <p style="margin: 0;">共建你我引以为荣之社区。</p>
+          <p style="margin-bottom: 0.5rem;"><strong>5. Community Culture</strong></p>
+          <p style="margin-bottom: 0;">Let's practice the LINUX DO community culture:</p>
+          <p style="margin: 0.5rem 0; font-weight: 600; font-size: 0.95rem;">Sincere, Friendly, United, Professional</p>
+          <p style="margin: 0;">Build a community we can all be proud of.</p>
 
           <p style="margin-top: 1rem; padding-top: 0.75rem; border-top: 1px solid var(--border); color: var(--text-muted); font-size: 0.8rem;">
-            最后更新：2025 年 1 月 4 日
+            Last Updated: January 4, 2025
           </p>
         </div>
       </div>
@@ -588,124 +618,124 @@
       <form id="register-detail-form">
         <div class="form-group">
           <label for="python-praise-input">
-            为什么喜欢 Python？ <span style="color: var(--danger);">*</span>
+            Why do you like Python? <span style="color: var(--danger);">*</span>
           </label>
           <textarea
             id="python-praise-input"
             rows="5"
-            placeholder="请写一段不少于 20 字的文字，表达您对 Python 的喜爱..."
+            placeholder="Please write at least 20 characters expressing your love for Python..."
             required
             minlength="20"
             style="width: 100%; padding: 0.625rem; border: 1px solid var(--border); border-radius: 6px; font-size: 0.875rem; font-family: inherit; resize: vertical;"
           ></textarea>
           <small style="color: var(--text-muted); margin-top: 0.25rem; display: block;">
-            请至少输入 20 个字符
+            Please enter at least 20 characters
           </small>
         </div>
         <div class="form-group">
           <label for="usage-purpose-input">
-            域名用途说明 <span style="color: var(--danger);">*</span>
+            Domain Usage Description <span style="color: var(--danger);">*</span>
           </label>
           <textarea
             id="usage-purpose-input"
             rows="4"
-            placeholder="请描述您打算如何使用这个域名..."
+            placeholder="Please describe how you plan to use this domain..."
             required
             minlength="10"
             style="width: 100%; padding: 0.625rem; border: 1px solid var(--border); border-radius: 6px; font-size: 0.875rem; font-family: inherit; resize: vertical;"
           ></textarea>
           <small style="color: var(--text-muted); margin-top: 0.25rem; display: block;">
-            请如实说明域名用途。内容不实或违背使用条款将会拒绝注册申请。
+            Please truthfully describe the domain usage. False or violating content will result in registration rejection.
           </small>
         </div>
         <div class="form-group">
           <label style="display: flex; align-items: start; cursor: pointer;">
             <input type="checkbox" id="terms-checkbox" required style="margin-top: 0.25rem; margin-right: 0.5rem; width: 18px; height: 18px; cursor: pointer;">
             <span style="font-size: 0.875rem;">
-              我已阅读并同意 <strong style="color: var(--danger);">PY.KG 服务条款</strong>，承诺遵守使用规范，如有违规愿意承担相应后果。
+              I have read and agree to the <strong style="color: var(--danger);">PY.KG Terms of Service</strong>, promise to comply with usage guidelines, and am willing to accept the consequences of any violations.
             </span>
           </label>
         </div>
         <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-          <button type="submit" class="btn btn-primary" id="pay-btn">支付并完成注册</button>
-          <button type="button" class="btn btn-secondary" id="back-to-label-btn">返回修改域名</button>
+          <button type="submit" class="btn btn-primary" id="pay-btn">Pay and Complete Registration</button>
+          <button type="button" class="btn btn-secondary" id="back-to-label-btn">Back to Modify Domain</button>
         </div>
       </form>
     </div>
 
     <!-- Pending review section (shown when domain is pending review but not yet created) -->
     <div id="pending-review-section" class="card hidden">
-      <h2>域名待审核</h2>
+      <h2>Domain Pending Review</h2>
       <div class="alert alert-info" style="margin-bottom: 1rem;">
-        <strong>您的域名注册申请正在等待管理员审核</strong><br>
-        审核通过后域名将自动激活，届时您可以配置 DNS 记录。
+        <strong>Your domain registration application is awaiting administrator review</strong><br>
+        Once approved, the domain will be automatically activated and you can configure DNS records.
       </div>
       <div style="margin-bottom: 1rem;">
-        <p><strong>申请域名：</strong><span id="pending-review-label">--</span>.py.kg</p>
-        <p><strong>审核原因：</strong><span id="pending-review-reason">--</span></p>
-        <p style="color: var(--text-muted); font-size: 0.875rem;"><strong>提交时间：</strong><span id="pending-review-created">--</span></p>
+        <p><strong>Applied Domain:</strong><span id="pending-review-label">--</span>.py.kg</p>
+        <p><strong>Review Reason:</strong><span id="pending-review-reason">--</span></p>
+        <p style="color: var(--text-muted); font-size: 0.875rem;"><strong>Submission Time:</strong><span id="pending-review-created">--</span></p>
       </div>
-      <button class="btn btn-secondary" id="refresh-review-status-btn">刷新状态</button>
+      <button class="btn btn-secondary" id="refresh-review-status-btn">Refresh Status</button>
     </div>
 
     <!-- Pending order section -->
     <div id="pending-order-section" class="card hidden">
-      <h2>待支付订单</h2>
+      <h2>Pending Payment Order</h2>
       <div class="alert alert-warning" style="margin-bottom: 1rem;">
-        您有一个待支付的域名注册订单，请完成支付或取消后重新注册。
+        You have a pending domain registration order. Please complete payment or cancel to register again.
       </div>
       <div style="margin-bottom: 1rem;">
-        <p><strong>域名：</strong><span id="pending-label">--</span>.py.kg</p>
-        <p><strong>金额：</strong><span id="pending-amount">--</span> 积分</p>
-        <p><strong>订单号：</strong><span id="pending-order-no">--</span></p>
-        <p style="color: var(--text-muted); font-size: 0.875rem;"><strong>创建时间：</strong><span id="pending-created">--</span></p>
+        <p><strong>Domain:</strong><span id="pending-label">--</span>.py.kg</p>
+        <p><strong>Amount:</strong><span id="pending-amount">--</span> Credits</p>
+        <p><strong>Order Number:</strong><span id="pending-order-no">--</span></p>
+        <p style="color: var(--text-muted); font-size: 0.875rem;"><strong>Created:</strong><span id="pending-created">--</span></p>
       </div>
       <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-        <button class="btn btn-primary" id="continue-pay-btn">继续支付</button>
-        <button class="btn btn-secondary" id="refresh-status-btn">刷新状态</button>
-        <button class="btn btn-secondary" id="cancel-order-btn">取消订单</button>
+        <button class="btn btn-primary" id="continue-pay-btn">Continue Payment</button>
+        <button class="btn btn-secondary" id="refresh-status-btn">Refresh Status</button>
+        <button class="btn btn-secondary" id="cancel-order-btn">Cancel Order</button>
       </div>
     </div>
 
     <!-- Domain management section -->
     <div id="domain-section" class="card hidden">
-      <h2>我的域名</h2>
+      <h2>My Domain</h2>
       <div id="suspend-alert" class="hidden"></div>
-      <div class="domain-display" id="domain-display">加载中...</div>
+      <div class="domain-display" id="domain-display">Loading...</div>
       <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem;">
         <span class="badge badge-success" id="domain-status">active</span>
         <span style="color: var(--text-muted); font-size: 0.875rem;" id="domain-created"></span>
       </div>
-      <button class="btn btn-danger btn-sm" id="delete-domain-btn">删除域名</button>
+      <button class="btn btn-danger btn-sm" id="delete-domain-btn">Delete Domain</button>
     </div>
 
     <!-- DNS Records section -->
     <div id="dns-section" class="card hidden">
-      <h2>DNS 记录管理</h2>
+      <h2>DNS Records Management</h2>
       <div class="alert alert-info" style="margin-bottom: 1rem;">
-        <strong>说明：</strong>您可以添加以下类型的 DNS 记录（最多10条）：
+        <strong>Note:</strong>You can add the following types of DNS records (maximum 10):
         <ul style="margin: 0.5rem 0 0 1.5rem;">
-          <li><strong>A / AAAA：</strong>指向 IPv4 / IPv6 地址</li>
-          <li><strong>CNAME：</strong>指向另一个域名</li>
-          <li><strong>TXT：</strong>可以用于各种验证</li>
+          <li><strong>A / AAAA:</strong>Points to IPv4 / IPv6 address</li>
+          <li><strong>CNAME:</strong>Points to another domain</li>
+          <li><strong>TXT:</strong>Can be used for various verifications</li>
         </ul>
       </div>
 
       <div id="dns-loading" class="loading">
         <span class="spinner"></span>
-        <p>加载 DNS 记录...</p>
+        <p>Loading DNS records...</p>
       </div>
 
       <div id="dns-content" class="hidden">
         <div class="form-group">
-          <label>当前 DNS 记录 <span id="dns-mode-badge"></span></label>
+          <label>Current DNS Records <span id="dns-mode-badge"></span></label>
           <div id="dns-records-container">
-            <p style="color: var(--text-muted); padding: 1rem;">暂无 DNS 记录</p>
+            <p style="color: var(--text-muted); padding: 1rem;">No DNS records</p>
           </div>
         </div>
 
         <div class="form-group">
-          <label>添加 DNS 记录</label>
+          <label>Add DNS Record</label>
           <div class="dns-form-grid">
             <div>
               <label style="display: block; font-size: 0.75rem; margin-bottom: 0.25rem; color: var(--text-muted);">Type</label>
@@ -726,7 +756,7 @@
             </div>
           </div>
           <p class="help-text" id="dns-type-hint" style="margin-top: 0.5rem;">
-            @ 表示根域名，或输入子域名（如 blog、api）来创建 blog.your-domain.py.kg
+            @ represents the root domain, or enter a subdomain (like blog, api) to create blog.your-domain.py.kg
           </p>
 
           <div style="margin-top: 1rem; padding: 1rem; background: var(--bg); border-radius: 6px;">
@@ -736,7 +766,7 @@
                 <span>
                   <strong>Proxy 🟠</strong>
                   <small style="display: block; color: var(--text-muted); margin-top: 0.25rem;">
-                    启用 Cloudflare CDN/DDoS 防护（仅 A/AAAA/CNAME）
+                    Enable Cloudflare CDN/DDoS protection (A/AAAA/CNAME only)
                   </small>
                 </span>
               </label>
@@ -750,34 +780,34 @@
                 </span>
               </label>
               <select id="dns-ttl-select" style="width: 100%; padding: 0.625rem; border: 1px solid var(--border); border-radius: 6px; font-size: 0.875rem;">
-                <option value="60">1 分钟</option>
-                <option value="300">5 分钟</option>
-                <option value="900">15 分钟</option>
-                <option value="1800">30 分钟</option>
-                <option value="3600" selected>1 小时</option>
-                <option value="7200">2 小时</option>
-                <option value="14400">4 小时</option>
-                <option value="43200">12 小时</option>
-                <option value="86400">1 天</option>
+                <option value="60">1 minute</option>
+                <option value="300">5 minutes</option>
+                <option value="900">15 minutes</option>
+                <option value="1800">30 minutes</option>
+                <option value="3600" selected>1 hour</option>
+                <option value="7200">2 hours</option>
+                <option value="14400">4 hours</option>
+                <option value="43200">12 hours</option>
+                <option value="86400">1 day</option>
               </select>
               <small style="color: var(--text-muted); margin-top: 0.25rem; display: block;">
-                <span id="dns-ttl-hint">DNS 缓存时间</span>
+                <span id="dns-ttl-hint">DNS cache time</span>
               </small>
             </div>
           </div>
 
-          <button type="button" class="btn btn-primary" id="add-dns-btn" style="margin-top: 1rem; width: 100%;">添加记录</button>
+          <button type="button" class="btn btn-primary" id="add-dns-btn" style="margin-top: 1rem; width: 100%;">Add Record</button>
         </div>
 
         <div id="dns-actions" style="margin-top: 1rem;">
-          <button type="button" class="btn btn-danger btn-sm" id="clear-dns-btn">清除所有 DNS 记录</button>
+          <button type="button" class="btn btn-danger btn-sm" id="clear-dns-btn">Clear All DNS Records</button>
         </div>
       </div>
     </div>
 
     <footer>
       <p>
-        <a href="/">首页</a> | <a href="/whois.html">WHOIS 查询</a> | <a href="/blacklist.html">小黑屋</a> | <a href="/logs.html">操作日志</a> | <a href="/terms.html">服务条款</a>
+        <a href="/">Home</a> | <a href="/whois.html">WHOIS Lookup</a> | <a href="/blacklist.html">Blacklist</a> | <a href="/logs.html">Operation Logs</a> | <a href="/terms.html">Terms of Service</a>
       </p>
     </footer>
   </div>
@@ -844,7 +874,7 @@
       const paymentStatus = params.get('payment');
       if (paymentStatus === 'success') {
         // 支付成功，域名已创建
-        errorContainer.innerHTML = `<div class="alert alert-success">支付成功！域名已创建，正在加载...</div>`;
+        errorContainer.innerHTML = `<div class="alert alert-success">Payment successful! Domain created, loading...</div>`;
         errorContainer.classList.remove('hidden');
         window.history.replaceState({}, '', '/');
 
@@ -874,7 +904,7 @@
         return;
       } else if (paymentStatus === 'processing') {
         // 支付正在处理中，等待 notify callback
-        errorContainer.innerHTML = `<div class="alert alert-info">支付正在处理中，请稍候刷新页面查看结果...</div>`;
+        errorContainer.innerHTML = `<div class="alert alert-info">Payment processing, please refresh the page later to check the result...</div>`;
         errorContainer.classList.remove('hidden');
         window.history.replaceState({}, '', '/');
 
@@ -888,17 +918,17 @@
             if (data.domain) {
               // 域名已创建，支付已完成
               clearInterval(checkInterval);
-              errorContainer.innerHTML = `<div class="alert alert-success">支付成功！域名已创建</div>`;
+              errorContainer.innerHTML = `<div class="alert alert-success">Payment successful! Domain created</div>`;
               setTimeout(() => window.location.reload(), 1000);
             } else if (attempts >= maxAttempts) {
               // 超时，提示用户手动刷新
               clearInterval(checkInterval);
-              errorContainer.innerHTML = `<div class="alert alert-warning">支付处理中，请稍后手动刷新页面查看结果</div>`;
+              errorContainer.innerHTML = `<div class="alert alert-warning">Payment processing, please manually refresh the page later to check the result</div>`;
             }
           } catch (e) {
             if (attempts >= maxAttempts) {
               clearInterval(checkInterval);
-              errorContainer.innerHTML = `<div class="alert alert-warning">支付处理中，请稍后手动刷新页面查看结果</div>`;
+              errorContainer.innerHTML = `<div class="alert alert-warning">Payment processing, please manually refresh the page later to check the result</div>`;
             }
           }
         }, 3000);
@@ -908,7 +938,7 @@
       // 通用支付返回（无明确状态）
       const fromPayment = params.get('from');
       if (fromPayment === 'payment') {
-        errorContainer.innerHTML = `<div class="alert alert-info">支付处理中，请稍候...</div>`;
+        errorContainer.innerHTML = `<div class="alert alert-info">Payment processing, please wait...</div>`;
         errorContainer.classList.remove('hidden');
         window.history.replaceState({}, '', '/');
         setTimeout(() => {
@@ -986,8 +1016,8 @@
             // Show suspend alert
             suspendAlert.innerHTML = `
               <div class="alert alert-error" style="margin-bottom: 1rem;">
-                <strong>域名已被暂停</strong><br>
-                暂停原因: ${escapeHtml(currentDomain.suspend_reason || '违规操作')}
+                <strong>Domain Suspended</strong><br>
+                Suspension reason: ${escapeHtml(currentDomain.suspend_reason || 'Violation')}
               </div>
             `;
             suspendAlert.classList.remove('hidden');
@@ -1004,9 +1034,9 @@
             // Show review alert
             suspendAlert.innerHTML = `
               <div class="alert alert-info" style="margin-bottom: 1rem;">
-                <strong>域名待审核</strong><br>
-                您的域名注册申请正在等待管理员审核，审核通过后即可使用。
-                ${currentDomain.review_reason ? `<br>审核原因: ${escapeHtml(currentDomain.review_reason)}` : ''}
+                <strong>Domain Pending Review</strong><br>
+                Your domain registration application is awaiting administrator review. Once approved, you can use it.
+                ${currentDomain.review_reason ? `<br>Review reason: ${escapeHtml(currentDomain.review_reason)}` : ''}
               </div>
             `;
             suspendAlert.classList.remove('hidden');
@@ -1026,13 +1056,13 @@
           }
 
           document.getElementById('domain-created').textContent =
-            `创建于 ${new Date(currentDomain.created_at).toLocaleDateString('zh-CN')}`;
+            `Created on ${new Date(currentDomain.created_at).toLocaleDateString('en-US')}`;
 
           // Control delete button based on status
           const deleteBtn = document.getElementById('delete-domain-btn');
           if (currentDomain.status === 'suspended' || currentDomain.status === 'review') {
             deleteBtn.disabled = true;
-            deleteBtn.title = currentDomain.status === 'suspended' ? '暂停的域名无法删除' : '审核中的域名无法删除';
+            deleteBtn.title = currentDomain.status === 'suspended' ? 'Suspended domains cannot be deleted' : 'Domains under review cannot be deleted';
           } else {
             deleteBtn.disabled = false;
             deleteBtn.title = '';
@@ -1047,9 +1077,9 @@
           pendingOrder = null;
 
           document.getElementById('pending-review-label').textContent = data.pendingReview.label;
-          document.getElementById('pending-review-reason').textContent = data.pendingReview.reason || '需要人工审核';
+          document.getElementById('pending-review-reason').textContent = data.pendingReview.reason || 'Requires manual review';
           document.getElementById('pending-review-created').textContent =
-            new Date(data.pendingReview.created_at).toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai', hour12: false });
+            new Date(data.pendingReview.created_at).toLocaleString('en-US', { timeZone: 'Asia/Shanghai', hour12: false });
 
           registerSection.classList.add('hidden');
           pendingReviewSection.classList.remove('hidden');
@@ -1082,7 +1112,7 @@
           dnsSection.classList.add('hidden');
         }
       } catch (e) {
-        showError('加载域名失败: ' + e.message);
+        showError('Failed to load domain: ' + e.message);
       }
     }
 
@@ -1093,15 +1123,15 @@
 
       // Show mode badge
       if (currentDNSMode === 'ns') {
-        modeBadge.innerHTML = '<span class="badge badge-warning">NS 委派模式</span>';
+        modeBadge.innerHTML = '<span class="badge badge-warning">NS Delegation Mode</span>';
       } else if (currentDNSMode === 'direct') {
-        modeBadge.innerHTML = '<span class="badge badge-success">直接解析模式</span>';
+        modeBadge.innerHTML = '<span class="badge badge-success">Direct Resolution Mode</span>';
       } else {
         modeBadge.innerHTML = '';
       }
 
       if (currentDNSRecords.length === 0) {
-        container.innerHTML = '<p style="color: var(--text-muted); padding: 1rem;">暂无 DNS 记录</p>';
+        container.innerHTML = '<p style="color: var(--text-muted); padding: 1rem;">No DNS records</p>';
       } else {
         container.innerHTML = `
           <table class="dns-table">
@@ -1129,7 +1159,7 @@
                     <td><span class="record-content">${escapeHtml(record.content)}</span></td>
                     <td style="text-align: center;"><span class="proxy-icon" title="${proxyTitle}">${proxyIcon}</span></td>
                     <td>${ttlText}</td>
-                    <td><button class="action-btn" onclick="deleteDNSRecord(${record.id})" title="删除">✕</button></td>
+                    <td><button class="action-btn" onclick="deleteDNSRecord(${record.id})" title="Delete">✕</button></td>
                   </tr>
                 `;
               }).join('')}
@@ -1141,10 +1171,10 @@
 
     // Format TTL for display
     function formatTTL(seconds) {
-      if (seconds < 60) return `${seconds}秒`;
-      if (seconds < 3600) return `${Math.floor(seconds / 60)}分钟`;
-      if (seconds < 86400) return `${Math.floor(seconds / 3600)}小时`;
-      return `${Math.floor(seconds / 86400)}天`;
+      if (seconds < 60) return `${seconds}s`;
+      if (seconds < 3600) return `${Math.floor(seconds / 60)}m`;
+      if (seconds < 86400) return `${Math.floor(seconds / 3600)}h`;
+      return `${Math.floor(seconds / 86400)}d`;
     }
 
     // Update DNS type hint based on selected type
@@ -1156,10 +1186,10 @@
       const proxyCheckbox = document.getElementById('dns-proxy-checkbox');
 
       const hints = {
-        'A': { placeholder: '1.2.3.4', text: '@ 表示根域名，或输入子域名（如 blog、api）来创建 blog.your-domain.py.kg' },
-        'AAAA': { placeholder: '2001:db8::1', text: '@ 表示根域名，或输入子域名来创建子域名记录' },
-        'CNAME': { placeholder: 'example.com', text: '@ 表示根域名，或输入子域名。目标域名示例：example.com' },
-        'TXT': { placeholder: 'your-acme-challenge-token', text: '仅限 Let\'s Encrypt 验证。Name 必须是 _acme-challenge 或 _acme-challenge.subdomain' },
+        'A': { placeholder: '1.2.3.4', text: '@ represents the root domain, or enter a subdomain (like blog, api) to create blog.your-domain.py.kg' },
+        'AAAA': { placeholder: '2001:db8::1', text: '@ represents the root domain, or enter a subdomain to create subdomain records' },
+        'CNAME': { placeholder: 'example.com', text: '@ represents the root domain, or enter a subdomain. Target domain example: example.com' },
+        'TXT': { placeholder: 'your-acme-challenge-token', text: 'Only for Let\'s Encrypt verification. Name must be _acme-challenge or _acme-challenge.subdomain' },
       };
 
       contentInput.placeholder = hints[type].placeholder;
@@ -1188,14 +1218,14 @@
         ttlSelect.style.opacity = '0.5';
         ttlSelect.style.cursor = 'not-allowed';
         ttlAutoBadge.classList.remove('hidden');
-        ttlHint.textContent = 'Proxy 模式下 TTL 由 Cloudflare 自动管理（通常为 5 分钟）';
+        ttlHint.textContent = 'In Proxy mode, TTL is automatically managed by Cloudflare (usually 5 minutes)';
       } else {
         // Proxy disabled: enable TTL select
         ttlSelect.disabled = false;
         ttlSelect.style.opacity = '1';
         ttlSelect.style.cursor = 'default';
         ttlAutoBadge.classList.add('hidden');
-        ttlHint.textContent = 'TTL 决定 DNS 记录在缓存中保留的时间';
+        ttlHint.textContent = 'TTL determines how long DNS records are cached';
       }
     }
 
@@ -1214,7 +1244,7 @@
       const proxied = proxyCheckbox.checked;
 
       if (!content) {
-        showError('请输入记录内容');
+        showError('Please enter record content');
         return;
       }
 
@@ -1223,30 +1253,30 @@
         if (type === 'TXT') {
           // TXT records can have underscores (like _acme-challenge)
           if (!/^[a-z0-9_]([a-z0-9_-]*[a-z0-9_])?(\.[a-z0-9_]([a-z0-9_-]*[a-z0-9_])?)*$/.test(name)) {
-            showError('Name 格式错误：TXT 记录必须是 _acme-challenge 或 _acme-challenge.subdomain');
+            showError('Name format error: TXT records must be _acme-challenge or _acme-challenge.subdomain');
             return;
           }
           // Validate TXT prefix
           if (!name.startsWith('_acme-challenge')) {
-            showError('TXT 记录仅限 Let\'s Encrypt 验证，Name 必须以 _acme-challenge 开头');
+            showError('TXT records are only for Let\'s Encrypt verification, Name must start with _acme-challenge');
             return;
           }
         } else {
           if (!/^[a-z0-9]([a-z0-9-]*[a-z0-9])?$/.test(name)) {
-            showError('Name 格式错误：必须是 @ 或有效的子域名（只允许小写字母、数字和连字符，不能以连字符开头或结尾）');
+            showError('Name format error: must be @ or a valid subdomain (only lowercase letters, numbers, and hyphens allowed, cannot start or end with hyphen)');
             return;
           }
         }
       }
 
       if (currentDNSRecords.length >= 10) {
-        showError('最多只能添加 10 条 DNS 记录');
+        showError('Maximum 10 DNS records allowed');
         return;
       }
 
       const btn = document.getElementById('add-dns-btn');
       btn.disabled = true;
-      btn.textContent = '添加中...';
+      btn.textContent = 'Adding...';
       clearMessages();
 
       try {
@@ -1262,20 +1292,20 @@
         await loadDomain();
         nameInput.value = '';
         contentInput.value = '';
-        const proxyText = proxied ? '（已启用 CDN）' : '';
-        const nameText = name === '@' ? '根域名' : name;
-        showSuccess(`${type} 记录添加成功 (${nameText})${proxyText}！DNS 生效可能需要几分钟。`);
+        const proxyText = proxied ? ' (CDN enabled)' : '';
+        const nameText = name === '@' ? 'root domain' : name;
+        showSuccess(`${type} record added successfully (${nameText})${proxyText}! DNS propagation may take a few minutes.`);
       } catch (e) {
-        showError('添加失败: ' + e.message);
+        showError('Failed to add: ' + e.message);
       } finally {
         btn.disabled = false;
-        btn.textContent = '添加记录';
+        btn.textContent = 'Add Record';
       }
     }
 
     // Delete DNS record
     async function deleteDNSRecord(recordId) {
-      if (!confirm('确定要删除这条 DNS 记录吗？')) {
+      if (!confirm('Are you sure you want to delete this DNS record?')) {
         return;
       }
 
@@ -1284,21 +1314,21 @@
       try {
         await api('DELETE', `/api/dns-records/${recordId}`);
         await loadDomain();
-        showSuccess('DNS 记录已删除');
+        showSuccess('DNS record deleted');
       } catch (e) {
-        showError('删除失败: ' + e.message);
+        showError('Failed to delete: ' + e.message);
       }
     }
 
     // Clear all DNS records
     async function clearAllDNS() {
-      if (!confirm('确定要清除所有 DNS 记录吗？这将删除所有解析记录。')) {
+      if (!confirm('Are you sure you want to clear all DNS records? This will delete all resolution records.')) {
         return;
       }
 
       const btn = document.getElementById('clear-dns-btn');
       btn.disabled = true;
-      btn.textContent = '清除中...';
+      btn.textContent = 'Clearing...';
       clearMessages();
 
       try {
@@ -1307,12 +1337,12 @@
           await api('DELETE', `/api/dns-records/${record.id}`);
         }
         await loadDomain();
-        showSuccess('所有 DNS 记录已清除');
+        showSuccess('All DNS records cleared');
       } catch (e) {
-        showError('清除失败: ' + e.message);
+        showError('Failed to clear: ' + e.message);
       } finally {
         btn.disabled = false;
-        btn.textContent = '清除所有 DNS 记录';
+        btn.textContent = 'Clear All DNS Records';
       }
     }
 
@@ -1343,18 +1373,18 @@
 
       // Basic validation
       if (!label || label.length < 2 || label.length > 63) {
-        showError('域名长度必须在 2-63 字符之间');
+        showError('Domain length must be between 2-63 characters');
         return;
       }
 
       if (!/^[a-z0-9]([a-z0-9-]*[a-z0-9])?$/.test(label)) {
-        showError('域名只能包含小写字母、数字和连字符，且不能以连字符开头或结尾');
+        showError('Domain can only contain lowercase letters, numbers, and hyphens, and cannot start or end with a hyphen');
         return;
       }
 
       // Check domain availability via WHOIS API
       btn.disabled = true;
-      btn.textContent = '检查中...';
+      btn.textContent = 'Checking...';
       clearMessages();
 
       try {
@@ -1364,16 +1394,16 @@
         if (data.success) {
           // Check if domain is reserved or already taken
           if (data.data.status === 'reserved') {
-            showError(data.data.reason || '域名包含被禁止的词汇');
+            showError(data.data.reason || 'Domain contains prohibited words');
             btn.disabled = false;
-            btn.textContent = '注册';
+            btn.textContent = 'Register';
             return;
           }
 
           if (data.data.status === 'active' || data.data.status === 'suspended' || data.data.status === 'review') {
-            showError('该域名已被注册');
+            showError('This domain is already registered');
             btn.disabled = false;
-            btn.textContent = '注册';
+            btn.textContent = 'Register';
             return;
           }
         } else {
@@ -1388,14 +1418,14 @@
             registerDetailSection.classList.remove('hidden');
             clearMessages();
           } else {
-            showError(data.error || '检查域名失败');
+            showError(data.error || 'Failed to check domain');
           }
         }
       } catch (error) {
-        showError('检查域名失败，请重试');
+        showError('Failed to check domain, please try again');
       } finally {
         btn.disabled = false;
-        btn.textContent = '注册';
+        btn.textContent = 'Register';
       }
     });
 
@@ -1415,17 +1445,17 @@
 
       // Validate
       if (pythonPraise.length < 20) {
-        showError('对 Python 的赞美至少需要 20 个字符');
+        showError('Python praise must be at least 20 characters');
         return;
       }
 
       if (usagePurpose.length < 10) {
-        showError('使用用途说明至少需要 10 个字符');
+        showError('Usage description must be at least 10 characters');
         return;
       }
 
       btn.disabled = true;
-      btn.textContent = '处理中...';
+      btn.textContent = 'Processing...';
       clearMessages();
 
       try {
@@ -1440,35 +1470,35 @@
           submitPaymentForm(data.submit_url, data.form_data);
         } else if (data.requires_review) {
           // Manual review required
-          showSuccess(data.message || '您的域名申请需要人工审核，请耐心等待。');
+          showSuccess(data.message || 'Your domain application requires manual review, please be patient.');
           registerDetailSection.classList.add('hidden');
           setTimeout(() => window.location.reload(), 2000);
         } else {
-          showError('未获取到支付表单数据');
+          showError('Failed to get payment form data');
           btn.disabled = false;
-          btn.textContent = '支付并完成注册';
+          btn.textContent = 'Pay and Complete Registration';
         }
       } catch (e) {
-        showError('注册失败: ' + e.message);
+        showError('Registration failed: ' + e.message);
         btn.disabled = false;
-        btn.textContent = '支付并完成注册';
+        btn.textContent = 'Pay and Complete Registration';
       }
     });
 
     // Delete domain
     document.getElementById('delete-domain-btn').addEventListener('click', async () => {
-      if (!confirm('确定要删除域名吗？此操作不可恢复，所有 NS 记录将被删除。')) {
+      if (!confirm('Are you sure you want to delete the domain? This action cannot be undone, and all NS records will be deleted.')) {
         return;
       }
 
       const btn = document.getElementById('delete-domain-btn');
       btn.disabled = true;
-      btn.textContent = '删除中...';
+      btn.textContent = 'Deleting...';
       clearMessages();
 
       try {
         await api('DELETE', '/api/domains');
-        showSuccess('域名已删除');
+        showSuccess('Domain deleted');
         currentDomain = null;
         currentDNSRecords = [];
         currentDNSMode = null;
@@ -1476,10 +1506,10 @@
         dnsSection.classList.add('hidden');
         registerSection.classList.remove('hidden');
       } catch (e) {
-        showError('删除失败: ' + e.message);
+        showError('Failed to delete: ' + e.message);
       } finally {
         btn.disabled = false;
-        btn.textContent = '删除域名';
+        btn.textContent = 'Delete Domain';
       }
     });
 
@@ -1527,18 +1557,18 @@
         // Render notifications list
         const notificationsList = document.getElementById('notifications-list');
         if (notifications.length === 0) {
-          notificationsList.innerHTML = '<div class="empty-state">暂无消息</div>';
+          notificationsList.innerHTML = '<div class="empty-state">No notifications</div>';
         } else {
           notificationsList.innerHTML = notifications.map(n => `
             <div class="card" style="margin-bottom: 0.75rem; padding: 1rem; ${n.is_read === 0 ? 'border-left: 3px solid var(--primary);' : ''}">
               <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 0.5rem;">
                 <strong style="color: ${n.is_read === 0 ? 'var(--primary)' : 'var(--text)'};">${escapeHtml(n.title)}</strong>
-                <span style="font-size: 0.75rem; color: var(--text-muted);">${new Date(n.created_at).toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai', hour12: false })}</span>
+                <span style="font-size: 0.75rem; color: var(--text-muted);">${new Date(n.created_at).toLocaleString('en-US', { timeZone: 'Asia/Shanghai', hour12: false })}</span>
               </div>
               <p style="margin: 0; font-size: 0.875rem; color: var(--text-muted);">${escapeHtml(n.message)}</p>
               <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">
-                ${n.is_read === 0 ? `<button class="btn btn-secondary btn-sm" onclick="markAsRead(${n.id})">标记已读</button>` : ''}
-                <button class="btn btn-danger btn-sm" onclick="deleteNotification(${n.id})">删除</button>
+                ${n.is_read === 0 ? `<button class="btn btn-secondary btn-sm" onclick="markAsRead(${n.id})">Mark as Read</button>` : ''}
+                <button class="btn btn-danger btn-sm" onclick="deleteNotification(${n.id})">Delete</button>
               </div>
             </div>
           `).join('');
@@ -1553,7 +1583,7 @@
         await api('POST', '/api/notifications', { id });
         await loadNotifications();
       } catch (e) {
-        showError('标记失败: ' + e.message);
+        showError('Failed to mark: ' + e.message);
       }
     }
 
@@ -1562,7 +1592,7 @@
         await api('POST', '/api/notifications', { mark_all: true });
         await loadNotifications();
       } catch (e) {
-        showError('标记失败: ' + e.message);
+        showError('Failed to mark: ' + e.message);
       }
     }
 
@@ -1571,21 +1601,21 @@
         await api('DELETE', '/api/notifications', { id });
         await loadNotifications();
       } catch (e) {
-        showError('删除失败: ' + e.message);
+        showError('Failed to delete: ' + e.message);
       }
     }
 
     async function deleteAllReadNotifications() {
-      if (!confirm('确定要删除所有已读通知吗？')) {
+      if (!confirm('Are you sure you want to delete all read notifications?')) {
         return;
       }
 
       try {
         await api('DELETE', '/api/notifications', { delete_all_read: true });
         await loadNotifications();
-        showSuccess('所有已读通知已删除');
+        showSuccess('All read notifications deleted');
       } catch (e) {
-        showError('删除失败: ' + e.message);
+        showError('Failed to delete: ' + e.message);
       }
     }
 
@@ -1606,6 +1636,117 @@
     document.getElementById('mark-all-read-btn').addEventListener('click', markAllAsRead);
     document.getElementById('delete-all-read-btn').addEventListener('click', deleteAllReadNotifications);
 
+    // Messages system
+    async function loadMessages() {
+      const container = document.getElementById('messages-container');
+      const unreadBadge = document.getElementById('unread-messages-badge');
+
+      try {
+        const data = await api('GET', '/api/messages');
+        const messages = data.messages || [];
+        const conversation = data.conversation;
+
+        if (messages.length === 0) {
+          container.innerHTML = '<div style="text-align: center; padding: 2rem; color: var(--text-muted);">No messages yet. Send a message to start chatting with admin.</div>';
+        } else {
+          container.innerHTML = messages.map(m => {
+            const isAdmin = m.sender_type === 'admin';
+            const time = new Date(m.created_at).toLocaleString('en-US', {
+              timeZone: 'Asia/Shanghai',
+              hour12: false,
+              month: 'short',
+              day: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit'
+            });
+
+            return `
+              <div style="margin-bottom: 1rem; display: flex; flex-direction: column; align-items: ${isAdmin ? 'flex-start' : 'flex-end'};">
+                <div style="max-width: 70%; background: ${isAdmin ? 'var(--card-bg)' : 'var(--primary)'}; color: ${isAdmin ? 'var(--text)' : 'white'}; padding: 0.75rem; border-radius: 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.1);">
+                  <div style="font-weight: 600; font-size: 0.75rem; margin-bottom: 0.25rem; opacity: 0.8;">
+                    ${isAdmin ? 'Admin' : 'You'}
+                  </div>
+                  <div style="white-space: pre-wrap; word-break: break-word;">${escapeHtml(m.content)}</div>
+                  <div style="font-size: 0.7rem; margin-top: 0.25rem; opacity: 0.7;">
+                    ${time}
+                  </div>
+                </div>
+              </div>
+            `;
+          }).join('');
+
+          // Scroll to bottom
+          container.scrollTop = container.scrollHeight;
+        }
+
+        // Update unread badge
+        if (conversation && conversation.unread_user_count > 0) {
+          unreadBadge.textContent = conversation.unread_user_count;
+          unreadBadge.classList.remove('hidden');
+        } else {
+          unreadBadge.classList.add('hidden');
+        }
+      } catch (e) {
+        container.innerHTML = `<div class="alert alert-error">Failed to load messages: ${escapeHtml(e.message)}</div>`;
+      }
+    }
+
+    async function sendMessage() {
+      const input = document.getElementById('message-input');
+      const content = input.value.trim();
+      const btn = document.getElementById('send-message-btn');
+
+      if (!content) {
+        showError('Message cannot be empty');
+        return;
+      }
+
+      if (content.length > 2000) {
+        showError('Message too long (max 2000 characters)');
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = 'Sending...';
+
+      try {
+        await api('POST', '/api/messages', { content });
+        input.value = '';
+        document.getElementById('message-char-count').textContent = '0';
+        await loadMessages();
+        showSuccess('Message sent');
+      } catch (e) {
+        showError('Failed to send: ' + e.message);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Send';
+      }
+    }
+
+    // Messages event listeners
+    document.getElementById('messages-btn').addEventListener('click', () => {
+      document.getElementById('messages-panel').classList.toggle('hidden');
+      if (!document.getElementById('messages-panel').classList.contains('hidden')) {
+        loadMessages();
+      }
+    });
+
+    document.getElementById('close-messages-btn').addEventListener('click', () => {
+      document.getElementById('messages-panel').classList.add('hidden');
+    });
+
+    document.getElementById('send-message-btn').addEventListener('click', sendMessage);
+
+    document.getElementById('message-input').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+        sendMessage();
+      }
+    });
+
+    document.getElementById('message-input').addEventListener('input', (e) => {
+      document.getElementById('message-char-count').textContent = e.target.value.length;
+    });
+
     // Load appeal status for suspended domains
     async function loadAppealStatus() {
       try {
@@ -1617,16 +1758,16 @@
         if (pendingAppeal) {
           // Show pending appeal status instead of form
           appealSection.innerHTML = `
-            <h2>申诉状态</h2>
+            <h2>Appeal Status</h2>
             <div class="alert alert-info" style="margin-bottom: 1rem;">
-              <strong>您的申诉正在处理中</strong><br>
-              请耐心等待管理员审核。
+              <strong>Your appeal is being processed</strong><br>
+              Please wait patiently for administrator review.
             </div>
             <div style="margin-bottom: 1rem;">
-              <p><strong>申诉原因：</strong></p>
+              <p><strong>Appeal Reason:</strong></p>
               <p style="background: var(--bg); padding: 0.75rem; border-radius: 6px; margin-top: 0.5rem;">${escapeHtml(pendingAppeal.reason)}</p>
               <p style="color: var(--text-muted); font-size: 0.875rem; margin-top: 0.5rem;">
-                <strong>提交时间：</strong>${new Date(pendingAppeal.created_at).toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai', hour12: false })}
+                <strong>Submission Time:</strong>${new Date(pendingAppeal.created_at).toLocaleString('en-US', { timeZone: 'Asia/Shanghai', hour12: false })}
               </p>
             </div>
           `;
@@ -1634,26 +1775,26 @@
         } else {
           // Show appeal form
           appealSection.innerHTML = `
-            <h2>申诉解封</h2>
+            <h2>Submit Appeal</h2>
             <div class="alert alert-warning" style="margin-bottom: 1rem;">
-              您的域名已被暂停，如果您认为这是误判，可以提交申诉。
+              Your domain has been suspended. If you believe this is a mistake, you can submit an appeal.
             </div>
             <form id="appeal-form">
               <div class="form-group">
-                <label for="appeal-reason">申诉原因 <span style="color: var(--danger);">*</span></label>
+                <label for="appeal-reason">Appeal Reason <span style="color: var(--danger);">*</span></label>
                 <textarea
                   id="appeal-reason"
                   rows="5"
-                  placeholder="请详细说明您认为域名被暂停的原因不成立，或者您已经整改完成..."
+                  placeholder="Please explain in detail why you believe the suspension is unjustified, or that you have completed the necessary corrections..."
                   required
                   minlength="10"
                   style="width: 100%; padding: 0.625rem; border: 1px solid var(--border); border-radius: 6px; font-size: 0.875rem; font-family: inherit; resize: vertical;"
                 ></textarea>
                 <small style="color: var(--text-muted); margin-top: 0.25rem; display: block;">
-                  请至少输入 10 个字符
+                  Please enter at least 10 characters
                 </small>
               </div>
-              <button type="submit" class="btn btn-primary">提交申诉</button>
+              <button type="submit" class="btn btn-primary">Submit Appeal</button>
             </form>
           `;
           appealSection.classList.remove('hidden');
@@ -1674,17 +1815,17 @@
       const reason = document.getElementById('appeal-reason').value.trim();
 
       if (reason.length < 10) {
-        showError('申诉原因至少需要10个字符');
+        showError('Appeal reason must be at least 10 characters');
         return;
       }
 
       try {
         const data = await api('POST', '/api/appeals', { reason });
-        showSuccess(data.message || '申诉已提交');
+        showSuccess(data.message || 'Appeal submitted');
         // Reload appeal status to show pending state
         await loadAppealStatus();
       } catch (e) {
-        showError('提交失败: ' + e.message);
+        showError('Failed to submit: ' + e.message);
       }
     }
 
@@ -1697,7 +1838,7 @@
 
       const btn = document.getElementById('continue-pay-btn');
       btn.disabled = true;
-      btn.textContent = '跳转中...';
+      btn.textContent = 'Redirecting...';
 
       try {
         // Re-submit with the same label to get payment form
@@ -1705,14 +1846,14 @@
         if (data.submit_url && data.form_data) {
           submitPaymentForm(data.submit_url, data.form_data);
         } else {
-          showError('未获取到支付表单数据');
+          showError('Failed to get payment form data');
           btn.disabled = false;
-          btn.textContent = '继续支付';
+          btn.textContent = 'Continue Payment';
         }
       } catch (e) {
-        showError('获取支付表单失败: ' + e.message);
+        showError('Failed to get payment form: ' + e.message);
         btn.disabled = false;
-        btn.textContent = '继续支付';
+        btn.textContent = 'Continue Payment';
       }
     });
 
@@ -1730,26 +1871,26 @@
     document.getElementById('cancel-order-btn').addEventListener('click', async () => {
       if (!pendingOrder) return;
 
-      if (!confirm('确定要取消此订单吗？取消后可以重新注册其他域名。')) {
+      if (!confirm('Are you sure you want to cancel this order? After cancellation, you can register other domains.')) {
         return;
       }
 
       const btn = document.getElementById('cancel-order-btn');
       btn.disabled = true;
-      btn.textContent = '取消中...';
+      btn.textContent = 'Cancelling...';
       clearMessages();
 
       try {
         await api('DELETE', '/api/orders/' + pendingOrder.order_no);
-        showSuccess('订单已取消');
+        showSuccess('Order cancelled');
         pendingOrder = null;
         pendingOrderSection.classList.add('hidden');
         registerSection.classList.remove('hidden');
       } catch (e) {
-        showError('取消订单失败: ' + e.message);
+        showError('Failed to cancel order: ' + e.message);
       } finally {
         btn.disabled = false;
-        btn.textContent = '取消订单';
+        btn.textContent = 'Cancel Order';
       }
     });
 
