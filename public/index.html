@@ -983,6 +983,7 @@
 
         await loadDomain();
         await loadNotifications(); // Load notifications after user is loaded
+        startMessagePolling(); // Start polling for new messages
       } catch (e) {
         loginSection.classList.remove('hidden');
         userSection.classList.add('hidden');
@@ -1635,6 +1636,39 @@
 
     document.getElementById('mark-all-read-btn').addEventListener('click', markAllAsRead);
     document.getElementById('delete-all-read-btn').addEventListener('click', deleteAllReadNotifications);
+
+    // Check unread messages count (for badge display)
+    async function checkUnreadMessages() {
+      const unreadBadge = document.getElementById('unread-messages-badge');
+
+      try {
+        // Use check_only=true to avoid marking messages as read
+        const data = await api('GET', '/api/messages?check_only=true');
+        const conversation = data.conversation;
+
+        // Update unread badge
+        if (conversation && conversation.unread_user_count > 0) {
+          unreadBadge.textContent = conversation.unread_user_count;
+          unreadBadge.classList.remove('hidden');
+        } else {
+          unreadBadge.classList.add('hidden');
+        }
+      } catch (e) {
+        console.error('Failed to check unread messages:', e);
+        unreadBadge.classList.add('hidden');
+      }
+    }
+
+    // Start polling for new messages every 30 seconds
+    function startMessagePolling() {
+      // Initial check
+      checkUnreadMessages();
+
+      // Poll every 30 seconds
+      setInterval(() => {
+        checkUnreadMessages();
+      }, 30000); // 30 seconds
+    }
 
     // Messages system
     async function loadMessages() {

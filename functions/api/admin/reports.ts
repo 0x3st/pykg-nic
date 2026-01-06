@@ -135,16 +135,24 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
 
         // Suspend domain
         if (actions.suspend_domain && domain && domain.status === 'active') {
-          // Get DNS records
+          // Get DNS records that are synced to CF
           const { results: dnsRecords } = await env.DB.prepare(
-            'SELECT * FROM dns_records WHERE domain_id = ?'
+            'SELECT * FROM dns_records WHERE domain_id = ? AND cf_synced = 1'
           ).bind(domain.id).all<DnsRecord>();
 
-          // Delete from Cloudflare
-          await cfClient.deleteAllRecords(domain.fqdn);
-
-          // Mark as not synced
+          // Delete each DNS record from Cloudflare using stored cloudflare_record_id
           if (dnsRecords && dnsRecords.length > 0) {
+            for (const record of dnsRecords) {
+              if (record.cloudflare_record_id) {
+                try {
+                  await cfClient.deleteDNSRecord(record.cloudflare_record_id);
+                } catch (e) {
+                  console.error(`Error deleting CF record ${record.cloudflare_record_id}:`, e);
+                }
+              }
+            }
+
+            // Mark as not synced
             await env.DB.prepare(
               'UPDATE dns_records SET cf_synced = 0 WHERE domain_id = ?'
             ).bind(domain.id).run();
@@ -168,8 +176,21 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
 
         // Delete domain
         if (actions.delete_domain && domain) {
-          // Delete from Cloudflare
-          await cfClient.deleteAllRecords(domain.fqdn);
+          // Get DNS records that are synced to CF
+          const { results: recordsToDelete } = await env.DB.prepare(
+            'SELECT cloudflare_record_id FROM dns_records WHERE domain_id = ? AND cf_synced = 1 AND cloudflare_record_id IS NOT NULL'
+          ).bind(domain.id).all<{ cloudflare_record_id: string }>();
+
+          // Delete each DNS record from Cloudflare
+          if (recordsToDelete && recordsToDelete.length > 0) {
+            for (const record of recordsToDelete) {
+              try {
+                await cfClient.deleteDNSRecord(record.cloudflare_record_id);
+              } catch (e) {
+                console.error(`Error deleting CF record ${record.cloudflare_record_id}:`, e);
+              }
+            }
+          }
 
           // Send notification to domain owner
           await createNotification(

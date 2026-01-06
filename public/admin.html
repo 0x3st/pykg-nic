@@ -1770,6 +1770,46 @@
         return;
       }
 
+      // Get submit button and disable it
+      const submitBtn = form.querySelector('button[type="submit"]');
+      const originalBtnText = submitBtn.textContent;
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Sending...';
+
+      // Show progress indicator
+      const alertDiv = document.getElementById('announcements-alert');
+      alertDiv.innerHTML = `
+        <div class="alert alert-info" style="position: relative;">
+          <div style="margin-bottom: 0.5rem;">
+            <strong>Sending announcement to all users...</strong>
+          </div>
+          <div style="width: 100%; height: 8px; background: rgba(255,255,255,0.3); border-radius: 4px; overflow: hidden;">
+            <div id="announcement-progress" style="width: 0%; height: 100%; background: var(--primary); transition: width 0.3s ease;"></div>
+          </div>
+          <div style="margin-top: 0.5rem; font-size: 0.875rem;">
+            <span id="announcement-status">Preparing...</span>
+          </div>
+        </div>
+      `;
+
+      // Simulate progress (since we don't have real-time progress from server)
+      const progressBar = document.getElementById('announcement-progress');
+      const statusText = document.getElementById('announcement-status');
+      let progress = 0;
+      const progressInterval = setInterval(() => {
+        if (progress < 90) {
+          progress += 10;
+          progressBar.style.width = `${progress}%`;
+          if (progress < 30) {
+            statusText.textContent = 'Preparing announcement...';
+          } else if (progress < 60) {
+            statusText.textContent = 'Sending to users...';
+          } else {
+            statusText.textContent = 'Almost done...';
+          }
+        }
+      }, 200);
+
       try {
         const res = await fetch('/api/admin/announcements', {
           method: 'POST',
@@ -1778,14 +1818,26 @@
         });
 
         const data = await res.json();
+
+        // Clear progress interval
+        clearInterval(progressInterval);
+        progressBar.style.width = '100%';
+
         if (data.success) {
-          showAlert('announcements-alert', `Announcement sent successfully! Sent to ${data.data.success_count} users`, 'success');
-          form.reset();
+          statusText.textContent = 'Complete!';
+          setTimeout(() => {
+            showAlert('announcements-alert', `Announcement sent successfully! Sent to ${data.data.success_count} users`, 'success');
+            form.reset();
+          }, 500);
         } else {
           showAlert('announcements-alert', data.error || 'Send failed', 'error');
         }
       } catch (error) {
+        clearInterval(progressInterval);
         showAlert('announcements-alert', 'Send failed', 'error');
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = originalBtnText;
       }
     }
 

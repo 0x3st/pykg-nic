@@ -178,6 +178,20 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     const price = parseFloat(priceFromDb || env.DOMAIN_PRICE || '10');
 
     try {
+      // Clean up old pending reviews and orders for this user with the same label
+      // This prevents duplicate entries in the review queue when user retries payment
+      await env.DB.prepare(`
+        UPDATE pending_reviews
+        SET status = 'rejected', reviewed_at = datetime('now')
+        WHERE linuxdo_id = ? AND label = ? AND status = 'pending'
+      `).bind(linuxdoId, normalizedLabel).run();
+
+      await env.DB.prepare(`
+        UPDATE orders
+        SET status = 'failed'
+        WHERE linuxdo_id = ? AND label = ? AND status = 'pending'
+      `).bind(linuxdoId, normalizedLabel).run();
+
       // Create pending review
       await env.DB.prepare(`
         INSERT INTO pending_reviews (order_no, linuxdo_id, label, reason, python_praise, usage_purpose, status, created_at)
@@ -236,6 +250,20 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     const price = parseFloat(priceFromDb || env.DOMAIN_PRICE || '10');
 
     try {
+      // Clean up old pending reviews and orders for this user with the same label
+      // This prevents duplicate entries in the review queue when user retries payment
+      await env.DB.prepare(`
+        UPDATE pending_reviews
+        SET status = 'rejected', reviewed_at = datetime('now')
+        WHERE linuxdo_id = ? AND label = ? AND status = 'pending'
+      `).bind(linuxdoId, normalizedLabel).run();
+
+      await env.DB.prepare(`
+        UPDATE orders
+        SET status = 'failed'
+        WHERE linuxdo_id = ? AND label = ? AND status = 'pending'
+      `).bind(linuxdoId, normalizedLabel).run();
+
       // Create pending review
       await env.DB.prepare(`
         INSERT INTO pending_reviews (order_no, linuxdo_id, label, reason, python_praise, usage_purpose, status, created_at)
@@ -432,11 +460,23 @@ export const onRequestDelete: PagesFunction<Env> = async (context) => {
     return errorResponse('您的域名正在审核中，无法删除。', 403);
   }
 
-  // Delete NS records from Cloudflare
+  // Delete DNS records from Cloudflare using stored cloudflare_record_id
   const cfClient = new CloudflareDNSClient(env.CLOUDFLARE_API_TOKEN, env.CLOUDFLARE_ZONE_ID);
-  const deleteResult = await cfClient.deleteAllRecords(domain.fqdn);
-  if (!deleteResult.success) {
-    console.error('Cloudflare delete error:', deleteResult.error);
+
+  // Get all DNS records for this domain
+  const { results: dnsRecords } = await env.DB.prepare(
+    'SELECT cloudflare_record_id FROM dns_records WHERE domain_id = ? AND cf_synced = 1 AND cloudflare_record_id IS NOT NULL'
+  ).bind(domain.id).all<{ cloudflare_record_id: string }>();
+
+  // Delete each DNS record from Cloudflare
+  if (dnsRecords && dnsRecords.length > 0) {
+    for (const record of dnsRecords) {
+      try {
+        await cfClient.deleteDNSRecord(record.cloudflare_record_id);
+      } catch (e) {
+        console.error(`Error deleting CF record ${record.cloudflare_record_id}:`, e);
+      }
+    }
   }
 
   // Delete from database (DNS records will be cascade deleted due to FOREIGN KEY)

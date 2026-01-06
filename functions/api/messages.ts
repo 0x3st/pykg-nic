@@ -15,6 +15,10 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
   const { user } = authResult;
   const linuxdoId = parseInt(user.sub, 10);
 
+  // Check if we should mark messages as read (default: true, false if ?check_only=true)
+  const url = new URL(request.url);
+  const checkOnly = url.searchParams.get('check_only') === 'true';
+
   try {
     // Get or create conversation
     let conversation = await env.DB.prepare(`
@@ -35,22 +39,31 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
       ORDER BY m.created_at ASC
     `).bind(conversation.id).all<MessageWithSender>();
 
-    // Mark all admin messages as read
-    await env.DB.prepare(`
-      UPDATE messages SET is_read = 1
-      WHERE conversation_id = ? AND sender_type = 'admin' AND is_read = 0
-    `).bind(conversation.id).run();
+    // Only mark as read if not in check-only mode
+    if (!checkOnly) {
+      // Mark all admin messages as read
+      await env.DB.prepare(`
+        UPDATE messages SET is_read = 1
+        WHERE conversation_id = ? AND sender_type = 'admin' AND is_read = 0
+      `).bind(conversation.id).run();
 
-    // Update unread count
-    await env.DB.prepare(`
-      UPDATE conversations SET unread_user_count = 0
-      WHERE id = ?
-    `).bind(conversation.id).run();
+      // Update unread count
+      await env.DB.prepare(`
+        UPDATE conversations SET unread_user_count = 0
+        WHERE id = ?
+      `).bind(conversation.id).run();
 
-    return successResponse({
-      messages: results || [],
-      conversation: { ...conversation, unread_user_count: 0 }
-    });
+      return successResponse({
+        messages: results || [],
+        conversation: { ...conversation, unread_user_count: 0 }
+      });
+    } else {
+      // In check-only mode, return current unread count
+      return successResponse({
+        messages: results || [],
+        conversation: conversation
+      });
+    }
   } catch (e) {
     console.error('Failed to get messages:', e);
     return errorResponse('Failed to get messages', 500);

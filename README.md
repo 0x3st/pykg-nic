@@ -1,19 +1,35 @@
 # PY.KG NIC - 子域名注册局
 
-基于 Cloudflare Pages + D1 + Cloudflare DNS 的子域名注册与 NS 委派平台，支持 LinuxDO Credit 支付。
+基于 Cloudflare Pages + D1 + Cloudflare DNS 的子域名注册与 DNS 管理平台，支持 LinuxDO Credit 支付。
 
 ## 功能特性
 
+### 用户功能
 - LinuxDO OAuth2 登录认证
 - LinuxDO Credit 积分支付
 - 每用户一个子域名配额
-- NS 记录委派管理
-- 内容审核（敏感词过滤 + 人工审核）
-- 管理后台（用户/域名/审核/设置管理）
-- 完整的审计日志
+- DNS 记录管理（A/AAAA/CNAME/TXT）
+- 域名暂停申诉
+- 域名滥用举报
+- 站内消息（与管理员沟通）
+- 通知中心
+
+### 管理功能
+- 用户管理（封禁/解封/设置管理员）
+- 域名管理（暂停/激活/删除/DNS 管理）
+- 审核管理（敏感词触发的域名审核）
+- 申诉管理（处理用户申诉）
+- 举报管理（处理滥用举报）
+- 敏感词管理
+- 系统设置
+- 公告广播
+- 站内消息管理
+
+### 公共功能
 - WHOIS 查询
 - 黑名单查询
 - 区块链日志记录
+- 完整的审计日志
 
 ## 目录结构
 
@@ -24,7 +40,9 @@ pykg-nic/
 │   ├── admin.html              # 管理后台页面
 │   ├── whois.html              # WHOIS 查询页面
 │   ├── blacklist.html          # 黑名单查询页面
-│   └── logs.html               # 区块链日志页面
+│   ├── logs.html               # 区块链日志页面
+│   ├── terms.html              # 服务条款页面
+│   └── repair-blockchain.html  # 区块链修复工具
 ├── functions/
 │   ├── lib/
 │   │   ├── types.ts            # 类型定义
@@ -34,7 +52,10 @@ pykg-nic/
 │   │   ├── credit.ts           # LinuxDO Credit 支付
 │   │   ├── moderation.ts       # 内容审核
 │   │   ├── validators.ts       # 输入验证
-│   │   └── blockchain.ts       # 区块链日志
+│   │   ├── blockchain.ts       # 区块链日志
+│   │   ├── notifications.ts    # 通知系统
+│   │   ├── messages.ts         # 消息系统
+│   │   └── reserved-words.ts   # 保留词列表
 │   ├── auth/
 │   │   ├── login.ts            # OAuth2 登录入口
 │   │   ├── callback.ts         # OAuth2 回调处理
@@ -42,19 +63,33 @@ pykg-nic/
 │   └── api/
 │       ├── me.ts               # 用户信息 API
 │       ├── domains.ts          # 域名注册/管理 API
-│       ├── ns.ts               # NS 记录管理 API
+│       ├── dns-records.ts      # DNS 记录管理 API
+│       ├── dns-records/[id].ts # 单条 DNS 记录操作
+│       ├── ns.ts               # NS 记录管理 API（已弃用）
 │       ├── whois.ts            # WHOIS 查询 API
 │       ├── blacklist.ts        # 黑名单查询 API
 │       ├── logs.ts             # 区块链日志 API
+│       ├── notifications.ts    # 通知 API
+│       ├── messages.ts         # 站内消息 API
+│       ├── appeals.ts          # 申诉 API
+│       ├── reports.ts          # 举报 API
 │       ├── orders/             # 订单管理 API
 │       ├── payment/            # 支付回调 API
 │       └── admin/              # 管理后台 API
 │           ├── stats.ts        # 统计数据
 │           ├── users.ts        # 用户管理
 │           ├── domains.ts      # 域名管理
+│           ├── domains/[id]/dns.ts # 管理员 DNS 管理
+│           ├── dns-records.ts  # 管理员 DNS 记录管理
 │           ├── reviews.ts      # 审核管理
+│           ├── appeals.ts      # 申诉管理
+│           ├── reports.ts      # 举报管理
+│           ├── messages.ts     # 站内消息管理
+│           ├── announcements.ts # 公告广播
 │           ├── banned-words.ts # 敏感词管理
-│           └── settings.ts     # 系统设置
+│           ├── settings.ts     # 系统设置
+│           ├── promote.ts      # 管理员提升
+│           └── repair-blockchain.ts # 区块链修复
 ├── schema.sql                  # D1 数据库 Schema
 ├── wrangler.jsonc              # Wrangler 配置
 ├── package.json
@@ -263,7 +298,9 @@ npm run dev
 
 删除当前用户的域名。
 
-### NS 记录 API
+### NS 记录 API（已弃用）
+
+> **注意**：NS 记录 API 已弃用，请使用 DNS 记录 API 管理 A/AAAA/CNAME/TXT 记录。
 
 #### GET /api/ns
 
@@ -293,6 +330,220 @@ npm run dev
 #### DELETE /api/ns
 
 清除所有 NS 记录。
+
+### DNS 记录 API
+
+#### GET /api/dns-records
+
+获取当前用户域名的所有 DNS 记录。
+
+**响应：**
+```json
+{
+  "success": true,
+  "data": {
+    "dns_mode": "direct",
+    "records": [
+      {
+        "id": 1,
+        "type": "A",
+        "name": "@",
+        "content": "1.2.3.4",
+        "ttl": 3600,
+        "proxied": false
+      }
+    ]
+  }
+}
+```
+
+#### POST /api/dns-records
+
+添加 DNS 记录（最多 10 条）。
+
+**请求：**
+```json
+{
+  "type": "A",
+  "name": "@",
+  "content": "1.2.3.4",
+  "ttl": 3600,
+  "proxied": false
+}
+```
+
+**支持的记录类型：**
+- `A` - IPv4 地址
+- `AAAA` - IPv6 地址
+- `CNAME` - 别名记录
+- `TXT` - 文本记录（禁止邮件相关记录如 SPF、DKIM、DMARC）
+
+#### PUT /api/dns-records/:id
+
+更新指定 DNS 记录。
+
+#### DELETE /api/dns-records/:id
+
+删除指定 DNS 记录。
+
+### 通知 API
+
+#### GET /api/notifications
+
+获取用户通知列表。
+
+**查询参数：**
+- `unread_only`: `true` 仅返回未读通知
+
+**响应：**
+```json
+{
+  "success": true,
+  "data": {
+    "notifications": [
+      {
+        "id": 1,
+        "type": "domain_approved",
+        "title": "域名已激活",
+        "message": "您的域名 example.py.kg 已激活",
+        "is_read": false,
+        "created_at": "2024-01-01T00:00:00Z"
+      }
+    ]
+  }
+}
+```
+
+#### POST /api/notifications
+
+标记通知为已读。
+
+**请求：**
+```json
+{
+  "id": 1
+}
+```
+
+或标记全部已读：
+```json
+{
+  "mark_all": true
+}
+```
+
+#### DELETE /api/notifications
+
+删除通知。
+
+**请求：**
+```json
+{
+  "id": 1
+}
+```
+
+或删除所有已读通知：
+```json
+{
+  "delete_all_read": true
+}
+```
+
+### 消息 API
+
+#### GET /api/messages
+
+获取与管理员的对话消息。
+
+**查询参数：**
+- `check_only`: `true` 仅检查未读数，不标记已读
+
+**响应：**
+```json
+{
+  "success": true,
+  "data": {
+    "messages": [
+      {
+        "id": 1,
+        "sender_id": 12345,
+        "sender_type": "user",
+        "sender_username": "example",
+        "content": "你好",
+        "is_read": true,
+        "created_at": "2024-01-01T00:00:00Z"
+      }
+    ],
+    "conversation": {
+      "id": 1,
+      "unread_user_count": 0
+    }
+  }
+}
+```
+
+#### POST /api/messages
+
+发送消息给管理员。
+
+**请求：**
+```json
+{
+  "content": "你好，我有一个问题..."
+}
+```
+
+### 申诉 API
+
+#### GET /api/appeals
+
+获取用户的申诉记录。
+
+**响应：**
+```json
+{
+  "success": true,
+  "data": {
+    "appeals": [
+      {
+        "id": 1,
+        "domain_id": 1,
+        "label": "example",
+        "fqdn": "example.py.kg",
+        "reason": "申诉原因...",
+        "status": "pending",
+        "created_at": "2024-01-01T00:00:00Z"
+      }
+    ]
+  }
+}
+```
+
+#### POST /api/appeals
+
+提交域名暂停申诉（仅当域名处于暂停状态时可用）。
+
+**请求：**
+```json
+{
+  "reason": "申诉原因，至少10个字符..."
+}
+```
+
+### 举报 API
+
+#### POST /api/reports
+
+举报域名滥用。
+
+**请求：**
+```json
+{
+  "label": "example",
+  "reason": "举报原因..."
+}
+```
 
 ### 订单 API
 
@@ -433,6 +684,123 @@ npm run dev
 }
 ```
 
+#### GET /api/admin/appeals
+
+获取申诉列表。
+
+**查询参数：**
+- `status`: `pending` | `approved` | `rejected`
+- `limit`: 每页数量
+
+**响应：**
+```json
+{
+  "success": true,
+  "data": {
+    "appeals": [
+      {
+        "id": 1,
+        "domain_id": 1,
+        "label": "example",
+        "fqdn": "example.py.kg",
+        "username": "user1",
+        "reason": "申诉原因...",
+        "status": "pending",
+        "created_at": "2024-01-01T00:00:00Z"
+      }
+    ]
+  }
+}
+```
+
+#### POST /api/admin/appeals
+
+处理申诉。
+
+**请求：**
+```json
+{
+  "id": 1,
+  "action": "approve",
+  "admin_note": "管理员备注"
+}
+```
+
+- `action`: `approve` 批准（解除域名暂停）| `reject` 拒绝
+
+#### GET /api/admin/reports
+
+获取举报列表。
+
+**查询参数：**
+- `status`: `pending` | `resolved` | `rejected`
+- `limit`: 每页数量
+
+#### POST /api/admin/reports
+
+处理举报（支持批量操作）。
+
+**请求：**
+```json
+{
+  "ids": [1, 2, 3],
+  "actions": {
+    "ban_reporter": false,
+    "ban_reported_user": false,
+    "suspend_domain": true,
+    "delete_domain": false,
+    "close_report": true
+  },
+  "reason": "处理原因"
+}
+```
+
+#### GET /api/admin/messages
+
+获取所有对话列表或指定对话的消息。
+
+**查询参数：**
+- `conversation_id`: 指定对话 ID（可选）
+
+#### POST /api/admin/messages
+
+向用户发送消息。
+
+**请求：**
+```json
+{
+  "conversation_id": 1,
+  "content": "消息内容..."
+}
+```
+
+#### POST /api/admin/announcements
+
+向所有用户广播公告。
+
+**请求：**
+```json
+{
+  "title": "公告标题",
+  "message": "公告内容..."
+}
+```
+
+#### POST /api/admin/promote
+
+自助提升为管理员（需要 ADMIN_SECRET）。
+
+**请求：**
+```json
+{
+  "secret": "管理员密钥"
+}
+```
+
+#### POST /api/admin/repair-blockchain
+
+修复区块链日志（重新计算哈希链）。
+
 ## 数据库表结构
 
 ### users
@@ -443,6 +811,8 @@ npm run dev
 | linuxdo_id | INTEGER | 主键，LinuxDO 用户 ID |
 | username | TEXT | 用户名 |
 | trust_level | INTEGER | 信任等级 |
+| silenced | INTEGER | 是否被禁言 |
+| active | INTEGER | 是否活跃 |
 | is_admin | INTEGER | 是否管理员 |
 | is_banned | INTEGER | 是否被封禁 |
 | ban_reason | TEXT | 封禁原因 |
@@ -457,6 +827,24 @@ npm run dev
 | fqdn | TEXT | 完整域名（唯一） |
 | owner_linuxdo_id | INTEGER | 所有者 ID（唯一） |
 | status | TEXT | 状态：pending/active/suspended/review |
+| review_reason | TEXT | 审核原因 |
+| suspend_reason | TEXT | 暂停原因 |
+| dns_mode | TEXT | DNS 模式：ns/direct |
+
+### dns_records
+DNS 记录表，存储用户的 DNS 记录。
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| id | INTEGER | 主键 |
+| domain_id | INTEGER | 关联域名 ID |
+| type | TEXT | 记录类型：A/AAAA/CNAME/TXT |
+| name | TEXT | 记录名称（@ 表示根域名） |
+| content | TEXT | 记录内容 |
+| ttl | INTEGER | TTL 值 |
+| proxied | INTEGER | 是否启用 Cloudflare 代理 |
+| cloudflare_record_id | TEXT | Cloudflare 记录 ID |
+| cf_synced | INTEGER | 是否已同步到 Cloudflare |
 
 ### orders
 订单表，记录支付订单。
@@ -482,6 +870,81 @@ npm run dev
 | label | TEXT | 申请的域名标签 |
 | reason | TEXT | 需要审核的原因 |
 | status | TEXT | 状态：pending/approved/rejected |
+
+### notifications
+通知表，存储用户通知。
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| id | INTEGER | 主键 |
+| linuxdo_id | INTEGER | 用户 ID |
+| type | TEXT | 通知类型 |
+| title | TEXT | 通知标题 |
+| message | TEXT | 通知内容 |
+| is_read | INTEGER | 是否已读 |
+
+### conversations
+对话表，存储用户与管理员的对话。
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| id | INTEGER | 主键 |
+| user_id | INTEGER | 用户 ID |
+| last_message_at | TEXT | 最后消息时间 |
+| last_message_preview | TEXT | 最后消息预览 |
+| unread_admin_count | INTEGER | 管理员未读数 |
+| unread_user_count | INTEGER | 用户未读数 |
+
+### messages
+消息表，存储对话中的消息。
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| id | INTEGER | 主键 |
+| conversation_id | INTEGER | 对话 ID |
+| sender_id | INTEGER | 发送者 ID |
+| sender_type | TEXT | 发送者类型：user/admin |
+| content | TEXT | 消息内容 |
+| is_read | INTEGER | 是否已读 |
+
+### appeals
+申诉表，存储域名暂停申诉。
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| id | INTEGER | 主键 |
+| domain_id | INTEGER | 域名 ID |
+| linuxdo_id | INTEGER | 用户 ID |
+| reason | TEXT | 申诉原因 |
+| status | TEXT | 状态：pending/approved/rejected |
+| reviewed_by | INTEGER | 审核人 ID |
+| admin_note | TEXT | 管理员备注 |
+
+### reports
+举报表，存储域名滥用举报。
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| id | INTEGER | 主键 |
+| label | TEXT | 被举报的域名标签 |
+| reporter_linuxdo_id | INTEGER | 举报人 ID |
+| reason | TEXT | 举报原因 |
+| status | TEXT | 状态：pending/resolved/rejected |
+| resolved_by | INTEGER | 处理人 ID |
+
+### blockchain_logs
+区块链日志表，记录所有重要操作的不可篡改日志。
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| id | INTEGER | 主键 |
+| action | TEXT | 操作类型 |
+| actor_name | TEXT | 操作者名称 |
+| target_type | TEXT | 目标类型 |
+| target_name | TEXT | 目标名称 |
+| details | TEXT | 详细信息（JSON） |
+| prev_hash | TEXT | 前一条记录的哈希 |
+| hash | TEXT | 当前记录的哈希 |
 
 ### banned_words
 敏感词表。
@@ -526,6 +989,8 @@ npm run dev
 8. **人工审核机制**：可疑域名需要管理员审核
 9. **审计日志**：记录所有关键操作
 10. **管理员双重验证**：环境变量 + 数据库标记
+11. **区块链日志**：不可篡改的操作记录
+12. **邮件记录限制**：禁止创建 SPF/DKIM/DMARC 等邮件相关 TXT 记录
 
 ### 建议的额外安全措施
 

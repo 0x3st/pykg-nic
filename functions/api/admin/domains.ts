@@ -119,19 +119,33 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       case 'suspend':
         console.log('[Admin Domains POST] Suspending domain:', domain.fqdn);
 
-        // Get all DNS records for this domain
+        // Get all DNS records for this domain (only synced ones need to be deleted from CF)
         const { results: dnsRecords } = await env.DB.prepare(
-          'SELECT * FROM dns_records WHERE domain_id = ?'
+          'SELECT * FROM dns_records WHERE domain_id = ? AND cf_synced = 1'
         ).bind(id).all<DnsRecord>();
 
-        console.log('[Admin Domains POST] DNS records count:', dnsRecords?.length || 0);
+        console.log('[Admin Domains POST] DNS records to delete from CF:', dnsRecords?.length || 0);
 
-        // Delete all DNS records from Cloudflare
-        const deleteResult = await cfClient.deleteAllRecords(domain.fqdn);
-        console.log('[Admin Domains POST] CF deleteAllRecords result:', JSON.stringify(deleteResult));
-
-        // Mark all DNS records as not synced in database (keep them as evidence)
+        // Delete each DNS record from Cloudflare using stored cloudflare_record_id
+        let deletedCount = 0;
         if (dnsRecords && dnsRecords.length > 0) {
+          for (const record of dnsRecords) {
+            if (record.cloudflare_record_id) {
+              try {
+                const deleteResult = await cfClient.deleteDNSRecord(record.cloudflare_record_id);
+                if (deleteResult.success) {
+                  deletedCount++;
+                } else {
+                  console.error(`Failed to delete CF record ${record.cloudflare_record_id}:`, deleteResult.error);
+                }
+              } catch (e) {
+                console.error(`Error deleting CF record ${record.cloudflare_record_id}:`, e);
+              }
+            }
+          }
+          console.log('[Admin Domains POST] Deleted', deletedCount, 'of', dnsRecords.length, 'CF records');
+
+          // Mark all DNS records as not synced in database (keep them as evidence)
           await env.DB.prepare(
             'UPDATE dns_records SET cf_synced = 0 WHERE domain_id = ?'
           ).bind(id).run();
@@ -205,9 +219,24 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       case 'delete':
         console.log('[Admin Domains POST] Deleting domain:', domain.fqdn);
 
-        // Delete all DNS records from Cloudflare
-        const deleteAllResult = await cfClient.deleteAllRecords(domain.fqdn);
-        console.log('[Admin Domains POST] CF delete result:', JSON.stringify(deleteAllResult));
+        // Get all DNS records for this domain to delete from CF
+        const { results: recordsToDelete } = await env.DB.prepare(
+          'SELECT cloudflare_record_id FROM dns_records WHERE domain_id = ? AND cf_synced = 1 AND cloudflare_record_id IS NOT NULL'
+        ).bind(id).all<{ cloudflare_record_id: string }>();
+
+        // Delete each DNS record from Cloudflare using stored cloudflare_record_id
+        let deleteCount = 0;
+        if (recordsToDelete && recordsToDelete.length > 0) {
+          for (const record of recordsToDelete) {
+            try {
+              await cfClient.deleteDNSRecord(record.cloudflare_record_id);
+              deleteCount++;
+            } catch (e) {
+              console.error(`Error deleting CF record ${record.cloudflare_record_id}:`, e);
+            }
+          }
+        }
+        console.log('[Admin Domains POST] Deleted', deleteCount, 'CF records');
 
         // Send notification to user about deletion
         await createNotification(

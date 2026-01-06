@@ -53,25 +53,18 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       return errorResponse('No users found', 404);
     }
 
-    // Create notification for each user
-    let successCount = 0;
-    let failCount = 0;
+    // Use D1 batch API for efficient bulk insert
+    const statements = users.map(user =>
+      env.DB.prepare(`
+        INSERT INTO notifications (linuxdo_id, type, title, message, is_read, created_at)
+        VALUES (?, ?, ?, ?, 0, datetime('now'))
+      `).bind(user.linuxdo_id, 'announcement', trimmedTitle, trimmedMessage)
+    );
 
-    for (const user of users) {
-      try {
-        await createNotification(
-          env.DB,
-          user.linuxdo_id,
-          'announcement',
-          trimmedTitle,
-          trimmedMessage
-        );
-        successCount++;
-      } catch (e) {
-        console.error(`Failed to create notification for user ${user.linuxdo_id}:`, e);
-        failCount++;
-      }
-    }
+    // Execute all statements in a single batch
+    await env.DB.batch(statements);
+
+    const successCount = users.length;
 
     // Log the action
     await env.DB.prepare(`
@@ -85,7 +78,6 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
         title: trimmedTitle,
         message: trimmedMessage,
         success_count: successCount,
-        fail_count: failCount,
         total_users: users.length,
       }),
       request.headers.get('CF-Connecting-IP')
@@ -95,7 +87,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       sent: true,
       total_users: users.length,
       success_count: successCount,
-      fail_count: failCount,
+      fail_count: 0,
     });
   } catch (e) {
     console.error('Failed to send announcement:', e);
