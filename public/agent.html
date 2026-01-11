@@ -278,11 +278,14 @@
             try {
                 const res = await fetch('/api/me');
                 if (res.ok) {
+                    const userData = await res.json();
+                    const username = userData.data?.username || 'there';
+
                     setStatus('connected', 'Online');
                     chat.innerHTML = '';
 
-                    // Send initial greeting
-                    setTimeout(() => send(''), 100);
+                    // Show welcome message immediately without API call
+                    showWelcome(username);
                 } else if (res.status === 401 || res.status === 403) {
                     setStatus('error', 'Not logged in');
                     chat.innerHTML = '';
@@ -299,6 +302,26 @@
         function setStatus(state, text) {
             status.className = 'status ' + state;
             statusText.textContent = text;
+        }
+
+        function showWelcome(username) {
+            const div = document.createElement('div');
+            div.className = 'message ai';
+            div.innerHTML = `
+                <div class="bubble">
+                    <p>Hello <strong>${username}</strong>! I'm Michael, your Registry Specialist at PY.KG.</p>
+                    <p>How can I help you today? I can assist with:</p>
+                    <ul>
+                        <li>Domain registration and management</li>
+                        <li>DNS record configuration</li>
+                        <li>WHOIS and blacklist queries</li>
+                        <li>Appeals and reports</li>
+                    </ul>
+                    <p>Feel free to ask me anything about your domains.</p>
+                </div>
+            `;
+            chat.appendChild(div);
+            scroll();
         }
 
         function showLoginPrompt() {
