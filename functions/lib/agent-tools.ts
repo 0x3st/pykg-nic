@@ -259,7 +259,26 @@ export class AgentToolExecutor {
 
     const { onRequestGet } = await import('../api/dns-records');
     const response = await onRequestGet({ request: dnsRequest, env: this.env } as any);
-    return await response.json();
+    const data = await response.json();
+
+    // Return with UI rendering flag for interactive DNS management
+    if (data.success && data.data) {
+      // Get domain info for display
+      const domain = await this.env.DB.prepare(
+        'SELECT * FROM domains WHERE owner_linuxdo_id = ? AND status = ?'
+      ).bind(this.user.linuxdo_id, 'active').first();
+
+      return {
+        success: true,
+        ui_type: 'dns_manager',
+        data: {
+          ...data.data,
+          domain: domain || {}
+        }
+      };
+    }
+
+    return data;
   }
 
   private async whoisLookup(label: string) {

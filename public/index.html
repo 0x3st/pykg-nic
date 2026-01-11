@@ -134,6 +134,105 @@
         }
         .login-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 16px -2px rgba(2, 132, 199, 0.4); }
 
+        /* DNS Manager UI */
+        .dns-manager {
+            background: rgba(255,255,255,0.95); border-radius: 12px; padding: 0;
+            margin-top: 12px; overflow: hidden; border: 1px solid rgba(0,0,0,0.08);
+        }
+        .dns-manager-header {
+            background: linear-gradient(135deg, #0284c7, #0369a1);
+            color: white; padding: 12px 16px; display: flex;
+            justify-content: space-between; align-items: center;
+        }
+        .dns-manager-header h3 { margin: 0; font-size: 14px; font-weight: 600; }
+        .dns-table {
+            width: 100%; border-collapse: collapse; font-size: 13px;
+        }
+        .dns-table th {
+            background: rgba(0,0,0,0.02); padding: 10px 12px;
+            text-align: left; font-weight: 600; border-bottom: 2px solid rgba(0,0,0,0.06);
+            font-size: 11px; text-transform: uppercase; color: var(--text-secondary);
+        }
+        .dns-table td {
+            padding: 12px; border-bottom: 1px solid rgba(0,0,0,0.04);
+        }
+        .dns-table tr:hover { background: rgba(56, 189, 248, 0.04); }
+        .dns-type-badge {
+            display: inline-block; padding: 3px 8px; border-radius: 6px;
+            font-size: 11px; font-weight: 600; font-family: monospace;
+        }
+        .dns-type-A { background: #dbeafe; color: #1e40af; }
+        .dns-type-AAAA { background: #e0e7ff; color: #4338ca; }
+        .dns-type-CNAME { background: #fce7f3; color: #9f1239; }
+        .dns-type-TXT { background: #d1fae5; color: #065f46; }
+        .dns-actions {
+            display: flex; gap: 6px;
+        }
+        .dns-btn {
+            padding: 4px 10px; border-radius: 6px; font-size: 11px;
+            cursor: pointer; border: none; font-weight: 500; transition: all 0.2s;
+        }
+        .dns-btn-edit {
+            background: rgba(59, 130, 246, 0.1); color: #2563eb;
+        }
+        .dns-btn-edit:hover { background: rgba(59, 130, 246, 0.2); }
+        .dns-btn-delete {
+            background: rgba(239, 68, 68, 0.1); color: #dc2626;
+        }
+        .dns-btn-delete:hover { background: rgba(239, 68, 68, 0.2); }
+        .dns-btn-add {
+            background: white; color: #0284c7; padding: 6px 14px;
+            border-radius: 8px; font-size: 12px; font-weight: 600;
+            cursor: pointer; border: none; transition: all 0.2s;
+        }
+        .dns-btn-add:hover { background: rgba(255,255,255,0.9); transform: scale(1.05); }
+        .dns-empty {
+            text-align: center; padding: 40px 20px; color: var(--text-secondary);
+        }
+        .dns-form {
+            padding: 16px; background: rgba(0,0,0,0.02); display: none;
+        }
+        .dns-form.active { display: block; }
+        .dns-form-grid {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+            margin-bottom: 12px;
+        }
+        .dns-form-group {
+            display: flex; flex-direction: column; gap: 4px;
+        }
+        .dns-form-group label {
+            font-size: 11px; font-weight: 600; color: var(--text-secondary);
+            text-transform: uppercase;
+        }
+        .dns-form-group input, .dns-form-group select {
+            padding: 8px 10px; border-radius: 6px; border: 1px solid rgba(0,0,0,0.1);
+            font-size: 13px; font-family: inherit;
+        }
+        .dns-form-group input:focus, .dns-form-group select:focus {
+            outline: none; border-color: #0284c7; box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.1);
+        }
+        .dns-form-actions {
+            display: flex; gap: 8px; justify-content: flex-end;
+        }
+        .dns-form-btn {
+            padding: 8px 16px; border-radius: 6px; font-size: 12px;
+            font-weight: 600; cursor: pointer; border: none; transition: all 0.2s;
+        }
+        .dns-form-btn-save {
+            background: #0284c7; color: white;
+        }
+        .dns-form-btn-save:hover { background: #0369a1; }
+        .dns-form-btn-cancel {
+            background: rgba(0,0,0,0.05); color: var(--text);
+        }
+        .dns-form-btn-cancel:hover { background: rgba(0,0,0,0.1); }
+        .proxied-toggle {
+            display: flex; align-items: center; gap: 8px; margin-top: 4px;
+        }
+        .proxied-toggle input[type="checkbox"] {
+            width: 16px; height: 16px; cursor: pointer;
+        }
+
         .tool-badge {
             background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.3);
             border-radius: 12px; padding: 6px 10px; margin-top: 8px;
@@ -416,6 +515,21 @@
                         return names[t.name] || t.name;
                     });
                     bubble.innerHTML = `<div class="tool-badge">🔧 ${tools.join(', ')}</div>`;
+
+                    // Check if we need to render DNS Manager UI
+                    const dnsManagerCall = data.data.tool_calls.find(t =>
+                        t.name === 'query_dns_records' && t.result?.ui_type === 'dns_manager'
+                    );
+
+                    if (dnsManagerCall) {
+                        await type(bubble, md(data.data.response));
+                        renderDnsManager(bubble, dnsManagerCall.result.data);
+                        setStatus('connected', 'Online');
+                        processing = false;
+                        sendBtn.disabled = false;
+                        scroll();
+                        return;
+                    }
                 }
 
                 // Render markdown
@@ -475,6 +589,199 @@
 
         function scroll() {
             chat.scrollTop = chat.scrollHeight;
+        }
+
+        // DNS Manager UI Functions
+        function renderDnsManager(container, dnsData) {
+            const records = dnsData.records || [];
+            const domain = dnsData.domain || {};
+
+            const managerId = 'dns-' + Date.now();
+            const managerHtml = `
+                <div class="dns-manager" id="${managerId}">
+                    <div class="dns-manager-header">
+                        <h3>🌐 DNS Records for ${domain.fqdn || 'your domain'}</h3>
+                        <button class="dns-btn-add" onclick="toggleDnsForm('${managerId}')">+ Add Record</button>
+                    </div>
+                    <div class="dns-form" id="${managerId}-form">
+                        <div class="dns-form-grid">
+                            <div class="dns-form-group">
+                                <label>Type</label>
+                                <select id="${managerId}-type">
+                                    <option value="A">A</option>
+                                    <option value="AAAA">AAAA</option>
+                                    <option value="CNAME">CNAME</option>
+                                    <option value="TXT">TXT</option>
+                                </select>
+                            </div>
+                            <div class="dns-form-group">
+                                <label>Name</label>
+                                <input type="text" id="${managerId}-name" placeholder="@ or subdomain">
+                            </div>
+                            <div class="dns-form-group" style="grid-column: 1 / -1;">
+                                <label>Content</label>
+                                <input type="text" id="${managerId}-content" placeholder="IP address or target">
+                            </div>
+                            <div class="dns-form-group">
+                                <label>TTL (seconds)</label>
+                                <input type="number" id="${managerId}-ttl" value="3600" min="60">
+                            </div>
+                            <div class="dns-form-group">
+                                <label>Proxied</label>
+                                <div class="proxied-toggle">
+                                    <input type="checkbox" id="${managerId}-proxied">
+                                    <span style="font-size: 12px; color: var(--text-secondary);">Enable proxy</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="dns-form-actions">
+                            <button class="dns-form-btn dns-form-btn-cancel" onclick="toggleDnsForm('${managerId}')">Cancel</button>
+                            <button class="dns-form-btn dns-form-btn-save" onclick="saveDnsRecord('${managerId}')">Save Record</button>
+                        </div>
+                    </div>
+                    <div id="${managerId}-content">
+                        ${renderDnsTable(records, managerId)}
+                    </div>
+                </div>
+            `;
+
+            container.insertAdjacentHTML('beforeend', managerHtml);
+        }
+
+        function renderDnsTable(records, managerId) {
+            if (!records || records.length === 0) {
+                return '<div class="dns-empty">No DNS records found. Click "+ Add Record" to create one.</div>';
+            }
+
+            let html = '<table class="dns-table"><thead><tr><th>Type</th><th>Name</th><th>Content</th><th>TTL</th><th>Proxy</th><th>Actions</th></tr></thead><tbody>';
+
+            records.forEach(record => {
+                html += `
+                    <tr>
+                        <td><span class="dns-type-badge dns-type-${record.type}">${record.type}</span></td>
+                        <td><code>${record.name}</code></td>
+                        <td><code>${record.content}</code></td>
+                        <td>${record.ttl}s</td>
+                        <td>${record.proxied ? '✓' : '-'}</td>
+                        <td>
+                            <div class="dns-actions">
+                                <button class="dns-btn dns-btn-edit" onclick="editDnsRecord(${record.id}, '${managerId}')">Edit</button>
+                                <button class="dns-btn dns-btn-delete" onclick="deleteDnsRecord(${record.id}, '${managerId}')">Delete</button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            html += '</tbody></table>';
+            return html;
+        }
+
+        function toggleDnsForm(managerId) {
+            const form = document.getElementById(managerId + '-form');
+            form.classList.toggle('active');
+            if (form.classList.contains('active')) {
+                // Clear form
+                document.getElementById(managerId + '-type').value = 'A';
+                document.getElementById(managerId + '-name').value = '';
+                document.getElementById(managerId + '-content').value = '';
+                document.getElementById(managerId + '-ttl').value = '3600';
+                document.getElementById(managerId + '-proxied').checked = false;
+                delete form.dataset.editId;
+            }
+        }
+
+        async function saveDnsRecord(managerId) {
+            const form = document.getElementById(managerId + '-form');
+            const recordId = form.dataset.editId;
+
+            const data = {
+                type: document.getElementById(managerId + '-type').value,
+                name: document.getElementById(managerId + '-name').value,
+                content: document.getElementById(managerId + '-content').value,
+                ttl: parseInt(document.getElementById(managerId + '-ttl').value),
+                proxied: document.getElementById(managerId + '-proxied').checked
+            };
+
+            try {
+                const url = recordId ? `/api/dns-records/${recordId}` : '/api/dns-records';
+                const method = recordId ? 'PUT' : 'POST';
+
+                const res = await fetch(url, {
+                    method,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await res.json();
+
+                if (result.success) {
+                    // Refresh DNS records
+                    await refreshDnsRecords(managerId);
+                    toggleDnsForm(managerId);
+                } else {
+                    alert('Error: ' + (result.error || 'Failed to save record'));
+                }
+            } catch (e) {
+                alert('Error: ' + e.message);
+            }
+        }
+
+        async function editDnsRecord(recordId, managerId) {
+            try {
+                const res = await fetch(`/api/dns-records/${recordId}`);
+                const result = await res.json();
+
+                if (result.success) {
+                    const record = result.data;
+                    const form = document.getElementById(managerId + '-form');
+
+                    document.getElementById(managerId + '-type').value = record.type;
+                    document.getElementById(managerId + '-name').value = record.name;
+                    document.getElementById(managerId + '-content').value = record.content;
+                    document.getElementById(managerId + '-ttl').value = record.ttl;
+                    document.getElementById(managerId + '-proxied').checked = record.proxied;
+
+                    form.dataset.editId = recordId;
+                    form.classList.add('active');
+                }
+            } catch (e) {
+                alert('Error: ' + e.message);
+            }
+        }
+
+        async function deleteDnsRecord(recordId, managerId) {
+            if (!confirm('Are you sure you want to delete this DNS record?')) return;
+
+            try {
+                const res = await fetch(`/api/dns-records/${recordId}`, {
+                    method: 'DELETE'
+                });
+
+                const result = await res.json();
+
+                if (result.success) {
+                    await refreshDnsRecords(managerId);
+                } else {
+                    alert('Error: ' + (result.error || 'Failed to delete record'));
+                }
+            } catch (e) {
+                alert('Error: ' + e.message);
+            }
+        }
+
+        async function refreshDnsRecords(managerId) {
+            try {
+                const res = await fetch('/api/dns-records');
+                const result = await res.json();
+
+                if (result.success) {
+                    const contentDiv = document.getElementById(managerId + '-content');
+                    contentDiv.innerHTML = renderDnsTable(result.data.records, managerId);
+                }
+            } catch (e) {
+                console.error('Failed to refresh DNS records:', e);
+            }
         }
 
         init();
