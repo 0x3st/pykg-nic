@@ -1,0 +1,2013 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PY.KG NIC</title>
+  <style>
+    :root {
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --danger: #dc2626;
+      --danger-hover: #b91c1c;
+      --success: #16a34a;
+      --warning: #d97706;
+      --bg: #f8fafc;
+      --card-bg: #ffffff;
+      --text: #1e293b;
+      --text-muted: #64748b;
+      --border: #e2e8f0;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 2rem 1rem;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+
+    header h1 {
+      font-size: 2rem;
+      margin-bottom: 0.5rem;
+    }
+
+    header p {
+      color: var(--text-muted);
+    }
+
+    .card {
+      background: var(--card-bg);
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .card h2 {
+      font-size: 1.25rem;
+      margin-bottom: 1rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .btn {
+      display: inline-block;
+      padding: 0.625rem 1.25rem;
+      border-radius: 6px;
+      font-size: 0.875rem;
+      font-weight: 500;
+      text-decoration: none;
+      cursor: pointer;
+      border: none;
+      transition: background-color 0.2s;
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: var(--primary-hover);
+    }
+
+    .btn-danger {
+      background: var(--danger);
+      color: white;
+    }
+
+    .btn-danger:hover {
+      background: var(--danger-hover);
+    }
+
+    .btn-secondary {
+      background: var(--border);
+      color: var(--text);
+    }
+
+    .btn-secondary:hover {
+      background: #cbd5e1;
+    }
+
+    .btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .alert {
+      padding: 1rem;
+      border-radius: 6px;
+      margin-bottom: 1rem;
+    }
+
+    .alert-error {
+      background: #fef2f2;
+      color: var(--danger);
+      border: 1px solid #fecaca;
+    }
+
+    .alert-success {
+      background: #f0fdf4;
+      color: var(--success);
+      border: 1px solid #bbf7d0;
+    }
+
+    .alert-info {
+      background: #eff6ff;
+      color: var(--primary);
+      border: 1px solid #bfdbfe;
+    }
+
+    .form-group {
+      margin-bottom: 1rem;
+    }
+
+    .form-group label {
+      display: block;
+      font-weight: 500;
+      margin-bottom: 0.375rem;
+      font-size: 0.875rem;
+    }
+
+    .form-group input, .form-group select, .form-group textarea {
+      width: 100%;
+      padding: 0.625rem;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 0.875rem;
+      font-family: inherit;
+    }
+
+    .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    }
+
+    .input-group {
+      display: flex;
+      align-items: center;
+    }
+
+    .input-group input {
+      border-top-right-radius: 0;
+      border-bottom-right-radius: 0;
+    }
+
+    .input-group .suffix {
+      padding: 0.625rem 1rem;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-left: none;
+      border-top-right-radius: 6px;
+      border-bottom-right-radius: 6px;
+      color: var(--text-muted);
+      font-size: 0.875rem;
+    }
+
+    .user-info {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .user-details {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: var(--primary);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 0.125rem 0.5rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 500;
+    }
+
+    .badge-success {
+      background: #dcfce7;
+      color: var(--success);
+    }
+
+    .badge-warning {
+      background: #fef3c7;
+      color: var(--warning);
+    }
+
+    .domain-display {
+      font-family: monospace;
+      font-size: 1.25rem;
+      padding: 1rem;
+      background: var(--bg);
+      border-radius: 6px;
+      margin-bottom: 1rem;
+    }
+
+    .ns-list {
+      list-style: none;
+      padding: 0;
+      margin: 1rem 0;
+    }
+
+    .ns-list li {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem;
+      background: var(--bg);
+      border-radius: 4px;
+      margin-bottom: 0.5rem;
+      font-family: monospace;
+      font-size: 0.875rem;
+    }
+
+    .ns-list li .ns-remove {
+      margin-left: auto;
+      background: none;
+      border: none;
+      color: var(--danger);
+      cursor: pointer;
+      padding: 0.25rem;
+    }
+
+    .dns-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1rem 0;
+      font-size: 0.875rem;
+    }
+
+    .dns-table thead {
+      background: var(--bg);
+    }
+
+    .dns-table th {
+      padding: 0.75rem 0.5rem;
+      text-align: left;
+      font-weight: 600;
+      color: var(--text-muted);
+      border-bottom: 2px solid var(--border);
+    }
+
+    .dns-table td {
+      padding: 0.75rem 0.5rem;
+      border-bottom: 1px solid var(--border);
+      vertical-align: middle;
+    }
+
+    .dns-table tbody tr:hover {
+      background: var(--bg);
+    }
+
+    .dns-table .type-badge {
+      display: inline-block;
+      padding: 0.25rem 0.5rem;
+      background: #dbeafe;
+      color: #1e40af;
+      border-radius: 4px;
+      font-weight: 500;
+      font-size: 0.75rem;
+    }
+
+    .dns-table .proxy-icon {
+      font-size: 1.1rem;
+    }
+
+    .dns-table .record-name {
+      font-family: monospace;
+      color: var(--primary);
+      font-weight: 500;
+    }
+
+    .dns-table .record-content {
+      font-family: monospace;
+      word-break: break-all;
+    }
+
+    .dns-table .action-btn {
+      background: none;
+      border: none;
+      color: var(--danger);
+      cursor: pointer;
+      padding: 0.25rem 0.5rem;
+      font-size: 1rem;
+    }
+
+    .dns-table .action-btn:hover {
+      color: var(--danger-hover);
+    }
+
+    .dns-form-grid {
+      display: grid;
+      grid-template-columns: 100px 150px 1fr;
+      gap: 0.5rem;
+      align-items: start;
+    }
+
+    @media (max-width: 768px) {
+      .dns-table {
+        font-size: 0.75rem;
+      }
+
+      .dns-table th,
+      .dns-table td {
+        padding: 0.5rem 0.25rem;
+      }
+
+      .dns-form-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .ns-input-row {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .ns-input-row input {
+      flex: 1;
+    }
+
+    .btn-sm {
+      padding: 0.375rem 0.75rem;
+      font-size: 0.75rem;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 2rem;
+      color: var(--text-muted);
+    }
+
+    .spinner {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 2px solid var(--border);
+      border-top-color: var(--primary);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .help-text {
+      font-size: 0.8125rem;
+      color: var(--text-muted);
+      margin-top: 0.5rem;
+    }
+
+    footer {
+      text-align: center;
+      padding: 2rem;
+      color: var(--text-muted);
+      font-size: 0.875rem;
+    }
+
+    footer a {
+      color: var(--primary);
+      text-decoration: none;
+    }
+
+    @media (max-width: 640px) {
+      .user-info {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .ns-input-row {
+        flex-direction: column;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>PY.KG Network Information Center</h1>
+      <p>PY.KG Subdomain Registration Service</p>
+    </header>
+
+    <!-- AI Assistant Banner -->
+    <div style="background: linear-gradient(135deg, #0284c7, #10b981); color: white; padding: 1rem 1.5rem; border-radius: 12px; margin-bottom: 1.5rem; box-shadow: 0 4px 12px -2px rgba(2, 132, 199, 0.3);">
+      <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem;">
+        <div>
+          <strong style="font-size: 1.1em;">🤖 Try our new AI Registry Specialist!</strong>
+          <p style="margin: 0.25rem 0 0 0; opacity: 0.95;">Chat with Michael for easier domain management</p>
+        </div>
+        <a href="/" style="background: white; color: #0284c7; padding: 0.5rem 1.5rem; border-radius: 8px; text-decoration: none; font-weight: 500; white-space: nowrap;">Go to AI Assistant</a>
+      </div>
+    </div>
+
+    <!-- Error display -->
+    <div id="error-container" class="hidden"></div>
+
+    <!-- Login section (shown when not logged in) -->
+    <div id="login-section" class="card hidden">
+      <h2>Login</h2>
+      <p style="margin-bottom: 1rem; color: var(--text-muted);">
+        Login with your LinuxDO account to register your exclusive subdomain.
+        <br>
+        <small>Requirement: Trust Level ≥ 2</small>
+      </p>
+      <a href="/auth/login" class="btn btn-primary">Login with LinuxDO</a>
+    </div>
+
+    <!-- User section (shown when logged in) -->
+    <div id="user-section" class="card hidden">
+      <div class="user-info">
+        <div class="user-details">
+          <div class="avatar" id="user-avatar">?</div>
+          <div>
+            <strong id="user-name">Loading...</strong>
+            <br>
+            <span class="badge badge-success" id="user-trust">TL?</span>
+          </div>
+        </div>
+        <div style="display: flex; gap: 0.5rem; align-items: center;">
+          <button class="btn btn-secondary" id="notifications-btn" style="position: relative;">
+            Notifications
+            <span id="unread-badge" class="hidden" style="position: absolute; top: -5px; right: -5px; background: var(--danger); color: white; border-radius: 50%; width: 18px; height: 18px; font-size: 0.7rem; display: flex; align-items: center; justify-content: center;"></span>
+          </button>
+          <button class="btn btn-secondary" id="messages-btn" style="position: relative;">
+            Messages
+            <span id="unread-messages-badge" class="hidden" style="position: absolute; top: -5px; right: -5px; background: var(--danger); color: white; border-radius: 50%; width: 18px; height: 18px; font-size: 0.7rem; display: flex; align-items: center; justify-content: center;"></span>
+          </button>
+          <a href="/auth/logout" class="btn btn-secondary">Logout</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Notifications panel -->
+    <div id="notifications-panel" class="card hidden">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <h2 style="margin: 0;">Notifications</h2>
+        <div style="display: flex; gap: 0.5rem;">
+          <button class="btn btn-secondary btn-sm" id="mark-all-read-btn">Mark All as Read</button>
+          <button class="btn btn-danger btn-sm" id="delete-all-read-btn">Delete All Read</button>
+          <button class="btn btn-secondary btn-sm" id="close-notifications-btn">Close</button>
+        </div>
+      </div>
+      <div id="notifications-list">
+        <div class="loading">Loading...</div>
+      </div>
+    </div>
+
+    <!-- Messages panel -->
+    <div id="messages-panel" class="card hidden">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <h2 style="margin: 0;">Chat with Admin</h2>
+        <button class="btn btn-secondary btn-sm" id="close-messages-btn">Close</button>
+      </div>
+      <div id="messages-container" style="max-height: 400px; overflow-y: auto; margin-bottom: 1rem; padding: 1rem; background: var(--bg); border-radius: 6px;">
+        <div class="loading">Loading messages...</div>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+        <textarea
+          id="message-input"
+          placeholder="Type your message here..."
+          rows="3"
+          maxlength="2000"
+          style="width: 100%; padding: 0.625rem; border: 1px solid var(--border); border-radius: 6px; font-size: 0.875rem; font-family: inherit; resize: vertical;"
+        ></textarea>
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <small style="color: var(--text-muted);">
+            <span id="message-char-count">0</span>/2000 characters
+          </small>
+          <button class="btn btn-primary btn-sm" id="send-message-btn">Send</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Appeal submission panel (shown when domain is suspended) -->
+    <div id="appeal-section" class="card hidden">
+      <h2>Submit Appeal</h2>
+      <div class="alert alert-warning" style="margin-bottom: 1rem;">
+        Your domain has been suspended. If you believe this is a mistake, you can submit an appeal.
+      </div>
+      <form id="appeal-form">
+        <div class="form-group">
+          <label for="appeal-reason">Appeal Reason <span style="color: var(--danger);">*</span></label>
+          <textarea
+            id="appeal-reason"
+            rows="5"
+            placeholder="Please explain in detail why you believe the suspension is unjustified, or that you have completed the necessary corrections..."
+            required
+            minlength="10"
+            style="width: 100%; padding: 0.625rem; border: 1px solid var(--border); border-radius: 6px; font-size: 0.875rem; font-family: inherit; resize: vertical;"
+          ></textarea>
+          <small style="color: var(--text-muted); margin-top: 0.25rem; display: block;">
+            Please enter at least 10 characters
+          </small>
+        </div>
+        <button type="submit" class="btn btn-primary">Submit Appeal</button>
+      </form>
+    </div>
+
+    <!-- Domain registration section -->
+    <div id="register-section" class="card hidden">
+      <h2>Register Subdomain</h2>
+      <p style="margin-bottom: 1rem; color: var(--text-muted);">
+        Each user can register one subdomain. Please choose carefully.
+      </p>
+      <div class="alert alert-info" style="margin-bottom: 1rem;">
+        <strong>Price:</strong><span id="domain-price">--</span> Credits (LinuxDO Credit)
+      </div>
+      <form id="register-form">
+        <div class="form-group">
+          <label for="label-input">Subdomain</label>
+          <div class="input-group">
+            <input type="text" id="label-input" placeholder="your-name" pattern="[a-z0-9-]+" required>
+            <span class="suffix">.py.kg</span>
+          </div>
+          <small style="color: var(--text-muted); margin-top: 0.25rem; display: block;">
+            Only lowercase letters, numbers, and hyphens allowed, 2-63 characters
+          </small>
+        </div>
+        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+          <button type="submit" class="btn btn-primary" id="register-btn">Register</button>
+          <a href="/whois.html" class="btn btn-secondary">WHOIS Lookup</a>
+        </div>
+      </form>
+    </div>
+
+    <!-- Domain registration detail form section (Python praise + usage purpose) -->
+    <div id="register-detail-section" class="card hidden">
+      <h2>Complete Registration Information</h2>
+      <div class="domain-display" id="register-domain-display">Loading...</div>
+
+      <!-- Service Terms -->
+      <div style="margin-bottom: 1.5rem; padding: 1rem; background: var(--bg); border-left: 3px solid var(--danger); border-radius: 4px;">
+        <h3 style="font-size: 1rem; margin-bottom: 0.75rem; color: var(--danger);">PY.KG Terms of Service</h3>
+        <div style="font-size: 0.875rem; line-height: 1.6; color: var(--text);">
+          <p style="margin-bottom: 0.5rem;"><strong>1. Usage Guidelines</strong></p>
+          <ul style="margin-left: 1.5rem; margin-bottom: 0.75rem;">
+            <li>Strictly prohibited: Using domains for any illegal websites, illegal services, or unlawful activities</li>
+            <li>Strictly prohibited: Publishing or distributing illegal content (including but not limited to pornography, gambling, fraud, violence, terrorism, etc.)</li>
+            <li>Strictly prohibited: Using domains for network attacks, phishing, fraud, spreading viruses or malware</li>
+            <li>Strictly prohibited: Abusing domain resources, including malicious registration, reselling, or hoarding</li>
+            <li>Strictly prohibited: Publishing false information or using domains for misleading purposes</li>
+            <li>Must comply with relevant laws and regulations of the People's Republic of China and local jurisdictions</li>
+          </ul>
+
+          <p style="margin-bottom: 0.5rem;"><strong style="color: var(--danger);">2. Violation Handling</strong></p>
+          <ul style="margin-left: 1.5rem; margin-bottom: 0.75rem;">
+            <li><strong>Detection and Suspension:</strong> Upon discovery of violations, administrators will immediately suspend all DNS resolution services for the domain</li>
+            <li><strong>Appeal Mechanism:</strong> Users may submit an appeal through the console, and administrators will re-evaluate and make a final decision (including restoration, partial deletion, or complete deletion of DNS records)</li>
+            <li><strong>Appeal Limitation:</strong> Each domain has only one appeal opportunity. Please provide a complete and truthful statement in your appeal</li>
+            <li><strong>Domain Deletion:</strong> Domains confirmed to violate the Terms of Service will be deleted directly without restoration</li>
+            <li><strong>Permanent Ban:</strong> Users with three cumulative violations will be permanently blacklisted and will no longer have appeal rights</li>
+          </ul>
+
+          <p style="margin-bottom: 0.5rem;"><strong>3. Fees and Refunds</strong></p>
+          <ul style="margin-left: 1.5rem; margin-bottom: 0.75rem;">
+            <li>Domain registration requires payment of corresponding credits, and payment is considered the start of service</li>
+            <li><strong style="color: var(--danger);">To prevent abuse, all fees are non-refundable</strong>, including but not limited to: successful registration, failed review, violation deletion, etc.</li>
+            <li>Please read the Terms of Service carefully before registration and confirm before payment</li>
+          </ul>
+
+          <p style="margin-bottom: 0.5rem;"><strong>4. Privacy Policy</strong></p>
+          <ul style="margin-left: 1.5rem; margin-bottom: 0.75rem;">
+            <li><strong>Information Collection:</strong> We obtain your user ID, username, and trust level through LinuxDO OAuth for authentication and service provision</li>
+            <li><strong>Information Use:</strong> Your information is only used for domain registration, management, and related services, and will not be used for other commercial purposes</li>
+            <li><strong>Information Disclosure:</strong> Your registered domain and username will be publicly displayed in WHOIS queries; violation records will be published in the blacklist</li>
+            <li><strong>Information Storage:</strong> Your data is stored on Cloudflare infrastructure, and we take reasonable measures to protect data security</li>
+            <li><strong>Logging:</strong> The system records key operation logs (such as domain registration) for security audits and troubleshooting</li>
+          </ul>
+
+          <p style="margin-bottom: 0.5rem;"><strong>5. Community Culture</strong></p>
+          <p style="margin-bottom: 0;">Let's practice the LINUX DO community culture:</p>
+          <p style="margin: 0.5rem 0; font-weight: 600; font-size: 0.95rem;">Sincere, Friendly, United, Professional</p>
+          <p style="margin: 0;">Build a community we can all be proud of.</p>
+
+          <p style="margin-top: 1rem; padding-top: 0.75rem; border-top: 1px solid var(--border); color: var(--text-muted); font-size: 0.8rem;">
+            Last Updated: January 4, 2025
+          </p>
+        </div>
+      </div>
+
+      <form id="register-detail-form">
+        <div class="form-group">
+          <label for="python-praise-input">
+            Why do you like Python? <span style="color: var(--danger);">*</span>
+          </label>
+          <textarea
+            id="python-praise-input"
+            rows="5"
+            placeholder="Please write at least 20 characters expressing your love for Python..."
+            required
+            minlength="20"
+            style="width: 100%; padding: 0.625rem; border: 1px solid var(--border); border-radius: 6px; font-size: 0.875rem; font-family: inherit; resize: vertical;"
+          ></textarea>
+          <small style="color: var(--text-muted); margin-top: 0.25rem; display: block;">
+            Please enter at least 20 characters
+          </small>
+        </div>
+        <div class="form-group">
+          <label for="usage-purpose-input">
+            Domain Usage Description <span style="color: var(--danger);">*</span>
+          </label>
+          <textarea
+            id="usage-purpose-input"
+            rows="4"
+            placeholder="Please describe how you plan to use this domain..."
+            required
+            minlength="10"
+            style="width: 100%; padding: 0.625rem; border: 1px solid var(--border); border-radius: 6px; font-size: 0.875rem; font-family: inherit; resize: vertical;"
+          ></textarea>
+          <small style="color: var(--text-muted); margin-top: 0.25rem; display: block;">
+            Please truthfully describe the domain usage. False or violating content will result in registration rejection.
+          </small>
+        </div>
+        <div class="form-group">
+          <label style="display: flex; align-items: start; cursor: pointer;">
+            <input type="checkbox" id="terms-checkbox" required style="margin-top: 0.25rem; margin-right: 0.5rem; width: 18px; height: 18px; cursor: pointer;">
+            <span style="font-size: 0.875rem;">
+              I have read and agree to the <strong style="color: var(--danger);">PY.KG Terms of Service</strong>, promise to comply with usage guidelines, and am willing to accept the consequences of any violations.
+            </span>
+          </label>
+        </div>
+        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+          <button type="submit" class="btn btn-primary" id="pay-btn">Pay and Complete Registration</button>
+          <button type="button" class="btn btn-secondary" id="back-to-label-btn">Back to Modify Domain</button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Pending review section (shown when domain is pending review but not yet created) -->
+    <div id="pending-review-section" class="card hidden">
+      <h2>Domain Pending Review</h2>
+      <div class="alert alert-info" style="margin-bottom: 1rem;">
+        <strong>Your domain registration application is awaiting administrator review</strong><br>
+        Once approved, the domain will be automatically activated and you can configure DNS records.
+      </div>
+      <div style="margin-bottom: 1rem;">
+        <p><strong>Applied Domain:</strong><span id="pending-review-label">--</span>.py.kg</p>
+        <p><strong>Review Reason:</strong><span id="pending-review-reason">--</span></p>
+        <p style="color: var(--text-muted); font-size: 0.875rem;"><strong>Submission Time:</strong><span id="pending-review-created">--</span></p>
+      </div>
+      <button class="btn btn-secondary" id="refresh-review-status-btn">Refresh Status</button>
+    </div>
+
+    <!-- Pending order section -->
+    <div id="pending-order-section" class="card hidden">
+      <h2>Pending Payment Order</h2>
+      <div class="alert alert-warning" style="margin-bottom: 1rem;">
+        You have a pending domain registration order. Please complete payment or cancel to register again.
+      </div>
+      <div style="margin-bottom: 1rem;">
+        <p><strong>Domain:</strong><span id="pending-label">--</span>.py.kg</p>
+        <p><strong>Amount:</strong><span id="pending-amount">--</span> Credits</p>
+        <p><strong>Order Number:</strong><span id="pending-order-no">--</span></p>
+        <p style="color: var(--text-muted); font-size: 0.875rem;"><strong>Created:</strong><span id="pending-created">--</span></p>
+      </div>
+      <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+        <button class="btn btn-primary" id="continue-pay-btn">Continue Payment</button>
+        <button class="btn btn-secondary" id="refresh-status-btn">Refresh Status</button>
+        <button class="btn btn-secondary" id="cancel-order-btn">Cancel Order</button>
+      </div>
+    </div>
+
+    <!-- Domain management section -->
+    <div id="domain-section" class="card hidden">
+      <h2>My Domain</h2>
+      <div id="suspend-alert" class="hidden"></div>
+      <div class="domain-display" id="domain-display">Loading...</div>
+      <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem;">
+        <span class="badge badge-success" id="domain-status">active</span>
+        <span style="color: var(--text-muted); font-size: 0.875rem;" id="domain-created"></span>
+      </div>
+      <button class="btn btn-danger btn-sm" id="delete-domain-btn">Delete Domain</button>
+    </div>
+
+    <!-- DNS Records section -->
+    <div id="dns-section" class="card hidden">
+      <h2>DNS Records Management</h2>
+      <div class="alert alert-info" style="margin-bottom: 1rem;">
+        <strong>Note:</strong>You can add the following types of DNS records (maximum 10):
+        <ul style="margin: 0.5rem 0 0 1.5rem;">
+          <li><strong>A / AAAA:</strong>Points to IPv4 / IPv6 address</li>
+          <li><strong>CNAME:</strong>Points to another domain</li>
+          <li><strong>TXT:</strong>Can be used for various verifications</li>
+        </ul>
+      </div>
+
+      <div id="dns-loading" class="loading">
+        <span class="spinner"></span>
+        <p>Loading DNS records...</p>
+      </div>
+
+      <div id="dns-content" class="hidden">
+        <div class="form-group">
+          <label>Current DNS Records <span id="dns-mode-badge"></span></label>
+          <div id="dns-records-container">
+            <p style="color: var(--text-muted); padding: 1rem;">No DNS records</p>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Add DNS Record</label>
+          <div class="dns-form-grid">
+            <div>
+              <label style="display: block; font-size: 0.75rem; margin-bottom: 0.25rem; color: var(--text-muted);">Type</label>
+              <select id="dns-type-select" style="width: 100%; padding: 0.625rem; border: 1px solid var(--border); border-radius: 6px; font-size: 0.875rem;">
+                <option value="A">A</option>
+                <option value="AAAA">AAAA</option>
+                <option value="CNAME">CNAME</option>
+                <option value="TXT">TXT</option>
+              </select>
+            </div>
+            <div>
+              <label style="display: block; font-size: 0.75rem; margin-bottom: 0.25rem; color: var(--text-muted);">Name</label>
+              <input type="text" id="dns-name-input" placeholder="@" style="width: 100%; padding: 0.625rem; border: 1px solid var(--border); border-radius: 6px; font-size: 0.875rem; font-family: monospace;">
+            </div>
+            <div>
+              <label style="display: block; font-size: 0.75rem; margin-bottom: 0.25rem; color: var(--text-muted);">Content</label>
+              <input type="text" id="dns-content-input" placeholder="1.2.3.4" style="width: 100%; padding: 0.625rem; border: 1px solid var(--border); border-radius: 6px; font-size: 0.875rem; font-family: monospace;">
+            </div>
+          </div>
+          <p class="help-text" id="dns-type-hint" style="margin-top: 0.5rem;">
+            @ represents the root domain, or enter a subdomain (like blog, api) to create blog.your-domain.py.kg
+          </p>
+
+          <div style="margin-top: 1rem; padding: 1rem; background: var(--bg); border-radius: 6px;">
+            <div id="dns-proxy-option" style="margin-bottom: 0.75rem;">
+              <label style="display: flex; align-items: center; cursor: pointer;">
+                <input type="checkbox" id="dns-proxy-checkbox" style="margin-right: 0.5rem; width: 18px; height: 18px; cursor: pointer;">
+                <span>
+                  <strong>Proxy 🟠</strong>
+                  <small style="display: block; color: var(--text-muted); margin-top: 0.25rem;">
+                    Enable Cloudflare CDN/DDoS protection (A/AAAA/CNAME only)
+                  </small>
+                </span>
+              </label>
+            </div>
+
+            <div style="margin-top: 0.75rem;">
+              <label style="display: block; margin-bottom: 0.5rem;">
+                TTL
+                <span id="dns-ttl-auto-badge" class="hidden" style="margin-left: 0.5rem;">
+                  <span class="badge" style="background: var(--warning); color: white; font-size: 0.7rem;">Auto</span>
+                </span>
+              </label>
+              <select id="dns-ttl-select" style="width: 100%; padding: 0.625rem; border: 1px solid var(--border); border-radius: 6px; font-size: 0.875rem;">
+                <option value="60">1 minute</option>
+                <option value="300">5 minutes</option>
+                <option value="900">15 minutes</option>
+                <option value="1800">30 minutes</option>
+                <option value="3600" selected>1 hour</option>
+                <option value="7200">2 hours</option>
+                <option value="14400">4 hours</option>
+                <option value="43200">12 hours</option>
+                <option value="86400">1 day</option>
+              </select>
+              <small style="color: var(--text-muted); margin-top: 0.25rem; display: block;">
+                <span id="dns-ttl-hint">DNS cache time</span>
+              </small>
+            </div>
+          </div>
+
+          <button type="button" class="btn btn-primary" id="add-dns-btn" style="margin-top: 1rem; width: 100%;">Add Record</button>
+        </div>
+
+        <div id="dns-actions" style="margin-top: 1rem;">
+          <button type="button" class="btn btn-danger btn-sm" id="clear-dns-btn">Clear All DNS Records</button>
+        </div>
+      </div>
+    </div>
+
+    <footer>
+      <p>
+        <a href="/">Home</a> | <a href="/whois.html">WHOIS Lookup</a> | <a href="/blacklist.html">Blacklist</a> | <a href="/logs.html">Operation Logs</a> | <a href="/terms.html">Terms of Service</a>
+      </p>
+    </footer>
+  </div>
+
+  <script>
+    // State
+    let currentUser = null;
+    let currentDomain = null;
+    let currentDNSRecords = [];
+    let currentDNSMode = null;
+    let pendingOrder = null;
+    let domainPrice = 10;
+    let pendingLabel = ''; // Store the label for registration flow
+    let unreadNotifications = [];
+
+    // DOM elements
+    const errorContainer = document.getElementById('error-container');
+    const loginSection = document.getElementById('login-section');
+    const userSection = document.getElementById('user-section');
+    const registerSection = document.getElementById('register-section');
+    const registerDetailSection = document.getElementById('register-detail-section');
+    const pendingReviewSection = document.getElementById('pending-review-section');
+    const pendingOrderSection = document.getElementById('pending-order-section');
+    const domainSection = document.getElementById('domain-section');
+    const dnsSection = document.getElementById('dns-section');
+
+    // Show error
+    function showError(message) {
+      errorContainer.innerHTML = `<div class="alert alert-error">${escapeHtml(message)}</div>`;
+      errorContainer.classList.remove('hidden');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // Show success
+    function showSuccess(message) {
+      errorContainer.innerHTML = `<div class="alert alert-success">${escapeHtml(message)}</div>`;
+      errorContainer.classList.remove('hidden');
+      setTimeout(() => errorContainer.classList.add('hidden'), 5000);
+    }
+
+    // Clear messages
+    function clearMessages() {
+      errorContainer.classList.add('hidden');
+    }
+
+    // Escape HTML
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    // Check for URL error parameter
+    function checkUrlError() {
+      const params = new URLSearchParams(window.location.search);
+      const error = params.get('error');
+      if (error) {
+        showError(error);
+        window.history.replaceState({}, '', '/');
+        return;
+      }
+
+      // 支付返回处理
+      const paymentStatus = params.get('payment');
+      if (paymentStatus === 'success') {
+        // 支付成功，域名已创建
+        errorContainer.innerHTML = `<div class="alert alert-success">Payment successful! Domain created, loading...</div>`;
+        errorContainer.classList.remove('hidden');
+        window.history.replaceState({}, '', '/');
+
+        // 轮询检查域名是否已创建（最多尝试10次，每次间隔2秒）
+        let attempts = 0;
+        const maxAttempts = 10;
+        const checkInterval = setInterval(async () => {
+          attempts++;
+          try {
+            const data = await api('GET', '/api/domains');
+            if (data.domain) {
+              // 域名已创建，刷新页面
+              clearInterval(checkInterval);
+              window.location.reload();
+            } else if (attempts >= maxAttempts) {
+              // 超时，仍然刷新页面
+              clearInterval(checkInterval);
+              window.location.reload();
+            }
+          } catch (e) {
+            if (attempts >= maxAttempts) {
+              clearInterval(checkInterval);
+              window.location.reload();
+            }
+          }
+        }, 2000);
+        return;
+      } else if (paymentStatus === 'processing') {
+        // 支付正在处理中，等待 notify callback
+        errorContainer.innerHTML = `<div class="alert alert-info">Payment processing, please refresh the page later to check the result...</div>`;
+        errorContainer.classList.remove('hidden');
+        window.history.replaceState({}, '', '/');
+
+        // 轮询检查支付状态（最多尝试10次，每次间隔3秒）
+        let attempts = 0;
+        const maxAttempts = 10;
+        const checkInterval = setInterval(async () => {
+          attempts++;
+          try {
+            const data = await api('GET', '/api/domains');
+            if (data.domain) {
+              // 域名已创建，支付已完成
+              clearInterval(checkInterval);
+              errorContainer.innerHTML = `<div class="alert alert-success">Payment successful! Domain created</div>`;
+              setTimeout(() => window.location.reload(), 1000);
+            } else if (attempts >= maxAttempts) {
+              // 超时，提示用户手动刷新
+              clearInterval(checkInterval);
+              errorContainer.innerHTML = `<div class="alert alert-warning">Payment processing, please manually refresh the page later to check the result</div>`;
+            }
+          } catch (e) {
+            if (attempts >= maxAttempts) {
+              clearInterval(checkInterval);
+              errorContainer.innerHTML = `<div class="alert alert-warning">Payment processing, please manually refresh the page later to check the result</div>`;
+            }
+          }
+        }, 3000);
+        return;
+      }
+
+      // 通用支付返回（无明确状态）
+      const fromPayment = params.get('from');
+      if (fromPayment === 'payment') {
+        errorContainer.innerHTML = `<div class="alert alert-info">Payment processing, please wait...</div>`;
+        errorContainer.classList.remove('hidden');
+        window.history.replaceState({}, '', '/');
+        setTimeout(() => {
+          window.location.reload();
+        }, 3000);
+      }
+    }
+
+    // API helper
+    async function api(method, path, body = null) {
+      const options = {
+        method,
+        headers: {},
+        credentials: 'same-origin',
+      };
+      if (body) {
+        options.headers['Content-Type'] = 'application/json';
+        options.body = JSON.stringify(body);
+      }
+      const response = await fetch(path, options);
+      const data = await response.json();
+      if (!response.ok || !data.success) {
+        throw new Error(data.error || 'Request failed');
+      }
+      return data.data;
+    }
+
+    // Load user info
+    async function loadUser() {
+      try {
+        const data = await api('GET', '/api/me');
+        currentUser = data.user;
+        domainPrice = data.price || 10;
+
+        document.getElementById('user-avatar').textContent = currentUser.username[0].toUpperCase();
+        document.getElementById('user-name').textContent = currentUser.username;
+        document.getElementById('user-trust').textContent = `TL${currentUser.trust_level}`;
+        document.getElementById('domain-price').textContent = domainPrice;
+
+        loginSection.classList.add('hidden');
+        userSection.classList.remove('hidden');
+
+        await loadDomain();
+        await loadNotifications(); // Load notifications after user is loaded
+        startMessagePolling(); // Start polling for new messages
+      } catch (e) {
+        loginSection.classList.remove('hidden');
+        userSection.classList.add('hidden');
+        registerSection.classList.add('hidden');
+        pendingOrderSection.classList.add('hidden');
+        domainSection.classList.add('hidden');
+        dnsSection.classList.add('hidden');
+      }
+    }
+
+    // Load domain
+    async function loadDomain() {
+      try {
+        const data = await api('GET', '/api/domains');
+        if (data.domain) {
+          currentDomain = data.domain;
+          currentDNSRecords = data.domain.dns_records || [];
+          currentDNSMode = data.domain.dns_mode;
+          pendingOrder = null;
+
+          document.getElementById('domain-display').textContent = currentDomain.fqdn;
+
+          // Handle suspended domains
+          const statusBadge = document.getElementById('domain-status');
+          const suspendAlert = document.getElementById('suspend-alert');
+
+          if (currentDomain.status === 'suspended') {
+            statusBadge.className = 'badge badge-danger';
+            statusBadge.textContent = 'suspended';
+
+            // Show suspend alert
+            suspendAlert.innerHTML = `
+              <div class="alert alert-error" style="margin-bottom: 1rem;">
+                <strong>Domain Suspended</strong><br>
+                Suspension reason: ${escapeHtml(currentDomain.suspend_reason || 'Violation')}
+              </div>
+            `;
+            suspendAlert.classList.remove('hidden');
+
+            // Check if there's a pending appeal and show appropriate section
+            await loadAppealStatus();
+
+            // Hide DNS section for suspended domains
+            dnsSection.classList.add('hidden');
+          } else if (currentDomain.status === 'review') {
+            statusBadge.className = 'badge badge-warning';
+            statusBadge.textContent = 'pending review';
+
+            // Show review alert
+            suspendAlert.innerHTML = `
+              <div class="alert alert-info" style="margin-bottom: 1rem;">
+                <strong>Domain Pending Review</strong><br>
+                Your domain registration application is awaiting administrator review. Once approved, you can use it.
+                ${currentDomain.review_reason ? `<br>Review reason: ${escapeHtml(currentDomain.review_reason)}` : ''}
+              </div>
+            `;
+            suspendAlert.classList.remove('hidden');
+
+            // Hide DNS section for domains pending review
+            dnsSection.classList.add('hidden');
+          } else {
+            statusBadge.className = 'badge badge-success';
+            statusBadge.textContent = currentDomain.status;
+            suspendAlert.classList.add('hidden');
+
+            // Show DNS section for active domains
+            dnsSection.classList.remove('hidden');
+            renderDNSList();
+            document.getElementById('dns-loading').classList.add('hidden');
+            document.getElementById('dns-content').classList.remove('hidden');
+          }
+
+          document.getElementById('domain-created').textContent =
+            `Created on ${new Date(currentDomain.created_at).toLocaleDateString('en-US')}`;
+
+          // Control delete button based on status
+          const deleteBtn = document.getElementById('delete-domain-btn');
+          if (currentDomain.status === 'suspended' || currentDomain.status === 'review') {
+            deleteBtn.disabled = true;
+            deleteBtn.title = currentDomain.status === 'suspended' ? 'Suspended domains cannot be deleted' : 'Domains under review cannot be deleted';
+          } else {
+            deleteBtn.disabled = false;
+            deleteBtn.title = '';
+          }
+
+          registerSection.classList.add('hidden');
+          pendingOrderSection.classList.add('hidden');
+          domainSection.classList.remove('hidden');
+        } else if (data.pendingReview) {
+          // Show pending review status
+          currentDomain = null;
+          pendingOrder = null;
+
+          document.getElementById('pending-review-label').textContent = data.pendingReview.label;
+          document.getElementById('pending-review-reason').textContent = data.pendingReview.reason || 'Requires manual review';
+          document.getElementById('pending-review-created').textContent =
+            new Date(data.pendingReview.created_at).toLocaleString('en-US', { timeZone: 'Asia/Shanghai', hour12: false });
+
+          registerSection.classList.add('hidden');
+          pendingReviewSection.classList.remove('hidden');
+          pendingOrderSection.classList.add('hidden');
+          domainSection.classList.add('hidden');
+          dnsSection.classList.add('hidden');
+        } else if (data.pendingOrder) {
+          // Show pending order
+          pendingOrder = data.pendingOrder;
+          currentDomain = null;
+
+          document.getElementById('pending-label').textContent = pendingOrder.label;
+          document.getElementById('pending-amount').textContent = pendingOrder.amount;
+          document.getElementById('pending-order-no').textContent = pendingOrder.order_no;
+          document.getElementById('pending-created').textContent =
+            new Date(pendingOrder.created_at).toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai', hour12: false });
+
+          registerSection.classList.add('hidden');
+          pendingOrderSection.classList.remove('hidden');
+          domainSection.classList.add('hidden');
+          dnsSection.classList.add('hidden');
+        } else {
+          // No domain, no pending order, no pending review - show registration
+          currentDomain = null;
+          pendingOrder = null;
+          registerSection.classList.remove('hidden');
+          pendingReviewSection.classList.add('hidden');
+          pendingOrderSection.classList.add('hidden');
+          domainSection.classList.add('hidden');
+          dnsSection.classList.add('hidden');
+        }
+      } catch (e) {
+        showError('Failed to load domain: ' + e.message);
+      }
+    }
+
+    // Render DNS records list
+    function renderDNSList() {
+      const container = document.getElementById('dns-records-container');
+      const modeBadge = document.getElementById('dns-mode-badge');
+
+      // Show mode badge
+      if (currentDNSMode === 'ns') {
+        modeBadge.innerHTML = '<span class="badge badge-warning">NS Delegation Mode</span>';
+      } else if (currentDNSMode === 'direct') {
+        modeBadge.innerHTML = '<span class="badge badge-success">Direct Resolution Mode</span>';
+      } else {
+        modeBadge.innerHTML = '';
+      }
+
+      if (currentDNSRecords.length === 0) {
+        container.innerHTML = '<p style="color: var(--text-muted); padding: 1rem;">No DNS records</p>';
+      } else {
+        container.innerHTML = `
+          <table class="dns-table">
+            <thead>
+              <tr>
+                <th>Type</th>
+                <th>Name</th>
+                <th>Content</th>
+                <th style="text-align: center;">Proxy</th>
+                <th>TTL</th>
+                <th style="width: 60px;"></th>
+              </tr>
+            </thead>
+            <tbody>
+              ${currentDNSRecords.map(record => {
+                const ttlText = record.proxied ? 'Auto' : formatTTL(record.ttl);
+                const proxyIcon = record.proxied ? '🟠' : '⚪';
+                const proxyTitle = record.proxied ? 'Proxied' : 'DNS only';
+                const displayName = record.name === '@' ? '@' : escapeHtml(record.name);
+
+                return `
+                  <tr>
+                    <td><span class="type-badge">${escapeHtml(record.type)}</span></td>
+                    <td><span class="record-name">${displayName}</span></td>
+                    <td><span class="record-content">${escapeHtml(record.content)}</span></td>
+                    <td style="text-align: center;"><span class="proxy-icon" title="${proxyTitle}">${proxyIcon}</span></td>
+                    <td>${ttlText}</td>
+                    <td><button class="action-btn" onclick="deleteDNSRecord(${record.id})" title="Delete">✕</button></td>
+                  </tr>
+                `;
+              }).join('')}
+            </tbody>
+          </table>
+        `;
+      }
+    }
+
+    // Format TTL for display
+    function formatTTL(seconds) {
+      if (seconds < 60) return `${seconds}s`;
+      if (seconds < 3600) return `${Math.floor(seconds / 60)}m`;
+      if (seconds < 86400) return `${Math.floor(seconds / 3600)}h`;
+      return `${Math.floor(seconds / 86400)}d`;
+    }
+
+    // Update DNS type hint based on selected type
+    function updateDNSTypeHint() {
+      const type = document.getElementById('dns-type-select').value;
+      const contentInput = document.getElementById('dns-content-input');
+      const hint = document.getElementById('dns-type-hint');
+      const proxyOption = document.getElementById('dns-proxy-option');
+      const proxyCheckbox = document.getElementById('dns-proxy-checkbox');
+
+      const hints = {
+        'A': { placeholder: '1.2.3.4', text: '@ represents the root domain, or enter a subdomain (like blog, api) to create blog.your-domain.py.kg' },
+        'AAAA': { placeholder: '2001:db8::1', text: '@ represents the root domain, or enter a subdomain to create subdomain records' },
+        'CNAME': { placeholder: 'example.com', text: '@ represents the root domain, or enter a subdomain. Target domain example: example.com' },
+        'TXT': { placeholder: 'your-acme-challenge-token', text: 'Only for Let\'s Encrypt verification. Name must be _acme-challenge or _acme-challenge.subdomain' },
+      };
+
+      contentInput.placeholder = hints[type].placeholder;
+      hint.textContent = hints[type].text;
+
+      // Show/hide proxy option (only for A, AAAA, CNAME)
+      if (type === 'TXT') {
+        proxyOption.style.display = 'none';
+        proxyCheckbox.checked = false;
+        updateTTLState(); // Update TTL state when proxy changes
+      } else {
+        proxyOption.style.display = 'block';
+      }
+    }
+
+    // Update TTL select state based on proxy checkbox
+    function updateTTLState() {
+      const proxyCheckbox = document.getElementById('dns-proxy-checkbox');
+      const ttlSelect = document.getElementById('dns-ttl-select');
+      const ttlAutoBadge = document.getElementById('dns-ttl-auto-badge');
+      const ttlHint = document.getElementById('dns-ttl-hint');
+
+      if (proxyCheckbox.checked) {
+        // Proxy enabled: disable TTL select and show Auto badge
+        ttlSelect.disabled = true;
+        ttlSelect.style.opacity = '0.5';
+        ttlSelect.style.cursor = 'not-allowed';
+        ttlAutoBadge.classList.remove('hidden');
+        ttlHint.textContent = 'In Proxy mode, TTL is automatically managed by Cloudflare (usually 5 minutes)';
+      } else {
+        // Proxy disabled: enable TTL select
+        ttlSelect.disabled = false;
+        ttlSelect.style.opacity = '1';
+        ttlSelect.style.cursor = 'default';
+        ttlAutoBadge.classList.add('hidden');
+        ttlHint.textContent = 'TTL determines how long DNS records are cached';
+      }
+    }
+
+    // Add DNS record
+    async function addDNSRecord() {
+      const typeSelect = document.getElementById('dns-type-select');
+      const nameInput = document.getElementById('dns-name-input');
+      const contentInput = document.getElementById('dns-content-input');
+      const ttlSelect = document.getElementById('dns-ttl-select');
+      const proxyCheckbox = document.getElementById('dns-proxy-checkbox');
+
+      const type = typeSelect.value;
+      const name = nameInput.value.trim() || '@';
+      const content = contentInput.value.trim();
+      const ttl = parseInt(ttlSelect.value, 10);
+      const proxied = proxyCheckbox.checked;
+
+      if (!content) {
+        showError('Please enter record content');
+        return;
+      }
+
+      // Validate name format (@ or subdomain label)
+      if (name !== '@') {
+        if (type === 'TXT') {
+          // TXT records can have underscores (like _acme-challenge)
+          if (!/^[a-z0-9_]([a-z0-9_-]*[a-z0-9_])?(\.[a-z0-9_]([a-z0-9_-]*[a-z0-9_])?)*$/.test(name)) {
+            showError('Name format error: TXT records must be _acme-challenge or _acme-challenge.subdomain');
+            return;
+          }
+          // Validate TXT prefix
+          if (!name.startsWith('_acme-challenge')) {
+            showError('TXT records are only for Let\'s Encrypt verification, Name must start with _acme-challenge');
+            return;
+          }
+        } else {
+          if (!/^[a-z0-9]([a-z0-9-]*[a-z0-9])?$/.test(name)) {
+            showError('Name format error: must be @ or a valid subdomain (only lowercase letters, numbers, and hyphens allowed, cannot start or end with hyphen)');
+            return;
+          }
+        }
+      }
+
+      if (currentDNSRecords.length >= 10) {
+        showError('Maximum 10 DNS records allowed');
+        return;
+      }
+
+      const btn = document.getElementById('add-dns-btn');
+      btn.disabled = true;
+      btn.textContent = 'Adding...';
+      clearMessages();
+
+      try {
+        await api('POST', '/api/dns-records', {
+          type: type,
+          name: name,
+          content: content,
+          ttl: ttl,
+          proxied: proxied
+        });
+
+        // Reload domain to get updated records
+        await loadDomain();
+        nameInput.value = '';
+        contentInput.value = '';
+        const proxyText = proxied ? ' (CDN enabled)' : '';
+        const nameText = name === '@' ? 'root domain' : name;
+        showSuccess(`${type} record added successfully (${nameText})${proxyText}! DNS propagation may take a few minutes.`);
+      } catch (e) {
+        showError('Failed to add: ' + e.message);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Add Record';
+      }
+    }
+
+    // Delete DNS record
+    async function deleteDNSRecord(recordId) {
+      if (!confirm('Are you sure you want to delete this DNS record?')) {
+        return;
+      }
+
+      clearMessages();
+
+      try {
+        await api('DELETE', `/api/dns-records/${recordId}`);
+        await loadDomain();
+        showSuccess('DNS record deleted');
+      } catch (e) {
+        showError('Failed to delete: ' + e.message);
+      }
+    }
+
+    // Clear all DNS records
+    async function clearAllDNS() {
+      if (!confirm('Are you sure you want to clear all DNS records? This will delete all resolution records.')) {
+        return;
+      }
+
+      const btn = document.getElementById('clear-dns-btn');
+      btn.disabled = true;
+      btn.textContent = 'Clearing...';
+      clearMessages();
+
+      try {
+        // Delete all records one by one
+        for (const record of currentDNSRecords) {
+          await api('DELETE', `/api/dns-records/${record.id}`);
+        }
+        await loadDomain();
+        showSuccess('All DNS records cleared');
+      } catch (e) {
+        showError('Failed to clear: ' + e.message);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Clear All DNS Records';
+      }
+    }
+
+    // Submit payment form (POST)
+    function submitPaymentForm(submitUrl, formData) {
+      const form = document.createElement('form');
+      form.method = 'POST';
+      form.action = submitUrl;
+
+      for (const [key, value] of Object.entries(formData)) {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = key;
+        input.value = value;
+        form.appendChild(input);
+      }
+
+      document.body.appendChild(form);
+      form.submit();
+    }
+
+    // Register domain - Step 1: Check availability then show detail form
+    document.getElementById('register-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const input = document.getElementById('label-input');
+      const btn = document.getElementById('register-btn');
+      const label = input.value.toLowerCase().trim();
+
+      // Basic validation
+      if (!label || label.length < 2 || label.length > 63) {
+        showError('Domain length must be between 2-63 characters');
+        return;
+      }
+
+      if (!/^[a-z0-9]([a-z0-9-]*[a-z0-9])?$/.test(label)) {
+        showError('Domain can only contain lowercase letters, numbers, and hyphens, and cannot start or end with a hyphen');
+        return;
+      }
+
+      // Check domain availability via WHOIS API
+      btn.disabled = true;
+      btn.textContent = 'Checking...';
+      clearMessages();
+
+      try {
+        const response = await fetch(`/api/whois?domain=${encodeURIComponent(label)}`);
+        const data = await response.json();
+
+        if (data.success) {
+          // Check if domain is reserved or already taken
+          if (data.data.status === 'reserved') {
+            showError(data.data.reason || 'Domain contains prohibited words');
+            btn.disabled = false;
+            btn.textContent = 'Register';
+            return;
+          }
+
+          if (data.data.status === 'active' || data.data.status === 'suspended' || data.data.status === 'review') {
+            showError('This domain is already registered');
+            btn.disabled = false;
+            btn.textContent = 'Register';
+            return;
+          }
+        } else {
+          // Domain not found (404) means it's available
+          if (response.status === 404 || data.error === 'Domain not found') {
+            // Domain is available, proceed to detail form
+            pendingLabel = label;
+            document.getElementById('register-domain-display').textContent = `${label}.py.kg`;
+
+            // Hide register section, show detail section
+            registerSection.classList.add('hidden');
+            registerDetailSection.classList.remove('hidden');
+            clearMessages();
+          } else {
+            showError(data.error || 'Failed to check domain');
+          }
+        }
+      } catch (error) {
+        showError('Failed to check domain, please try again');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Register';
+      }
+    });
+
+    // Back to label selection
+    document.getElementById('back-to-label-btn').addEventListener('click', () => {
+      registerDetailSection.classList.add('hidden');
+      registerSection.classList.remove('hidden');
+      clearMessages();
+    });
+
+    // Register domain - Step 2: Submit with praise and purpose
+    document.getElementById('register-detail-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn = document.getElementById('pay-btn');
+      const pythonPraise = document.getElementById('python-praise-input').value.trim();
+      const usagePurpose = document.getElementById('usage-purpose-input').value.trim();
+
+      // Validate
+      if (pythonPraise.length < 20) {
+        showError('Python praise must be at least 20 characters');
+        return;
+      }
+
+      if (usagePurpose.length < 10) {
+        showError('Usage description must be at least 10 characters');
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = 'Processing...';
+      clearMessages();
+
+      try {
+        const data = await api('POST', '/api/domains', {
+          label: pendingLabel,
+          python_praise: pythonPraise,
+          usage_purpose: usagePurpose,
+        });
+
+        // Submit payment form (POST)
+        if (data.submit_url && data.form_data) {
+          submitPaymentForm(data.submit_url, data.form_data);
+        } else if (data.requires_review) {
+          // Manual review required
+          showSuccess(data.message || 'Your domain application requires manual review, please be patient.');
+          registerDetailSection.classList.add('hidden');
+          setTimeout(() => window.location.reload(), 2000);
+        } else {
+          showError('Failed to get payment form data');
+          btn.disabled = false;
+          btn.textContent = 'Pay and Complete Registration';
+        }
+      } catch (e) {
+        showError('Registration failed: ' + e.message);
+        btn.disabled = false;
+        btn.textContent = 'Pay and Complete Registration';
+      }
+    });
+
+    // Delete domain
+    document.getElementById('delete-domain-btn').addEventListener('click', async () => {
+      if (!confirm('Are you sure you want to delete the domain? This action cannot be undone, and all NS records will be deleted.')) {
+        return;
+      }
+
+      const btn = document.getElementById('delete-domain-btn');
+      btn.disabled = true;
+      btn.textContent = 'Deleting...';
+      clearMessages();
+
+      try {
+        await api('DELETE', '/api/domains');
+        showSuccess('Domain deleted');
+        currentDomain = null;
+        currentDNSRecords = [];
+        currentDNSMode = null;
+        domainSection.classList.add('hidden');
+        dnsSection.classList.add('hidden');
+        registerSection.classList.remove('hidden');
+      } catch (e) {
+        showError('Failed to delete: ' + e.message);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Delete Domain';
+      }
+    });
+
+    // Event listeners for DNS records
+    document.getElementById('dns-type-select').addEventListener('change', updateDNSTypeHint);
+    document.getElementById('dns-proxy-checkbox').addEventListener('change', updateTTLState);
+    document.getElementById('add-dns-btn').addEventListener('click', addDNSRecord);
+
+    // Add Enter key support for both name and content inputs
+    document.getElementById('dns-name-input').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        addDNSRecord();
+      }
+    });
+    document.getElementById('dns-content-input').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        addDNSRecord();
+      }
+    });
+
+    document.getElementById('clear-dns-btn').addEventListener('click', clearAllDNS);
+
+    // Initialize DNS type hint and TTL state
+    updateDNSTypeHint();
+    updateTTLState();
+
+    // Notifications functionality
+    async function loadNotifications() {
+      try {
+        const data = await api('GET', '/api/notifications');
+        const notifications = data.notifications || [];
+
+        // Update unread count
+        unreadNotifications = notifications.filter(n => n.is_read === 0);
+        const unreadBadge = document.getElementById('unread-badge');
+        if (unreadNotifications.length > 0) {
+          unreadBadge.textContent = unreadNotifications.length;
+          unreadBadge.classList.remove('hidden');
+        } else {
+          unreadBadge.classList.add('hidden');
+        }
+
+        // Render notifications list
+        const notificationsList = document.getElementById('notifications-list');
+        if (notifications.length === 0) {
+          notificationsList.innerHTML = '<div class="empty-state">No notifications</div>';
+        } else {
+          notificationsList.innerHTML = notifications.map(n => `
+            <div class="card" style="margin-bottom: 0.75rem; padding: 1rem; ${n.is_read === 0 ? 'border-left: 3px solid var(--primary);' : ''}">
+              <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 0.5rem;">
+                <strong style="color: ${n.is_read === 0 ? 'var(--primary)' : 'var(--text)'};">${escapeHtml(n.title)}</strong>
+                <span style="font-size: 0.75rem; color: var(--text-muted);">${new Date(n.created_at).toLocaleString('en-US', { timeZone: 'Asia/Shanghai', hour12: false })}</span>
+              </div>
+              <p style="margin: 0; font-size: 0.875rem; color: var(--text-muted);">${escapeHtml(n.message)}</p>
+              <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">
+                ${n.is_read === 0 ? `<button class="btn btn-secondary btn-sm" onclick="markAsRead(${n.id})">Mark as Read</button>` : ''}
+                <button class="btn btn-danger btn-sm" onclick="deleteNotification(${n.id})">Delete</button>
+              </div>
+            </div>
+          `).join('');
+        }
+      } catch (e) {
+        console.error('Failed to load notifications:', e);
+      }
+    }
+
+    async function markAsRead(id) {
+      try {
+        await api('POST', '/api/notifications', { id });
+        await loadNotifications();
+      } catch (e) {
+        showError('Failed to mark: ' + e.message);
+      }
+    }
+
+    async function markAllAsRead() {
+      try {
+        await api('POST', '/api/notifications', { mark_all: true });
+        await loadNotifications();
+      } catch (e) {
+        showError('Failed to mark: ' + e.message);
+      }
+    }
+
+    async function deleteNotification(id) {
+      try {
+        await api('DELETE', '/api/notifications', { id });
+        await loadNotifications();
+      } catch (e) {
+        showError('Failed to delete: ' + e.message);
+      }
+    }
+
+    async function deleteAllReadNotifications() {
+      if (!confirm('Are you sure you want to delete all read notifications?')) {
+        return;
+      }
+
+      try {
+        await api('DELETE', '/api/notifications', { delete_all_read: true });
+        await loadNotifications();
+        showSuccess('All read notifications deleted');
+      } catch (e) {
+        showError('Failed to delete: ' + e.message);
+      }
+    }
+
+    window.markAsRead = markAsRead;
+    window.deleteNotification = deleteNotification;
+
+    document.getElementById('notifications-btn').addEventListener('click', () => {
+      document.getElementById('notifications-panel').classList.toggle('hidden');
+      if (!document.getElementById('notifications-panel').classList.contains('hidden')) {
+        loadNotifications();
+      }
+    });
+
+    document.getElementById('close-notifications-btn').addEventListener('click', () => {
+      document.getElementById('notifications-panel').classList.add('hidden');
+    });
+
+    document.getElementById('mark-all-read-btn').addEventListener('click', markAllAsRead);
+    document.getElementById('delete-all-read-btn').addEventListener('click', deleteAllReadNotifications);
+
+    // Check unread messages count (for badge display)
+    async function checkUnreadMessages() {
+      const unreadBadge = document.getElementById('unread-messages-badge');
+
+      try {
+        // Use check_only=true to avoid marking messages as read
+        const data = await api('GET', '/api/messages?check_only=true');
+        const conversation = data.conversation;
+
+        // Update unread badge
+        if (conversation && conversation.unread_user_count > 0) {
+          unreadBadge.textContent = conversation.unread_user_count;
+          unreadBadge.classList.remove('hidden');
+        } else {
+          unreadBadge.classList.add('hidden');
+        }
+      } catch (e) {
+        console.error('Failed to check unread messages:', e);
+        unreadBadge.classList.add('hidden');
+      }
+    }
+
+    // Start polling for new messages every 30 seconds
+    function startMessagePolling() {
+      // Initial check
+      checkUnreadMessages();
+
+      // Poll every 30 seconds
+      setInterval(() => {
+        checkUnreadMessages();
+      }, 30000); // 30 seconds
+    }
+
+    // Messages system
+    async function loadMessages() {
+      const container = document.getElementById('messages-container');
+      const unreadBadge = document.getElementById('unread-messages-badge');
+
+      try {
+        const data = await api('GET', '/api/messages');
+        const messages = data.messages || [];
+        const conversation = data.conversation;
+
+        if (messages.length === 0) {
+          container.innerHTML = '<div style="text-align: center; padding: 2rem; color: var(--text-muted);">No messages yet. Send a message to start chatting with admin.</div>';
+        } else {
+          container.innerHTML = messages.map(m => {
+            const isAdmin = m.sender_type === 'admin';
+            const time = new Date(m.created_at).toLocaleString('en-US', {
+              timeZone: 'Asia/Shanghai',
+              hour12: false,
+              month: 'short',
+              day: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit'
+            });
+
+            return `
+              <div style="margin-bottom: 1rem; display: flex; flex-direction: column; align-items: ${isAdmin ? 'flex-start' : 'flex-end'};">
+                <div style="max-width: 70%; background: ${isAdmin ? 'var(--card-bg)' : 'var(--primary)'}; color: ${isAdmin ? 'var(--text)' : 'white'}; padding: 0.75rem; border-radius: 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.1);">
+                  <div style="font-weight: 600; font-size: 0.75rem; margin-bottom: 0.25rem; opacity: 0.8;">
+                    ${isAdmin ? 'Admin' : 'You'}
+                  </div>
+                  <div style="white-space: pre-wrap; word-break: break-word;">${escapeHtml(m.content)}</div>
+                  <div style="font-size: 0.7rem; margin-top: 0.25rem; opacity: 0.7;">
+                    ${time}
+                  </div>
+                </div>
+              </div>
+            `;
+          }).join('');
+
+          // Scroll to bottom
+          container.scrollTop = container.scrollHeight;
+        }
+
+        // Update unread badge
+        if (conversation && conversation.unread_user_count > 0) {
+          unreadBadge.textContent = conversation.unread_user_count;
+          unreadBadge.classList.remove('hidden');
+        } else {
+          unreadBadge.classList.add('hidden');
+        }
+      } catch (e) {
+        container.innerHTML = `<div class="alert alert-error">Failed to load messages: ${escapeHtml(e.message)}</div>`;
+      }
+    }
+
+    async function sendMessage() {
+      const input = document.getElementById('message-input');
+      const content = input.value.trim();
+      const btn = document.getElementById('send-message-btn');
+
+      if (!content) {
+        showError('Message cannot be empty');
+        return;
+      }
+
+      if (content.length > 2000) {
+        showError('Message too long (max 2000 characters)');
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = 'Sending...';
+
+      try {
+        await api('POST', '/api/messages', { content });
+        input.value = '';
+        document.getElementById('message-char-count').textContent = '0';
+        await loadMessages();
+        showSuccess('Message sent');
+      } catch (e) {
+        showError('Failed to send: ' + e.message);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Send';
+      }
+    }
+
+    // Messages event listeners
+    document.getElementById('messages-btn').addEventListener('click', () => {
+      document.getElementById('messages-panel').classList.toggle('hidden');
+      if (!document.getElementById('messages-panel').classList.contains('hidden')) {
+        loadMessages();
+      }
+    });
+
+    document.getElementById('close-messages-btn').addEventListener('click', () => {
+      document.getElementById('messages-panel').classList.add('hidden');
+    });
+
+    document.getElementById('send-message-btn').addEventListener('click', sendMessage);
+
+    document.getElementById('message-input').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+        sendMessage();
+      }
+    });
+
+    document.getElementById('message-input').addEventListener('input', (e) => {
+      document.getElementById('message-char-count').textContent = e.target.value.length;
+    });
+
+    // Load appeal status for suspended domains
+    async function loadAppealStatus() {
+      try {
+        const data = await api('GET', '/api/appeals');
+        const appeals = data.appeals || [];
+        const pendingAppeal = appeals.find(a => a.status === 'pending');
+        const appealSection = document.getElementById('appeal-section');
+
+        if (pendingAppeal) {
+          // Show pending appeal status instead of form
+          appealSection.innerHTML = `
+            <h2>Appeal Status</h2>
+            <div class="alert alert-info" style="margin-bottom: 1rem;">
+              <strong>Your appeal is being processed</strong><br>
+              Please wait patiently for administrator review.
+            </div>
+            <div style="margin-bottom: 1rem;">
+              <p><strong>Appeal Reason:</strong></p>
+              <p style="background: var(--bg); padding: 0.75rem; border-radius: 6px; margin-top: 0.5rem;">${escapeHtml(pendingAppeal.reason)}</p>
+              <p style="color: var(--text-muted); font-size: 0.875rem; margin-top: 0.5rem;">
+                <strong>Submission Time:</strong>${new Date(pendingAppeal.created_at).toLocaleString('en-US', { timeZone: 'Asia/Shanghai', hour12: false })}
+              </p>
+            </div>
+          `;
+          appealSection.classList.remove('hidden');
+        } else {
+          // Show appeal form
+          appealSection.innerHTML = `
+            <h2>Submit Appeal</h2>
+            <div class="alert alert-warning" style="margin-bottom: 1rem;">
+              Your domain has been suspended. If you believe this is a mistake, you can submit an appeal.
+            </div>
+            <form id="appeal-form">
+              <div class="form-group">
+                <label for="appeal-reason">Appeal Reason <span style="color: var(--danger);">*</span></label>
+                <textarea
+                  id="appeal-reason"
+                  rows="5"
+                  placeholder="Please explain in detail why you believe the suspension is unjustified, or that you have completed the necessary corrections..."
+                  required
+                  minlength="10"
+                  style="width: 100%; padding: 0.625rem; border: 1px solid var(--border); border-radius: 6px; font-size: 0.875rem; font-family: inherit; resize: vertical;"
+                ></textarea>
+                <small style="color: var(--text-muted); margin-top: 0.25rem; display: block;">
+                  Please enter at least 10 characters
+                </small>
+              </div>
+              <button type="submit" class="btn btn-primary">Submit Appeal</button>
+            </form>
+          `;
+          appealSection.classList.remove('hidden');
+
+          // Re-attach form submit handler
+          document.getElementById('appeal-form').addEventListener('submit', handleAppealSubmit);
+        }
+      } catch (e) {
+        console.error('Failed to load appeal status:', e);
+        // Show appeal form as fallback
+        document.getElementById('appeal-section').classList.remove('hidden');
+      }
+    }
+
+    // Appeal form submit handler
+    async function handleAppealSubmit(e) {
+      e.preventDefault();
+      const reason = document.getElementById('appeal-reason').value.trim();
+
+      if (reason.length < 10) {
+        showError('Appeal reason must be at least 10 characters');
+        return;
+      }
+
+      try {
+        const data = await api('POST', '/api/appeals', { reason });
+        showSuccess(data.message || 'Appeal submitted');
+        // Reload appeal status to show pending state
+        await loadAppealStatus();
+      } catch (e) {
+        showError('Failed to submit: ' + e.message);
+      }
+    }
+
+    // Appeal functionality (initial form handler, will be replaced by loadAppealStatus)
+    document.getElementById('appeal-form').addEventListener('submit', handleAppealSubmit);
+
+    // Continue payment for pending order
+    document.getElementById('continue-pay-btn').addEventListener('click', async () => {
+      if (!pendingOrder) return;
+
+      const btn = document.getElementById('continue-pay-btn');
+      btn.disabled = true;
+      btn.textContent = 'Redirecting...';
+
+      try {
+        // Re-submit with the same label to get payment form
+        const data = await api('POST', '/api/domains', { label: pendingOrder.label });
+        if (data.submit_url && data.form_data) {
+          submitPaymentForm(data.submit_url, data.form_data);
+        } else {
+          showError('Failed to get payment form data');
+          btn.disabled = false;
+          btn.textContent = 'Continue Payment';
+        }
+      } catch (e) {
+        showError('Failed to get payment form: ' + e.message);
+        btn.disabled = false;
+        btn.textContent = 'Continue Payment';
+      }
+    });
+
+    // Refresh status button - simply reload the page
+    document.getElementById('refresh-status-btn').addEventListener('click', () => {
+      window.location.reload();
+    });
+
+    // Refresh review status button - simply reload the page
+    document.getElementById('refresh-review-status-btn').addEventListener('click', () => {
+      window.location.reload();
+    });
+
+    // Cancel pending order
+    document.getElementById('cancel-order-btn').addEventListener('click', async () => {
+      if (!pendingOrder) return;
+
+      if (!confirm('Are you sure you want to cancel this order? After cancellation, you can register other domains.')) {
+        return;
+      }
+
+      const btn = document.getElementById('cancel-order-btn');
+      btn.disabled = true;
+      btn.textContent = 'Cancelling...';
+      clearMessages();
+
+      try {
+        await api('DELETE', '/api/orders/' + pendingOrder.order_no);
+        showSuccess('Order cancelled');
+        pendingOrder = null;
+        pendingOrderSection.classList.add('hidden');
+        registerSection.classList.remove('hidden');
+      } catch (e) {
+        showError('Failed to cancel order: ' + e.message);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Cancel Order';
+      }
+    });
+
+    // Initialize
+    checkUrlError();
+    loadUser();
+  </script>
+
+  <!-- AI Agent Floating Button -->
+  <style>
+    .ai-agent-fab {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      width: 60px;
+      height: 60px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+      transition: transform 0.3s, box-shadow 0.3s;
+      z-index: 1000;
+      border: none;
+    }
+
+    .ai-agent-fab:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+    }
+
+    .ai-agent-fab svg {
+      width: 28px;
+      height: 28px;
+      fill: white;
+    }
+
+    .ai-agent-badge {
+      position: absolute;
+      top: -4px;
+      right: -4px;
+      background: #ef4444;
+      color: white;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      font-size: 11px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 2px solid white;
+    }
+
+    @media (max-width: 768px) {
+      .ai-agent-fab {
+        width: 56px;
+        height: 56px;
+        bottom: 20px;
+        right: 20px;
+      }
+    }
+  </style>
+
+  <button class="ai-agent-fab" onclick="window.open('/agent.html', '_blank')" title="AI 助手">
+    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/>
+    </svg>
+    <!-- Optional: Add badge for new features -->
+    <!-- <span class="ai-agent-badge">NEW</span> -->
+  </button>
+</body>
+</html>
