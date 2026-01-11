@@ -19,10 +19,14 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
   const { user } = authResult;
   const linuxdoId = parseInt(user.sub, 10);
 
+  console.log('GET /api/dns-records - linuxdoId:', linuxdoId);
+
   // Get user's domain
   const domain = await env.DB.prepare(
     'SELECT * FROM domains WHERE owner_linuxdo_id = ? AND status = ?'
   ).bind(linuxdoId, 'active').first<Domain>();
+
+  console.log('Found domain:', domain?.id, domain?.fqdn);
 
   if (!domain) {
     return errorResponse('You do not have a registered domain', 404);
@@ -32,6 +36,9 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
   const { results: records } = await env.DB.prepare(
     'SELECT * FROM dns_records WHERE domain_id = ? ORDER BY type, name'
   ).bind(domain.id).all<DnsRecord>();
+
+  console.log('Found DNS records:', records?.length, 'for domain_id:', domain.id);
+  console.log('Records:', JSON.stringify(records));
 
   return successResponse({
     dns_mode: domain.dns_mode || 'direct',
