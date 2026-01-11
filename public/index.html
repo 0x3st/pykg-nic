@@ -724,9 +724,17 @@
                 proxied: document.getElementById(managerId + '-proxied').checked
             };
 
+            // Disable button during save
+            const saveBtn = form.querySelector('.dns-form-btn-save');
+            const originalText = saveBtn.textContent;
+            saveBtn.disabled = true;
+            saveBtn.textContent = 'Saving...';
+
             try {
                 const url = recordId ? `/api/dns-records/${recordId}` : '/api/dns-records';
                 const method = recordId ? 'PUT' : 'POST';
+
+                console.log('Saving DNS record:', method, url, data);
 
                 const res = await fetch(url, {
                     method,
@@ -734,7 +742,9 @@
                     body: JSON.stringify(data)
                 });
 
+                console.log('Save response status:', res.status);
                 const result = await res.json();
+                console.log('Save result:', result);
 
                 if (result.success) {
                     // Refresh DNS records
@@ -744,7 +754,11 @@
                     alert('Error: ' + (result.error || 'Failed to save record'));
                 }
             } catch (e) {
+                console.error('Save error:', e);
                 alert('Error: ' + e.message);
+            } finally {
+                saveBtn.disabled = false;
+                saveBtn.textContent = originalText;
             }
         }
 
@@ -774,12 +788,16 @@
         async function deleteDnsRecord(recordId, managerId) {
             if (!confirm('Are you sure you want to delete this DNS record?')) return;
 
+            console.log('Deleting DNS record:', recordId);
+
             try {
                 const res = await fetch(`/api/dns-records/${recordId}`, {
                     method: 'DELETE'
                 });
 
+                console.log('Delete response status:', res.status);
                 const result = await res.json();
+                console.log('Delete result:', result);
 
                 if (result.success) {
                     await refreshDnsRecords(managerId);
@@ -787,21 +805,44 @@
                     alert('Error: ' + (result.error || 'Failed to delete record'));
                 }
             } catch (e) {
+                console.error('Delete error:', e);
                 alert('Error: ' + e.message);
             }
         }
 
         async function refreshDnsRecords(managerId) {
+            console.log('Refreshing DNS records for', managerId);
+
             try {
+                const contentDiv = document.getElementById(managerId + '-content');
+
+                // Show loading state
+                const loadingHtml = '<div class="dns-empty">🔄 Refreshing records...</div>';
+                contentDiv.innerHTML = loadingHtml;
+
                 const res = await fetch('/api/dns-records');
+                console.log('Refresh response status:', res.status);
+
                 const result = await res.json();
+                console.log('Refresh result:', result);
 
                 if (result.success) {
-                    const contentDiv = document.getElementById(managerId + '-content');
-                    contentDiv.innerHTML = renderDnsTable(result.data.records, managerId);
+                    const records = result.data.records || [];
+                    console.log('Got records:', records.length, records);
+
+                    // Update table with new records
+                    contentDiv.innerHTML = renderDnsTable(records, managerId);
+
+                    // Scroll into view
+                    contentDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                } else {
+                    console.error('Refresh failed:', result.error);
+                    contentDiv.innerHTML = `<div class="dns-empty" style="color: #dc2626;">Failed to refresh: ${result.error || 'Unknown error'}</div>`;
                 }
             } catch (e) {
                 console.error('Failed to refresh DNS records:', e);
+                const contentDiv = document.getElementById(managerId + '-content');
+                contentDiv.innerHTML = `<div class="dns-empty" style="color: #dc2626;">Error: ${e.message}</div>`;
             }
         }
 
