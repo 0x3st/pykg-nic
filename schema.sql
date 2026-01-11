@@ -117,3 +117,16 @@ INSERT OR IGNORE INTO banned_words (word, category) VALUES ('bet', 'inappropriat
 INSERT OR IGNORE INTO banned_words (word, category) VALUES ('drug', 'inappropriate');
 INSERT OR IGNORE INTO banned_words (word, category) VALUES ('weed', 'inappropriate');
 INSERT OR IGNORE INTO banned_words (word, category) VALUES ('cocaine', 'inappropriate');
+
+-- Agent Conversations table: stores AI agent conversation history
+CREATE TABLE IF NOT EXISTS agent_conversations (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    linuxdo_id INTEGER NOT NULL,
+    messages TEXT NOT NULL,  -- JSON array of chat messages
+    created_at TEXT NOT NULL DEFAULT (datetime('now', '+8 hours')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now', '+8 hours')),
+    FOREIGN KEY (linuxdo_id) REFERENCES users(linuxdo_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_agent_conversations_user ON agent_conversations(linuxdo_id);
+CREATE INDEX IF NOT EXISTS idx_agent_conversations_updated ON agent_conversations(updated_at);

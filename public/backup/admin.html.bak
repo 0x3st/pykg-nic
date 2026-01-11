@@ -1,0 +1,2127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Panel - PY.KG</title>
+  <style>
+    :root {
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --danger: #dc2626;
+      --danger-hover: #b91c1c;
+      --success: #16a34a;
+      --warning: #d97706;
+      --bg: #f8fafc;
+      --card-bg: #ffffff;
+      --text: #1e293b;
+      --text-muted: #64748b;
+      --border: #e2e8f0;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    .admin-layout {
+      display: flex;
+      min-height: 100vh;
+    }
+
+    .sidebar {
+      width: 250px;
+      background: var(--card-bg);
+      border-right: 1px solid var(--border);
+      padding: 1.5rem;
+    }
+
+    .sidebar h1 {
+      font-size: 1.5rem;
+      margin-bottom: 0.5rem;
+      color: var(--primary);
+    }
+
+    .sidebar p {
+      font-size: 0.875rem;
+      color: var(--text-muted);
+      margin-bottom: 2rem;
+    }
+
+    .nav-menu {
+      list-style: none;
+    }
+
+    .nav-item {
+      margin-bottom: 0.5rem;
+    }
+
+    .nav-link {
+      display: block;
+      padding: 0.75rem 1rem;
+      border-radius: 6px;
+      text-decoration: none;
+      color: var(--text);
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+
+    .nav-link:hover {
+      background: var(--bg);
+    }
+
+    .nav-link.active {
+      background: var(--primary);
+      color: white;
+    }
+
+    .main-content {
+      flex: 1;
+      padding: 2rem;
+      overflow-y: auto;
+    }
+
+    .page {
+      display: none;
+    }
+
+    .page.active {
+      display: block;
+    }
+
+    .card {
+      background: var(--card-bg);
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .card h2 {
+      font-size: 1.25rem;
+      margin-bottom: 1rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+
+    .stat-card {
+      background: var(--card-bg);
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      padding: 1.5rem;
+    }
+
+    .stat-card h3 {
+      font-size: 0.875rem;
+      color: var(--text-muted);
+      margin-bottom: 0.5rem;
+    }
+
+    .stat-card .value {
+      font-size: 2rem;
+      font-weight: bold;
+      color: var(--primary);
+    }
+
+    .form-group {
+      margin-bottom: 1rem;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: 500;
+      font-size: 0.875rem;
+    }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      width: 100%;
+      padding: 0.625rem;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 0.875rem;
+    }
+
+    .form-group input[type="checkbox"] {
+      width: auto;
+      margin-right: 0.5rem;
+    }
+
+    .btn {
+      display: inline-block;
+      padding: 0.625rem 1.25rem;
+      border-radius: 6px;
+      font-size: 0.875rem;
+      font-weight: 500;
+      text-decoration: none;
+      cursor: pointer;
+      border: none;
+      transition: background-color 0.2s;
+      margin-right: 0.5rem;
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: var(--primary-hover);
+    }
+
+    .btn-danger {
+      background: var(--danger);
+      color: white;
+    }
+
+    .btn-danger:hover {
+      background: var(--danger-hover);
+    }
+
+    .btn-success {
+      background: var(--success);
+      color: white;
+    }
+
+    .btn-warning {
+      background: var(--warning);
+      color: white;
+    }
+
+    .btn-secondary {
+      background: var(--text-muted);
+      color: white;
+    }
+
+    .table-container {
+      overflow-x: auto;
+      margin-top: 1rem;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th, td {
+      padding: 0.75rem;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+
+    th {
+      font-weight: 600;
+      background: var(--bg);
+      font-size: 0.875rem;
+    }
+
+    td {
+      font-size: 0.875rem;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 0.25rem 0.625rem;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: 500;
+    }
+
+    .badge-success {
+      background: #dcfce7;
+      color: var(--success);
+    }
+
+    .badge-danger {
+      background: #fee2e2;
+      color: var(--danger);
+    }
+
+    .badge-warning {
+      background: #fef3c7;
+      color: var(--warning);
+    }
+
+    .badge-info {
+      background: #dbeafe;
+      color: var(--primary);
+    }
+
+    .search-bar {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .search-bar input {
+      flex: 1;
+    }
+
+    .alert {
+      padding: 1rem;
+      border-radius: 6px;
+      margin-bottom: 1rem;
+    }
+
+    .alert-success {
+      background: #dcfce7;
+      color: var(--success);
+    }
+
+    .alert-error {
+      background: #fee2e2;
+      color: var(--danger);
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.5);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal.show {
+      display: flex;
+    }
+
+    .modal-content {
+      background: var(--card-bg);
+      border-radius: 8px;
+      padding: 2rem;
+      max-width: 500px;
+      width: 90%;
+    }
+
+    .modal-header {
+      margin-bottom: 1rem;
+    }
+
+    .modal-header h3 {
+      font-size: 1.25rem;
+    }
+
+    .modal-footer {
+      margin-top: 1.5rem;
+      display: flex;
+      justify-content: flex-end;
+      gap: 0.5rem;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 2rem;
+      color: var(--text-muted);
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 3rem 1rem;
+      color: var(--text-muted);
+    }
+
+    .action-buttons {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .action-buttons button {
+      padding: 0.375rem 0.75rem;
+      font-size: 0.75rem;
+    }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <div class="loading">Loading...</div>
+  </div>
+
+  <script>
+    const API_BASE = '';
+    let currentUser = null;
+    let stats = null;
+
+    // Check admin permissions and initialize
+    async function init() {
+      try {
+        const res = await fetch('/api/me');
+        if (!res.ok) {
+          window.location.href = '/';
+          return;
+        }
+        const data = await res.json();
+        currentUser = data.data.user;
+
+        if (!currentUser.is_admin) {
+          alert('Admin permission required');
+          window.location.href = '/';
+          return;
+        }
+
+        renderLayout();
+        await loadStats();
+        await updateMessagesLink();
+        showPage('dashboard');
+      } catch (error) {
+        console.error('Initialization failed:', error);
+        alert('Loading failed, please refresh the page');
+      }
+    }
+
+    // Render layout
+    function renderLayout() {
+      document.getElementById('app').innerHTML = `
+        <div class="admin-layout">
+          <div class="sidebar">
+            <h1>PY.KG</h1>
+            <p>Admin Panel</p>
+            <ul class="nav-menu">
+              <li class="nav-item">
+                <a class="nav-link active" onclick="showPage('dashboard', event)">Dashboard</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" onclick="showPage('settings', event)">System Settings</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" onclick="showPage('users', event)">User Management</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" onclick="showPage('domains', event)">Domain Management</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" onclick="showPage('reviews', event)">Review Management</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" onclick="showPage('appeals', event)">Appeal Management</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" onclick="showPage('reports', event)">Report Management</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" onclick="showPage('messages', event)">Message Management</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" onclick="showPage('announcements', event)">Announcement Management</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" onclick="showPage('banned-words', event)">Sensitive Words Management</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="/">Back to Home</a>
+              </li>
+            </ul>
+          </div>
+          <div class="main-content">
+            <div id="dashboard" class="page active">
+              <div class="loading">Loading...</div>
+            </div>
+            <div id="settings" class="page">
+              <div class="loading">Loading...</div>
+            </div>
+            <div id="users" class="page">
+              <div class="loading">Loading...</div>
+            </div>
+            <div id="domains" class="page">
+              <div class="loading">Loading...</div>
+            </div>
+            <div id="reviews" class="page">
+              <div class="loading">Loading...</div>
+            </div>
+            <div id="appeals" class="page">
+              <div class="loading">Loading...</div>
+            </div>
+            <div id="reports" class="page">
+              <div class="loading">Loading...</div>
+            </div>
+            <div id="messages" class="page">
+              <div class="loading">Loading...</div>
+            </div>
+            <div id="announcements" class="page">
+              <div class="loading">Loading...</div>
+            </div>
+            <div id="banned-words" class="page">
+              <div class="loading">Loading...</div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    // Switch page
+    function showPage(pageName, event) {
+      document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
+      document.querySelectorAll('.nav-link').forEach(link => link.classList.remove('active'));
+
+      const page = document.getElementById(pageName);
+      if (page) {
+        page.classList.add('active');
+
+        // Activate corresponding navigation link
+        if (event && event.target) {
+          event.target.classList.add('active');
+        } else {
+          // When no event, find corresponding navigation link by pageName
+          const navLinks = document.querySelectorAll('.nav-link');
+          navLinks.forEach(link => {
+            if (link.textContent.includes(getPageTitle(pageName))) {
+              link.classList.add('active');
+            }
+          });
+        }
+
+        // Load page data
+        switch(pageName) {
+          case 'dashboard':
+            loadDashboard();
+            break;
+          case 'settings':
+            loadSettings();
+            break;
+          case 'users':
+            loadUsers();
+            break;
+          case 'domains':
+            loadDomains();
+            break;
+          case 'reviews':
+            loadReviews();
+            break;
+          case 'appeals':
+            loadAppeals();
+            break;
+          case 'reports':
+            loadReports();
+            break;
+          case 'messages':
+            loadMessagesPage();
+            break;
+          case 'announcements':
+            loadAnnouncements();
+            break;
+          case 'banned-words':
+            loadBannedWords();
+            break;
+        }
+      }
+    }
+
+    function getPageTitle(pageName) {
+      const titles = {
+        'dashboard': 'Dashboard',
+        'settings': 'System Settings',
+        'users': 'User Management',
+        'domains': 'Domain Management',
+        'reviews': 'Review Management',
+        'appeals': 'Appeal Management',
+        'reports': 'Report Management',
+        'messages': 'Message Management',
+        'announcements': 'Announcement Management',
+        'banned-words': 'Sensitive Words Management'
+      };
+      return titles[pageName] || '';
+    }
+
+    // Load statistics
+    async function loadStats() {
+      try {
+        const res = await fetch('/api/admin/stats');
+        if (!res.ok) {
+          console.warn('Stats API returned', res.status);
+          // Use default values on 429 or other errors
+          stats = {
+            totalUsers: 0,
+            totalDomains: 0,
+            pendingReviews: 0,
+            totalOrders: 0,
+            totalRevenue: 0
+          };
+          return;
+        }
+        const data = await res.json();
+        if (data.success) {
+          stats = data.data;
+        }
+      } catch (error) {
+        console.error('Failed to load statistics:', error);
+        // Use default values
+        stats = {
+          totalUsers: 0,
+          totalDomains: 0,
+          pendingReviews: 0,
+          totalOrders: 0,
+          totalRevenue: 0
+        };
+      }
+    }
+
+    // Load unread messages count
+    async function loadUnreadMessagesCount() {
+      try {
+        const res = await fetch('/api/admin/messages');
+        if (!res.ok) return 0;
+        const data = await res.json();
+        if (data.success) {
+          const conversations = data.data.conversations || [];
+          return conversations.reduce((sum, conv) => sum + (conv.unread_admin_count || 0), 0);
+        }
+        return 0;
+      } catch (error) {
+        console.error('Failed to load unread messages count:', error);
+        return 0;
+      }
+    }
+
+    // Update messages link with unread count
+    async function updateMessagesLink() {
+      const unreadCount = await loadUnreadMessagesCount();
+      const messagesLink = document.querySelector('.nav-link[onclick*="messages"]');
+      if (messagesLink && unreadCount > 0) {
+        messagesLink.innerHTML = `Message Management <span class="badge badge-danger" style="margin-left: 0.5rem;">${unreadCount}</span>`;
+      }
+    }
+
+    // Dashboard page
+    function loadDashboard() {
+      const page = document.getElementById('dashboard');
+      page.innerHTML = `
+        <h1 style="margin-bottom: 1.5rem;">Dashboard</h1>
+        <div class="stats-grid">
+          <div class="stat-card">
+            <h3>Total Users</h3>
+            <div class="value">${stats?.totalUsers || 0}</div>
+          </div>
+          <div class="stat-card">
+            <h3>Total Domains</h3>
+            <div class="value">${stats?.totalDomains || 0}</div>
+          </div>
+          <div class="stat-card">
+            <h3>Pending Reviews</h3>
+            <div class="value">${stats?.pendingReviews || 0}</div>
+          </div>
+          <div class="stat-card">
+            <h3>Total Orders</h3>
+            <div class="value">${stats?.totalOrders || 0}</div>
+          </div>
+          <div class="stat-card">
+            <h3>Total Revenue</h3>
+            <div class="value">${stats?.totalRevenue || 0}</div>
+          </div>
+        </div>
+      `;
+    }
+
+    // System settings page
+    async function loadSettings() {
+      const page = document.getElementById('settings');
+      page.innerHTML = '<div class="loading">Loading...</div>';
+
+      try {
+        const res = await fetch('/api/admin/settings');
+        const data = await res.json();
+
+        if (data.success) {
+          const settings = data.data;
+          page.innerHTML = `
+            <h1 style="margin-bottom: 1.5rem;">System Settings</h1>
+            <div id="settings-alert"></div>
+            <div class="card">
+              <h2>Basic Settings</h2>
+              <form id="settings-form">
+                <div class="form-group">
+                  <label>Domain Price (Credit)</label>
+                  <input type="number" name="domain_price" value="${settings.domain_price}" required min="0" step="1">
+                </div>
+                <div class="form-group">
+                  <label>
+                    <input type="checkbox" name="require_review" ${settings.require_review === 'true' ? 'checked' : ''}>
+                    Enable Manual Review
+                  </label>
+                  <p style="font-size: 0.875rem; color: var(--text-muted); margin-top: 0.25rem;">
+                    When enabled, all domain registrations require admin approval
+                  </p>
+                </div>
+                <div class="form-group">
+                  <label>Max Domains Per User</label>
+                  <input type="number" name="max_domains_per_user" value="${settings.max_domains_per_user}" required min="1" step="1">
+                </div>
+                <button type="submit" class="btn btn-primary">Save Settings</button>
+              </form>
+            </div>
+          `;
+
+          document.getElementById('settings-form').addEventListener('submit', saveSettings);
+        }
+      } catch (error) {
+        page.innerHTML = '<div class="alert alert-error">Loading failed</div>';
+      }
+    }
+
+    async function saveSettings(e) {
+      e.preventDefault();
+      const form = e.target;
+      const formData = new FormData(form);
+
+      const settings = {
+        domain_price: formData.get('domain_price'),
+        require_review: formData.get('require_review') ? 'true' : 'false',
+        max_domains_per_user: formData.get('max_domains_per_user')
+      };
+
+      try {
+        const res = await fetch('/api/admin/settings', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(settings)
+        });
+
+        const data = await res.json();
+        const alertDiv = document.getElementById('settings-alert');
+
+        if (data.success) {
+          alertDiv.innerHTML = '<div class="alert alert-success">Settings saved</div>';
+          setTimeout(() => alertDiv.innerHTML = '', 3000);
+        } else {
+          alertDiv.innerHTML = `<div class="alert alert-error">${data.error || 'Save failed'}</div>`;
+        }
+      } catch (error) {
+        document.getElementById('settings-alert').innerHTML = '<div class="alert alert-error">Save failed</div>';
+      }
+    }
+
+    // User management page
+    async function loadUsers(search = '', filter = 'all') {
+      const page = document.getElementById('users');
+      page.innerHTML = '<div class="loading">Loading...</div>';
+
+      try {
+        const params = new URLSearchParams({ search, filter, limit: 100 });
+        const res = await fetch(`/api/admin/users?${params}`);
+        const data = await res.json();
+
+        if (data.success) {
+          const users = data.data.users;
+          page.innerHTML = `
+            <h1 style="margin-bottom: 1.5rem;">User Management</h1>
+            <div id="users-alert"></div>
+            <div class="card">
+              <div class="search-bar">
+                <input type="text" id="user-search" placeholder="Search username or LinuxDO ID" value="${search}">
+                <select id="user-filter" value="${filter}">
+                  <option value="all">All</option>
+                  <option value="banned">Banned</option>
+                  <option value="admin">Admin</option>
+                </select>
+                <button class="btn btn-primary" onclick="searchUsers()">Search</button>
+              </div>
+              <div class="table-container">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>LinuxDO ID</th>
+                      <th>Username</th>
+                      <th>Trust Level</th>
+                      <th>Status</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${users.length === 0 ? '<tr><td colspan="5" class="empty-state">No data</td></tr>' : users.map(user => `
+                      <tr>
+                        <td>${user.linuxdo_id}</td>
+                        <td>${user.username}</td>
+                        <td>TL${user.trust_level}</td>
+                        <td>
+                          ${user.is_banned ? '<span class="badge badge-danger">Banned</span>' : ''}
+                          ${user.is_admin ? '<span class="badge badge-info">Admin</span>' : ''}
+                        </td>
+                        <td>
+                          <div class="action-buttons">
+                            ${!user.is_banned ? `<button class="btn btn-danger" onclick="banUser(${user.linuxdo_id})">Ban</button>` : `<button class="btn btn-success" onclick="unbanUser(${user.linuxdo_id})">Unban</button>`}
+                            ${!user.is_admin ? `<button class="btn btn-primary" onclick="setAdmin(${user.linuxdo_id}, true)">Set as Admin</button>` : `<button class="btn btn-secondary" onclick="setAdmin(${user.linuxdo_id}, false)">Remove Admin</button>`}
+                          </div>
+                        </td>
+                      </tr>
+                    `).join('')}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          `;
+        }
+      } catch (error) {
+        page.innerHTML = '<div class="alert alert-error">Loading failed</div>';
+      }
+    }
+
+    function searchUsers() {
+      const search = document.getElementById('user-search').value;
+      const filter = document.getElementById('user-filter').value;
+      loadUsers(search, filter);
+    }
+
+    async function banUser(linuxdoId) {
+      const reason = prompt('Enter ban reason:');
+      if (!reason) return;
+
+      try {
+        const res = await fetch('/api/admin/users', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ linuxdo_id: linuxdoId, action: 'ban', reason })
+        });
+
+        const data = await res.json();
+        if (data.success) {
+          showAlert('users-alert', 'User banned', 'success');
+          loadUsers();
+        } else {
+          showAlert('users-alert', data.error || 'Operation failed', 'error');
+        }
+      } catch (error) {
+        showAlert('users-alert', 'Operation failed', 'error');
+      }
+    }
+
+    async function unbanUser(linuxdoId) {
+      try {
+        const res = await fetch('/api/admin/users', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ linuxdo_id: linuxdoId, action: 'unban' })
+        });
+
+        const data = await res.json();
+        if (data.success) {
+          showAlert('users-alert', 'User unbanned', 'success');
+          loadUsers();
+        } else {
+          showAlert('users-alert', data.error || 'Operation failed', 'error');
+        }
+      } catch (error) {
+        showAlert('users-alert', 'Operation failed', 'error');
+      }
+    }
+
+    async function setAdmin(linuxdoId, isAdmin) {
+      const action = isAdmin ? 'set_admin' : 'remove_admin';
+
+      try {
+        const res = await fetch('/api/admin/users', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ linuxdo_id: linuxdoId, action })
+        });
+
+        const data = await res.json();
+        if (data.success) {
+          showAlert('users-alert', isAdmin ? 'Set as admin' : 'Admin removed', 'success');
+          loadUsers();
+        } else {
+          showAlert('users-alert', data.error || 'Operation failed', 'error');
+        }
+      } catch (error) {
+        showAlert('users-alert', 'Operation failed', 'error');
+      }
+    }
+
+    // Domain management page
+    async function loadDomains(search = '', status = 'all') {
+      const page = document.getElementById('domains');
+      page.innerHTML = '<div class="loading">Loading...</div>';
+
+      try {
+        const params = new URLSearchParams({ search, status, limit: 100 });
+        const res = await fetch(`/api/admin/domains?${params}`);
+        const data = await res.json();
+
+        if (data.success) {
+          const domains = data.data.domains;
+          page.innerHTML = `
+            <h1 style="margin-bottom: 1.5rem;">Domain Management</h1>
+            <div id="domains-alert"></div>
+            <div class="card">
+              <div class="search-bar">
+                <input type="text" id="domain-search" placeholder="Search domain or username" value="${search}">
+                <select id="domain-status" value="${status}">
+                  <option value="all">All</option>
+                  <option value="active">Active</option>
+                  <option value="suspended">Suspended</option>
+                  <option value="pending">Pending Payment</option>
+                  <option value="review">Pending Review</option>
+                </select>
+                <button class="btn btn-primary" onclick="searchDomains()">Search</button>
+              </div>
+              <div class="table-container">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Domain</th>
+                      <th>Owner</th>
+                      <th>Status</th>
+                      <th>Created At</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${domains.length === 0 ? '<tr><td colspan="5" class="empty-state">No data</td></tr>' : domains.map(domain => `
+                      <tr>
+                        <td>${domain.fqdn}</td>
+                        <td>${domain.owner_username || 'Unknown'} (${domain.owner_linuxdo_id})</td>
+                        <td>
+                          ${domain.status === 'active' ? '<span class="badge badge-success">Active</span>' : ''}
+                          ${domain.status === 'suspended' ? '<span class="badge badge-danger">Suspended</span>' : ''}
+                          ${domain.status === 'pending' ? '<span class="badge badge-warning">Pending Payment</span>' : ''}
+                          ${domain.status === 'review' ? '<span class="badge badge-info">Pending Review</span>' : ''}
+                        </td>
+                        <td>${new Date(domain.created_at).toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai', hour12: false })}</td>
+                        <td>
+                          <div class="action-buttons">
+                            <button class="btn btn-info btn-sm" onclick="manageDNSRecords(${domain.id}, '${domain.fqdn}')">DNS Records</button>
+                            ${domain.status === 'active' ? `<button class="btn btn-warning btn-sm" onclick="suspendDomain(${domain.id})">Suspend</button>` : ''}
+                            ${domain.status === 'suspended' ? `<button class="btn btn-success btn-sm" onclick="activateDomain(${domain.id})">Activate</button>` : ''}
+                            <button class="btn btn-danger btn-sm" onclick="deleteDomain(${domain.id})">Delete</button>
+                          </div>
+                        </td>
+                      </tr>
+                    `).join('')}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          `;
+        }
+      } catch (error) {
+        page.innerHTML = '<div class="alert alert-error">Loading failed</div>';
+      }
+    }
+
+    function searchDomains() {
+      const search = document.getElementById('domain-search').value;
+      const status = document.getElementById('domain-status').value;
+      loadDomains(search, status);
+    }
+
+    async function suspendDomain(id) {
+      const reason = prompt('Enter suspension reason:');
+      if (!reason) return;
+
+      try {
+        const res = await fetch('/api/admin/domains', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id, action: 'suspend', reason })
+        });
+
+        const data = await res.json();
+        if (data.success) {
+          showAlert('domains-alert', 'Domain suspended', 'success');
+          loadDomains();
+        } else {
+          showAlert('domains-alert', data.error || 'Operation failed', 'error');
+        }
+      } catch (error) {
+        showAlert('domains-alert', 'Operation failed', 'error');
+      }
+    }
+
+    async function activateDomain(id) {
+      try {
+        const res = await fetch('/api/admin/domains', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id, action: 'activate' })
+        });
+
+        const data = await res.json();
+        if (data.success) {
+          showAlert('domains-alert', 'Domain activated', 'success');
+          loadDomains();
+        } else {
+          showAlert('domains-alert', data.error || 'Operation failed', 'error');
+        }
+      } catch (error) {
+        showAlert('domains-alert', 'Operation failed', 'error');
+      }
+    }
+
+    async function deleteDomain(id) {
+      const reason = prompt('Enter deletion reason:');
+      if (reason === null) return; // User clicked cancel
+
+      try {
+        const res = await fetch('/api/admin/domains', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id, action: 'delete', reason })
+        });
+
+        const data = await res.json();
+        if (data.success) {
+          showAlert('domains-alert', 'Domain deleted', 'success');
+          loadDomains();
+        } else {
+          showAlert('domains-alert', data.error || 'Operation failed', 'error');
+        }
+      } catch (error) {
+        showAlert('domains-alert', 'Operation failed', 'error');
+      }
+    }
+
+    // Review management page
+    async function loadReviews(status = 'pending') {
+      const page = document.getElementById('reviews');
+      page.innerHTML = '<div class="loading">Loading...</div>';
+
+      try {
+        const params = new URLSearchParams({ status, limit: 100 });
+        const res = await fetch(`/api/admin/reviews?${params}`);
+        const data = await res.json();
+
+        if (data.success) {
+          const reviews = data.data.reviews;
+          const hasPendingReviews = reviews.some(r => r.status === 'pending' && r.order_status === 'paid');
+
+          page.innerHTML = `
+            <h1 style="margin-bottom: 1.5rem;">Review Management</h1>
+            <div id="reviews-alert"></div>
+            <div class="card">
+              <div class="search-bar" style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                  <select id="review-status" value="${status}">
+                    <option value="pending">Pending</option>
+                    <option value="approved">Approved</option>
+                    <option value="rejected">Rejected</option>
+                  </select>
+                  <button class="btn btn-primary" onclick="filterReviews()">Filter</button>
+                </div>
+                ${status === 'pending' && hasPendingReviews ? `
+                  <button class="btn btn-success" onclick="batchApproveReviews()">Batch Approve Selected</button>
+                ` : ''}
+              </div>
+              <div class="table-container">
+                <table>
+                  <thead>
+                    <tr>
+                      ${status === 'pending' ? '<th><input type="checkbox" id="select-all-reviews" onchange="toggleAllReviews(this)"></th>' : ''}
+                      <th>Domain</th>
+                      <th>User</th>
+                      <th>Python Praise</th>
+                      <th>Usage Purpose</th>
+                      <th>Payment Status</th>
+                      <th>Submitted At</th>
+                      <th>Status</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${reviews.length === 0 ? `<tr><td colspan="${status === 'pending' ? '9' : '8'}" class="empty-state">No data</td></tr>` : reviews.map(review => {
+                      const isPaid = review.order_status === 'paid';
+                      const canApprove = review.status === 'pending' && isPaid;
+                      return `
+                      <tr>
+                        ${status === 'pending' && canApprove ? `<td><input type="checkbox" class="review-checkbox" value="${review.id}"></td>` : (status === 'pending' ? '<td></td>' : '')}
+                        <td>${review.label}.py.kg</td>
+                        <td>${review.username} (${review.linuxdo_id})</td>
+                        <td style="max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${review.python_praise || '-'}">${review.python_praise || '-'}</td>
+                        <td style="max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${review.usage_purpose || '-'}">${review.usage_purpose || '-'}</td>
+                        <td>
+                          ${review.order_status === 'paid' ? '<span class="badge badge-success">Paid</span>' : ''}
+                          ${review.order_status === 'pending' ? '<span class="badge badge-warning">Pending Payment</span>' : ''}
+                          ${review.order_status === 'failed' ? '<span class="badge badge-danger">Payment Failed</span>' : ''}
+                          ${!review.order_status ? '<span class="badge badge-warning">No Order</span>' : ''}
+                        </td>
+                        <td>${new Date(review.created_at).toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai', hour12: false })}</td>
+                        <td>
+                          ${review.status === 'pending' ? '<span class="badge badge-warning">Pending</span>' : ''}
+                          ${review.status === 'approved' ? '<span class="badge badge-success">Approved</span>' : ''}
+                          ${review.status === 'rejected' ? '<span class="badge badge-danger">Rejected</span>' : ''}
+                        </td>
+                        <td>
+                          ${review.status === 'pending' ? `
+                            <div class="action-buttons">
+                              <button class="btn btn-success btn-sm" onclick="approveReview(${review.id})" ${!canApprove ? 'disabled title="Order not paid"' : ''}>Approve</button>
+                              <button class="btn btn-danger btn-sm" onclick="rejectReview(${review.id}, false)">Reject</button>
+                              <button class="btn btn-danger btn-sm" onclick="rejectReview(${review.id}, true)">Reject & Ban</button>
+                            </div>
+                          ` : '-'}
+                        </td>
+                      </tr>
+                    `}).join('')}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          `;
+        }
+      } catch (error) {
+        page.innerHTML = '<div class="alert alert-error">Loading failed</div>';
+      }
+    }
+
+    function toggleAllReviews(checkbox) {
+      const checkboxes = document.querySelectorAll('.review-checkbox');
+      checkboxes.forEach(cb => cb.checked = checkbox.checked);
+    }
+
+    async function batchApproveReviews() {
+      const checkboxes = document.querySelectorAll('.review-checkbox:checked');
+      const ids = Array.from(checkboxes).map(cb => parseInt(cb.value));
+
+      if (ids.length === 0) {
+        showAlert('reviews-alert', 'Please select reviews to approve', 'error');
+        return;
+      }
+
+      if (!confirm(`Are you sure you want to approve ${ids.length} selected domains?`)) return;
+
+      try {
+        let successCount = 0;
+        let failCount = 0;
+
+        for (const id of ids) {
+          const res = await fetch('/api/admin/reviews', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id, action: 'approve' })
+          });
+
+          const data = await res.json();
+          if (data.success) {
+            successCount++;
+          } else {
+            failCount++;
+          }
+        }
+
+        showAlert('reviews-alert', `Batch review completed: ${successCount} succeeded, ${failCount} failed`, successCount > 0 ? 'success' : 'error');
+        loadReviews();
+      } catch (error) {
+        showAlert('reviews-alert', 'Batch review failed', 'error');
+      }
+    }
+
+    function filterReviews() {
+      const status = document.getElementById('review-status').value;
+      loadReviews(status);
+    }
+
+    async function approveReview(id) {
+      const reason = prompt('Enter approval reason (optional):');
+      if (reason === null) return; // User clicked cancel
+
+      try {
+        const res = await fetch('/api/admin/reviews', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id, action: 'approve', reason })
+        });
+
+        const data = await res.json();
+        if (data.success) {
+          showAlert('reviews-alert', 'Approved', 'success');
+          loadReviews();
+          loadStats();
+        } else {
+          showAlert('reviews-alert', data.error || 'Operation failed', 'error');
+        }
+      } catch (error) {
+        showAlert('reviews-alert', 'Operation failed', 'error');
+      }
+    }
+
+    async function rejectReview(id, banUser) {
+      const reason = prompt('Enter rejection reason:');
+      if (reason === null) return; // User clicked cancel
+
+      try {
+        const res = await fetch('/api/admin/reviews', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id, action: 'reject', banUser, reason })
+        });
+
+        const data = await res.json();
+        if (data.success) {
+          showAlert('reviews-alert', banUser ? 'Rejected and user banned' : 'Rejected', 'success');
+          loadReviews();
+          loadStats();
+        } else {
+          showAlert('reviews-alert', data.error || 'Operation failed', 'error');
+        }
+      } catch (error) {
+        showAlert('reviews-alert', 'Operation failed', 'error');
+      }
+    }
+
+    // Appeal management page
+    async function loadAppeals(status = 'pending') {
+      const page = document.getElementById('appeals');
+      page.innerHTML = '<div class="loading">Loading...</div>';
+
+      try {
+        const params = new URLSearchParams({ status, limit: 100 });
+        const res = await fetch(`/api/admin/appeals?${params}`);
+        const data = await res.json();
+
+        if (data.success) {
+          const appeals = data.data.appeals;
+          page.innerHTML = `
+            <h1 style="margin-bottom: 1.5rem;">Appeal Management</h1>
+            <div id="appeals-alert"></div>
+            <div class="card">
+              <div class="search-bar">
+                <select id="appeal-status" value="${status}">
+                  <option value="pending">Pending</option>
+                  <option value="approved">Approved</option>
+                  <option value="rejected">Rejected</option>
+                </select>
+                <button class="btn btn-primary" onclick="filterAppeals()">Filter</button>
+              </div>
+              <div class="table-container">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Domain</th>
+                      <th>User</th>
+                      <th>Appeal Reason</th>
+                      <th>Submitted At</th>
+                      <th>Status</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${appeals.length === 0 ? '<tr><td colspan="6" class="empty-state">No data</td></tr>' : appeals.map(appeal => `
+                      <tr>
+                        <td>${appeal.fqdn}</td>
+                        <td>${appeal.username} (${appeal.linuxdo_id})</td>
+                        <td style="max-width: 300px; white-space: pre-wrap; word-break: break-word;">${appeal.reason}</td>
+                        <td>${new Date(appeal.created_at).toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai', hour12: false })}</td>
+                        <td>
+                          ${appeal.status === 'pending' ? '<span class="badge badge-warning">Pending</span>' : ''}
+                          ${appeal.status === 'approved' ? '<span class="badge badge-success">Approved</span>' : ''}
+                          ${appeal.status === 'rejected' ? '<span class="badge badge-danger">Rejected</span>' : ''}
+                        </td>
+                        <td>
+                          ${appeal.status === 'pending' ? `
+                            <div class="action-buttons">
+                              <button class="btn btn-info btn-sm" onclick="manageDNSRecords(${appeal.domain_id}, '${appeal.fqdn}')">DNS Records</button>
+                              <button class="btn btn-success btn-sm" onclick="approveAppeal(${appeal.id})">Approve (Unsuspend)</button>
+                              <button class="btn btn-danger btn-sm" onclick="rejectAppeal(${appeal.id})">Reject</button>
+                            </div>
+                          ` : '-'}
+                        </td>
+                      </tr>
+                    `).join('')}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          `;
+        }
+      } catch (error) {
+        page.innerHTML = '<div class="alert alert-error">Loading failed</div>';
+      }
+    }
+
+    function filterAppeals() {
+      const status = document.getElementById('appeal-status').value;
+      loadAppeals(status);
+    }
+
+    async function approveAppeal(id) {
+      const admin_note = prompt('Enter approval note (optional):');
+      if (admin_note === null) return;
+
+      try {
+        const res = await fetch('/api/admin/appeals', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id, action: 'approve', admin_note })
+        });
+
+        const data = await res.json();
+        if (data.success) {
+          showAlert('appeals-alert', 'Appeal approved, domain unsuspended', 'success');
+          loadAppeals();
+        } else {
+          showAlert('appeals-alert', data.error || 'Operation failed', 'error');
+        }
+      } catch (error) {
+        showAlert('appeals-alert', 'Operation failed', 'error');
+      }
+    }
+
+    async function rejectAppeal(id) {
+      const admin_note = prompt('Enter rejection reason:');
+      if (admin_note === null) return;
+
+      try {
+        const res = await fetch('/api/admin/appeals', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id, action: 'reject', admin_note })
+        });
+
+        const data = await res.json();
+        if (data.success) {
+          showAlert('appeals-alert', 'Appeal rejected', 'success');
+          loadAppeals();
+        } else {
+          showAlert('appeals-alert', data.error || 'Operation failed', 'error');
+        }
+      } catch (error) {
+        showAlert('appeals-alert', 'Operation failed', 'error');
+      }
+    }
+
+    // Report management page
+    async function loadReports(status = 'pending') {
+      const page = document.getElementById('reports');
+      page.innerHTML = '<div class="loading">Loading...</div>';
+
+      try {
+        const params = new URLSearchParams({ status, limit: 100 });
+        const res = await fetch(`/api/admin/reports?${params}`);
+        const data = await res.json();
+
+        if (data.success) {
+          const reports = data.data.reports;
+          page.innerHTML = `
+            <h1 style="margin-bottom: 1.5rem;">Report Management</h1>
+            <div id="reports-alert"></div>
+            <div class="card">
+              <div class="search-bar">
+                <select id="report-status" value="${status}">
+                  <option value="pending">Pending</option>
+                  <option value="resolved">Resolved</option>
+                  <option value="rejected">Rejected</option>
+                </select>
+                <button class="btn btn-primary" onclick="filterReports()">Filter</button>
+              </div>
+              <div class="table-container">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Reported Domain</th>
+                      <th>Reporter</th>
+                      <th>Report Reason</th>
+                      <th>Reported At</th>
+                      <th>Status</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${reports.length === 0 ? '<tr><td colspan="6" class="empty-state">No data</td></tr>' : reports.map(report => `
+                      <tr>
+                        <td>${report.label}.py.kg</td>
+                        <td>${report.reporter_username || report.reporter_linuxdo_id}</td>
+                        <td style="max-width: 300px;">${report.reason}</td>
+                        <td>${new Date(report.created_at).toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai', hour12: false })}</td>
+                        <td>
+                          ${report.status === 'pending' ? '<span class="badge badge-warning">Pending</span>' : ''}
+                          ${report.status === 'resolved' ? '<span class="badge badge-success">Resolved</span>' : ''}
+                          ${report.status === 'rejected' ? '<span class="badge badge-danger">Rejected</span>' : ''}
+                        </td>
+                        <td>
+                          ${report.status === 'pending' ? `
+                            <div class="action-buttons">
+                              <button class="btn btn-warning btn-sm" onclick="suspendReportedDomain(${report.id})">Suspend Resolution</button>
+                              <button class="btn btn-danger btn-sm" onclick="deleteReportedDomain(${report.id})">Delete Domain</button>
+                              <button class="btn btn-secondary btn-sm" onclick="rejectReport(${report.id})">Reject Report</button>
+                            </div>
+                          ` : '-'}
+                        </td>
+                      </tr>
+                    `).join('')}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          `;
+        }
+      } catch (error) {
+        page.innerHTML = '<div class="alert alert-error">Loading failed</div>';
+      }
+    }
+
+    function filterReports() {
+      const status = document.getElementById('report-status').value;
+      loadReports(status);
+    }
+
+    async function suspendReportedDomain(id) {
+      const reason = prompt('Enter suspension reason (optional):');
+      if (reason === null) return; // User clicked cancel
+
+      try {
+        const res = await fetch('/api/admin/reports', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            ids: [id],
+            actions: {
+              suspend_domain: true,
+              close_report: true
+            },
+            reason: reason || 'Report confirmed violation'
+          })
+        });
+
+        const data = await res.json();
+        if (data.success) {
+          showAlert('reports-alert', 'Report processed, domain suspended', 'success');
+          loadReports();
+        } else {
+          showAlert('reports-alert', data.error || 'Operation failed', 'error');
+        }
+      } catch (error) {
+        showAlert('reports-alert', 'Operation failed', 'error');
+      }
+    }
+
+    async function deleteReportedDomain(id) {
+      if (!confirm('Are you sure you want to delete the reported domain? This action cannot be undone.')) return;
+
+      const reason = prompt('Enter deletion reason (optional):');
+      if (reason === null) return; // User clicked cancel
+
+      try {
+        const res = await fetch('/api/admin/reports', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            ids: [id],
+            actions: {
+              delete_domain: true,
+              close_report: true
+            },
+            reason: reason || 'Report confirmed violation'
+          })
+        });
+
+        const data = await res.json();
+        if (data.success) {
+          showAlert('reports-alert', 'Report processed, domain deleted', 'success');
+          loadReports();
+        } else {
+          showAlert('reports-alert', data.error || 'Operation failed', 'error');
+        }
+      } catch (error) {
+        showAlert('reports-alert', 'Operation failed', 'error');
+      }
+    }
+
+    async function rejectReport(id) {
+      if (!confirm('Are you sure you want to reject this report?')) return;
+
+      try {
+        const res = await fetch('/api/admin/reports', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            ids: [id],
+            actions: {
+              close_report: true
+            }
+          })
+        });
+
+        const data = await res.json();
+        if (data.success) {
+          showAlert('reports-alert', 'Report rejected', 'success');
+          loadReports();
+        } else {
+          showAlert('reports-alert', data.error || 'Operation failed', 'error');
+        }
+      } catch (error) {
+        showAlert('reports-alert', 'Operation failed', 'error');
+      }
+    }
+
+    // Messages management page
+    async function loadMessagesPage() {
+      const page = document.getElementById('messages');
+      page.innerHTML = '<div class="loading">Loading...</div>';
+
+      try {
+        const res = await fetch('/api/admin/messages');
+        const data = await res.json();
+
+        if (data.success) {
+          const conversations = data.data.conversations || [];
+          const unreadConversations = conversations.filter(c => c.unread_admin_count > 0);
+
+          page.innerHTML = `
+            <h1 style="margin-bottom: 1.5rem;">Messages (${unreadConversations.length})</h1>
+            <div id="messages-alert"></div>
+
+            ${unreadConversations.length > 0 ? `
+              <div class="card" style="background: #fef3c7; border-left: 4px solid #d97706; margin-bottom: 1.5rem;">
+                <h3 style="margin-top: 0; color: #78350f;">💬 Unread Messages (${unreadConversations.length})</h3>
+                <div style="max-height: 400px; overflow-y: auto;">
+                  ${unreadConversations.map(conv => `
+                    <div class="card" style="margin-bottom: 0.75rem; padding: 1rem; border-left: 3px solid var(--warning); cursor: pointer;" onclick="openConversation(${conv.id}, '${conv.username}', ${conv.user_trust_level})">
+                      <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 0.5rem;">
+                        <div>
+                          <strong style="color: var(--text); font-size: 1rem;">${conv.username}</strong>
+                          <span class="badge badge-info" style="margin-left: 0.5rem;">TL${conv.user_trust_level}</span>
+                          <span class="badge badge-danger" style="margin-left: 0.5rem;">${conv.unread_admin_count} unread</span>
+                        </div>
+                        <span style="font-size: 0.75rem; color: var(--text-muted);">${new Date(conv.last_message_at).toLocaleString('en-US', { timeZone: 'Asia/Shanghai', hour12: false })}</span>
+                      </div>
+                      <p style="margin: 0; font-size: 0.875rem; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${conv.last_message_preview || 'No preview'}</p>
+                    </div>
+                  `).join('')}
+                </div>
+              </div>
+            ` : ''}
+
+            <div class="card">
+              <h2>All Conversations</h2>
+              <div class="table-container">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>User</th>
+                      <th>Trust Level</th>
+                      <th>Last Message</th>
+                      <th>Unread</th>
+                      <th>Time</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${conversations.length === 0 ? '<tr><td colspan="6" class="empty-state">No conversations yet</td></tr>' : conversations.map(conv => `
+                      <tr style="${conv.unread_admin_count > 0 ? 'background: #fef3c7;' : ''}">
+                        <td><strong>${conv.username}</strong></td>
+                        <td><span class="badge badge-info">TL${conv.user_trust_level}</span></td>
+                        <td style="max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${conv.last_message_preview || '-'}</td>
+                        <td>
+                          ${conv.unread_admin_count > 0 ? `<span class="badge badge-danger">${conv.unread_admin_count}</span>` : '-'}
+                        </td>
+                        <td>${new Date(conv.last_message_at).toLocaleString('en-US', { timeZone: 'Asia/Shanghai', hour12: false })}</td>
+                        <td>
+                          <button class="btn btn-primary btn-sm" onclick="openConversation(${conv.id}, '${conv.username}', ${conv.user_trust_level})">Open Chat</button>
+                        </td>
+                      </tr>
+                    `).join('')}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          `;
+        }
+      } catch (error) {
+        page.innerHTML = '<div class="alert alert-error">Loading failed</div>';
+      }
+    }
+
+    // Open conversation chat modal
+    async function openConversation(conversationId, username, trustLevel) {
+      const modal = document.createElement('div');
+      modal.id = 'conversation-modal';
+      modal.className = 'modal show';
+
+      modal.innerHTML = `
+        <div class="modal-content" style="max-width: 700px; max-height: 85vh; display: flex; flex-direction: column;">
+          <div class="modal-header" style="border-bottom: 1px solid var(--border); padding-bottom: 1rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <div>
+                <h3 style="margin: 0;">Chat with ${username}</h3>
+                <span class="badge badge-info" style="margin-top: 0.25rem;">TL${trustLevel}</span>
+              </div>
+              <button onclick="closeConversationModal()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: var(--text-muted);">&times;</button>
+            </div>
+          </div>
+          <div id="conversation-alert" style="margin-top: 1rem;"></div>
+          <div id="conversation-messages" style="flex: 1; overflow-y: auto; padding: 1rem; background: var(--bg); border-radius: 6px; margin: 1rem 0; min-height: 300px; max-height: 400px;">
+            <div class="loading">Loading messages...</div>
+          </div>
+          <div style="border-top: 1px solid var(--border); padding-top: 1rem;">
+            <textarea
+              id="admin-message-input"
+              placeholder="Type your reply..."
+              rows="3"
+              maxlength="2000"
+              style="width: 100%; padding: 0.625rem; border: 1px solid var(--border); border-radius: 6px; font-size: 0.875rem; font-family: inherit; resize: vertical; margin-bottom: 0.5rem;"
+            ></textarea>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <small style="color: var(--text-muted);">
+                <span id="admin-message-char-count">0</span>/2000 characters
+              </small>
+              <button class="btn btn-primary" id="send-admin-message-btn" onclick="sendAdminMessage(${conversationId})">Send</button>
+            </div>
+          </div>
+        </div>
+      `;
+
+      document.body.appendChild(modal);
+
+      // Load messages
+      loadConversationMessages(conversationId);
+
+      // Character counter
+      document.getElementById('admin-message-input').addEventListener('input', (e) => {
+        document.getElementById('admin-message-char-count').textContent = e.target.value.length;
+      });
+
+      // Enter key support (Ctrl+Enter or Cmd+Enter to send)
+      document.getElementById('admin-message-input').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+          e.preventDefault();
+          sendAdminMessage(conversationId);
+        }
+      });
+    }
+
+    // Close conversation modal
+    function closeConversationModal() {
+      const modal = document.getElementById('conversation-modal');
+      if (modal) {
+        modal.remove();
+        // Reload messages page to update unread counts
+        loadMessagesPage();
+        updateMessagesLink();
+      }
+    }
+
+    // Load conversation messages
+    async function loadConversationMessages(conversationId) {
+      const container = document.getElementById('conversation-messages');
+
+      try {
+        const res = await fetch(`/api/admin/messages?conversation_id=${conversationId}`);
+        const data = await res.json();
+
+        if (data.success) {
+          const messages = data.data.messages || [];
+          const conversation = data.data.conversation;
+
+          if (messages.length === 0) {
+            container.innerHTML = '<div style="text-align: center; padding: 2rem; color: var(--text-muted);">No messages yet</div>';
+          } else {
+            container.innerHTML = messages.map(m => {
+              const isAdmin = m.sender_type === 'admin';
+              const time = new Date(m.created_at).toLocaleString('en-US', {
+                timeZone: 'Asia/Shanghai',
+                hour12: false,
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+              });
+
+              return `
+                <div style="margin-bottom: 1rem; display: flex; flex-direction: column; align-items: ${isAdmin ? 'flex-end' : 'flex-start'};">
+                  <div style="max-width: 70%; background: ${isAdmin ? 'var(--primary)' : 'var(--card-bg)'}; color: ${isAdmin ? 'white' : 'var(--text)'}; padding: 0.75rem; border-radius: 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.1);">
+                    <div style="font-weight: 600; font-size: 0.75rem; margin-bottom: 0.25rem; opacity: 0.8;">
+                      ${isAdmin ? 'Admin' : conversation.username}
+                    </div>
+                    <div style="white-space: pre-wrap; word-break: break-word;">${escapeHtml(m.content)}</div>
+                    <div style="font-size: 0.7rem; margin-top: 0.25rem; opacity: 0.7;">
+                      ${time}
+                    </div>
+                  </div>
+                </div>
+              `;
+            }).join('');
+
+            // Scroll to bottom
+            container.scrollTop = container.scrollHeight;
+          }
+        } else {
+          container.innerHTML = `<div class="alert alert-error">Failed to load messages</div>`;
+        }
+      } catch (error) {
+        container.innerHTML = `<div class="alert alert-error">Failed to load messages</div>`;
+      }
+    }
+
+    // Send admin message
+    async function sendAdminMessage(conversationId) {
+      const input = document.getElementById('admin-message-input');
+      const content = input.value.trim();
+      const btn = document.getElementById('send-admin-message-btn');
+
+      if (!content) {
+        showAlert('conversation-alert', 'Message cannot be empty', 'error');
+        return;
+      }
+
+      if (content.length > 2000) {
+        showAlert('conversation-alert', 'Message too long (max 2000 characters)', 'error');
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = 'Sending...';
+
+      try {
+        const res = await fetch('/api/admin/messages', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            conversation_id: conversationId,
+            content: content
+          })
+        });
+
+        const data = await res.json();
+        if (data.success) {
+          input.value = '';
+          document.getElementById('admin-message-char-count').textContent = '0';
+          loadConversationMessages(conversationId);
+          showAlert('conversation-alert', 'Message sent', 'success');
+        } else {
+          showAlert('conversation-alert', data.error || 'Failed to send', 'error');
+        }
+      } catch (error) {
+        showAlert('conversation-alert', 'Failed to send message', 'error');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Send';
+      }
+    }
+
+    // Escape HTML
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    // Announcement management page
+    async function loadAnnouncements() {
+      const page = document.getElementById('announcements');
+      page.innerHTML = `
+        <h1 style="margin-bottom: 1.5rem;">Announcement Management</h1>
+
+        <div id="announcements-alert"></div>
+
+        <div class="card">
+          <h2>Send System Announcement</h2>
+          <p style="margin-bottom: 1rem; color: var(--text-muted);">
+            Send notification message to all users
+          </p>
+          <form id="send-announcement-form">
+            <div class="form-group">
+              <label>Announcement Title <span style="color: var(--danger);">*</span></label>
+              <input type="text" name="title" placeholder="Enter announcement title (max 100 characters)" required maxlength="100">
+            </div>
+            <div class="form-group">
+              <label>Announcement Content <span style="color: var(--danger);">*</span></label>
+              <textarea name="message" rows="5" placeholder="Enter announcement content (max 500 characters)" required maxlength="500"></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary">Send Announcement</button>
+          </form>
+        </div>
+
+        <div class="card">
+          <h2>Instructions</h2>
+          <ul style="margin-left: 1.5rem; color: var(--text-muted); font-size: 0.875rem;">
+            <li>Announcements will be sent as notifications to all registered users</li>
+            <li>Users will see unread notification alerts on the homepage</li>
+            <li>Use this feature carefully to avoid disturbing users</li>
+            <li>Cannot be recalled after sending, please check content carefully</li>
+          </ul>
+        </div>
+      `;
+
+      document.getElementById('send-announcement-form').addEventListener('submit', sendAnnouncement);
+    }
+
+    async function sendAnnouncement(e) {
+      e.preventDefault();
+      const form = e.target;
+      const formData = new FormData(form);
+
+      const title = formData.get('title').trim();
+      const message = formData.get('message').trim();
+
+      if (!title || !message) {
+        showAlert('announcements-alert', 'Please fill in all information', 'error');
+        return;
+      }
+
+      if (!confirm(`Are you sure you want to send announcement to all users?\n\nTitle: ${title}\nContent: ${message}`)) {
+        return;
+      }
+
+      // Get submit button and disable it
+      const submitBtn = form.querySelector('button[type="submit"]');
+      const originalBtnText = submitBtn.textContent;
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Sending...';
+
+      // Show progress indicator
+      const alertDiv = document.getElementById('announcements-alert');
+      alertDiv.innerHTML = `
+        <div class="alert alert-info" style="position: relative;">
+          <div style="margin-bottom: 0.5rem;">
+            <strong>Sending announcement to all users...</strong>
+          </div>
+          <div style="width: 100%; height: 8px; background: rgba(255,255,255,0.3); border-radius: 4px; overflow: hidden;">
+            <div id="announcement-progress" style="width: 0%; height: 100%; background: var(--primary); transition: width 0.3s ease;"></div>
+          </div>
+          <div style="margin-top: 0.5rem; font-size: 0.875rem;">
+            <span id="announcement-status">Preparing...</span>
+          </div>
+        </div>
+      `;
+
+      // Simulate progress (since we don't have real-time progress from server)
+      const progressBar = document.getElementById('announcement-progress');
+      const statusText = document.getElementById('announcement-status');
+      let progress = 0;
+      const progressInterval = setInterval(() => {
+        if (progress < 90) {
+          progress += 10;
+          progressBar.style.width = `${progress}%`;
+          if (progress < 30) {
+            statusText.textContent = 'Preparing announcement...';
+          } else if (progress < 60) {
+            statusText.textContent = 'Sending to users...';
+          } else {
+            statusText.textContent = 'Almost done...';
+          }
+        }
+      }, 200);
+
+      try {
+        const res = await fetch('/api/admin/announcements', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ title, message })
+        });
+
+        const data = await res.json();
+
+        // Clear progress interval
+        clearInterval(progressInterval);
+        progressBar.style.width = '100%';
+
+        if (data.success) {
+          statusText.textContent = 'Complete!';
+          setTimeout(() => {
+            showAlert('announcements-alert', `Announcement sent successfully! Sent to ${data.data.success_count} users`, 'success');
+            form.reset();
+          }, 500);
+        } else {
+          showAlert('announcements-alert', data.error || 'Send failed', 'error');
+        }
+      } catch (error) {
+        clearInterval(progressInterval);
+        showAlert('announcements-alert', 'Send failed', 'error');
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = originalBtnText;
+      }
+    }
+
+    // Sensitive words management page
+    async function loadBannedWords() {
+      const page = document.getElementById('banned-words');
+      page.innerHTML = '<div class="loading">Loading...</div>';
+
+      try {
+        const res = await fetch('/api/admin/banned-words');
+        const data = await res.json();
+
+        if (data.success) {
+          const words = data.data.words;
+          page.innerHTML = `
+            <h1 style="margin-bottom: 1.5rem;">Sensitive Words Management</h1>
+            <div id="banned-words-alert"></div>
+
+            <div class="card" style="background: #fff3cd; border-left: 4px solid #ffc107; margin-bottom: 1.5rem;">
+              <h3 style="margin-top: 0; color: #856404;">📋 Policy Description</h3>
+              <p style="margin-bottom: 0.5rem;"><strong>System Reserved Words:</strong> Referencing <a href="https://github.com/js-org/js.org" target="_blank" style="color: #0066cc;">js.org policy</a>, includes 470+ common technical terms (such as api, admin, www, etc.), automatically managed by the system, hard-blocking registration.</p>
+              <p style="margin-bottom: 0;"><strong>Custom Sensitive Words:</strong> You can add inappropriate content-related words (such as pornography, gambling, etc.) below, which will trigger manual review when detected.</p>
+            </div>
+
+            <div class="card">
+              <h2>Add Custom Sensitive Word</h2>
+              <form id="add-word-form">
+                <div style="display: flex; gap: 0.5rem; align-items: flex-end;">
+                  <div class="form-group" style="flex: 1; margin-bottom: 0;">
+                    <label>Sensitive Word</label>
+                    <input type="text" name="word" placeholder="Enter sensitive word" required>
+                  </div>
+                  <button type="submit" class="btn btn-primary">Add</button>
+                </div>
+              </form>
+            </div>
+            <div class="card">
+              <h2>Custom Sensitive Words List (${words.length})</h2>
+              <div class="table-container">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Sensitive Word</th>
+                      <th>Added At</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${words.length === 0 ? '<tr><td colspan="3" class="empty-state">No data</td></tr>' : words.map(word => `
+                      <tr>
+                        <td>${word.word}</td>
+                        <td>${new Date(word.created_at).toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai', hour12: false })}</td>
+                        <td>
+                          <button class="btn btn-danger btn-sm" onclick="deleteBannedWord(${word.id})">Delete</button>
+                        </td>
+                      </tr>
+                    `).join('')}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          `;
+
+          document.getElementById('add-word-form').addEventListener('submit', addBannedWord);
+        }
+      } catch (error) {
+        page.innerHTML = '<div class="alert alert-error">Loading failed</div>';
+      }
+    }
+
+    async function addBannedWord(e) {
+      e.preventDefault();
+      const form = e.target;
+      const formData = new FormData(form);
+
+      try {
+        const res = await fetch('/api/admin/banned-words', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            word: formData.get('word')
+          })
+        });
+
+        const data = await res.json();
+        if (data.success) {
+          showAlert('banned-words-alert', 'Sensitive word added', 'success');
+          form.reset();
+          loadBannedWords();
+        } else {
+          showAlert('banned-words-alert', data.error || 'Add failed', 'error');
+        }
+      } catch (error) {
+        showAlert('banned-words-alert', 'Add failed', 'error');
+      }
+    }
+
+    async function deleteBannedWord(id) {
+      if (!confirm('Are you sure you want to delete this sensitive word?')) return;
+
+      try {
+        const res = await fetch('/api/admin/banned-words', {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id })
+        });
+
+        const data = await res.json();
+        if (data.success) {
+          showAlert('banned-words-alert', 'Sensitive word deleted', 'success');
+          loadBannedWords();
+        } else {
+          showAlert('banned-words-alert', data.error || 'Delete failed', 'error');
+        }
+      } catch (error) {
+        showAlert('banned-words-alert', 'Delete failed', 'error');
+      }
+    }
+
+    // DNS records management
+    async function manageDNSRecords(domainId, fqdn) {
+      const modal = document.createElement('div');
+      modal.id = 'dns-modal';
+      modal.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; display: flex; align-items: center; justify-content: center;';
+
+      modal.innerHTML = `
+        <div style="background: white; border-radius: 8px; width: 90%; max-width: 900px; max-height: 90vh; overflow-y: auto; padding: 2rem;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+            <h2 style="margin: 0;">DNS Records Management - ${fqdn}</h2>
+            <button onclick="closeDNSModal()" style="background: none; border: none; font-size: 24px; cursor: pointer;">&times;</button>
+          </div>
+          <div id="dns-modal-alert"></div>
+          <div id="dns-records-content">
+            <div class="loading">Loading...</div>
+          </div>
+        </div>
+      `;
+
+      document.body.appendChild(modal);
+
+      // Load DNS records
+      try {
+        const res = await fetch(`/api/admin/dns-records?domain_id=${domainId}`);
+        const data = await res.json();
+
+        if (data.success) {
+          const records = data.data.records;
+          const domain = data.data.domain;
+
+          document.getElementById('dns-records-content').innerHTML = `
+            <div class="card" style="margin-bottom: 1rem;">
+              <p><strong>Domain Status:</strong> ${domain.status === 'active' ? 'Active' : domain.status === 'suspended' ? 'Suspended' : domain.status}</p>
+              <p><strong>Owner ID:</strong> ${domain.owner_linuxdo_id}</p>
+              <p style="margin-bottom: 0; color: #856404;">Tip: Admins can delete or modify violating DNS records here, then restore domain status.</p>
+            </div>
+            <div class="table-container">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Type</th>
+                    <th>Record Name</th>
+                    <th>Record Value</th>
+                    <th>TTL</th>
+                    <th>Proxied</th>
+                    <th>CF Synced</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${records.length === 0 ? '<tr><td colspan="7" class="empty-state">No DNS records</td></tr>' : records.map(record => `
+                    <tr>
+                      <td><span class="badge badge-info">${record.type}</span></td>
+                      <td>${record.name}</td>
+                      <td style="max-width: 300px; word-break: break-all;">${record.content}</td>
+                      <td>${record.ttl}</td>
+                      <td>${record.proxied ? 'Yes' : 'No'}</td>
+                      <td>${record.cf_synced ? '✓' : '✗'}</td>
+                      <td>
+                        <div class="action-buttons">
+                          <button class="btn btn-warning btn-sm" onclick="editDNSRecord(${record.id}, '${record.content}', ${record.ttl}, ${record.proxied})">Edit</button>
+                          <button class="btn btn-danger btn-sm" onclick="deleteDNSRecord(${record.id}, ${domainId}, '${fqdn}')">Delete</button>
+                        </div>
+                      </td>
+                    </tr>
+                  `).join('')}
+                </tbody>
+              </table>
+            </div>
+          `;
+        } else {
+          document.getElementById('dns-records-content').innerHTML = `<div class="alert alert-error">${data.error || 'Loading failed'}</div>`;
+        }
+      } catch (error) {
+        document.getElementById('dns-records-content').innerHTML = '<div class="alert alert-error">Loading failed</div>';
+      }
+    }
+
+    function closeDNSModal() {
+      const modal = document.getElementById('dns-modal');
+      if (modal) {
+        modal.remove();
+      }
+    }
+
+    async function editDNSRecord(id, currentContent, currentTtl, currentProxied) {
+      const newContent = prompt('Enter new record value:', currentContent);
+      if (newContent === null || newContent === currentContent) return;
+
+      const reason = prompt('Enter modification reason (optional):');
+
+      try {
+        const res = await fetch('/api/admin/dns-records', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            id,
+            content: newContent,
+            ttl: currentTtl,
+            proxied: currentProxied === 1,
+            reason
+          })
+        });
+
+        const data = await res.json();
+        if (data.success) {
+          showAlert('dns-modal-alert', 'DNS record updated', 'success');
+          // Reload the modal content
+          const modal = document.getElementById('dns-modal');
+          const fqdn = modal.querySelector('h2').textContent.split(' - ')[1];
+          const domainIdMatch = modal.querySelector('[onclick*="deleteDNSRecord"]');
+          if (domainIdMatch) {
+            const domainId = domainIdMatch.getAttribute('onclick').match(/deleteDNSRecord\(\d+,\s*(\d+)/)[1];
+            setTimeout(() => {
+              closeDNSModal();
+              manageDNSRecords(parseInt(domainId), fqdn);
+            }, 1000);
+          }
+        } else {
+          showAlert('dns-modal-alert', data.error || 'Update failed', 'error');
+        }
+      } catch (error) {
+        showAlert('dns-modal-alert', 'Update failed', 'error');
+      }
+    }
+
+    async function deleteDNSRecord(id, domainId, fqdn) {
+      if (!confirm('Are you sure you want to delete this DNS record?')) return;
+
+      const reason = prompt('Enter deletion reason (optional):');
+
+      try {
+        const res = await fetch('/api/admin/dns-records', {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id, reason })
+        });
+
+        const data = await res.json();
+        if (data.success) {
+          showAlert('dns-modal-alert', 'DNS record deleted', 'success');
+          // Reload the modal content
+          setTimeout(() => {
+            closeDNSModal();
+            manageDNSRecords(domainId, fqdn);
+          }, 1000);
+        } else {
+          showAlert('dns-modal-alert', data.error || 'Delete failed', 'error');
+        }
+      } catch (error) {
+        showAlert('dns-modal-alert', 'Delete failed', 'error');
+      }
+    }
+
+    // Utility functions
+    function showAlert(elementId, message, type) {
+      const element = document.getElementById(elementId);
+      if (element) {
+        element.innerHTML = `<div class="alert alert-${type}">${message}</div>`;
+        setTimeout(() => element.innerHTML = '', 3000);
+      }
+    }
+
+    // Initialize
+    init();
+  </script>
+</body>
+</html>

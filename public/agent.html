@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PY.KG Registry Assistant - Michael</title>
+    <style>
+        :root {
+            --glass-bg: rgba(255, 255, 255, 0.7);
+            --glass-border: rgba(255, 255, 255, 0.5);
+            --text-main: #0f172a;
+            --text-secondary: #475569;
+            --accent-gradient: linear-gradient(135deg, #0284c7, #10b981);
+            --blob1-color: #38bdf8;
+            --blob2-color: #34d399;
+            --blob3-color: #0c4a6e;
+        }
+
+        body {
+            margin: 0; padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            height: 100vh; width: 100vw; overflow: hidden;
+            display: flex; justify-content: center; align-items: center;
+            background-color: #f0f9ff;
+        }
+
+        .ambient-light {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            overflow: hidden; z-index: -1; background: #f0f9ff;
+        }
+        .blob {
+            position: absolute; filter: blur(80px); opacity: 0.6;
+            animation: float 25s infinite ease-in-out alternate; border-radius: 50%;
+        }
+        .blob-1 { background: var(--blob1-color); width: 700px; height: 700px; top: -150px; left: -150px; animation-duration: 28s; }
+        .blob-2 { background: var(--blob2-color); width: 600px; height: 600px; bottom: -100px; right: -150px; animation-duration: 32s; }
+        .blob-3 { background: var(--blob3-color); width: 500px; height: 500px; top: 35%; left: 45%; animation-duration: 24s; opacity: 0.4; }
+        @keyframes float {
+            0% { transform: translate(0, 0) scale(1); }
+            50% { transform: translate(40px, 60px) scale(1.05); }
+            100% { transform: translate(-30px, -40px) scale(0.95); }
+        }
+
+        .glass-container {
+            width: 900px; max-width: 90%; height: 85vh;
+            background: var(--glass-bg);
+            backdrop-filter: blur(25px) saturate(120%);
+            -webkit-backdrop-filter: blur(25px) saturate(120%);
+            border: 1px solid var(--glass-border);
+            box-shadow: 0 30px 60px -15px rgba(12, 74, 110, 0.15), inset 0 0 0 1px rgba(255, 255, 255, 0.6);
+            border-radius: 32px;
+            display: flex; flex-direction: column; overflow: hidden;
+            animation: hover-effect 8s ease-in-out infinite;
+        }
+        @keyframes hover-effect {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .header {
+            padding: 20px 30px; border-bottom: 1px solid rgba(0,0,0,0.03);
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .brand { display: flex; align-items: center; gap: 14px; }
+        .logo-box {
+            width: 42px; height: 42px; background: var(--accent-gradient);
+            border-radius: 12px; display: flex; align-items: center; justify-content: center;
+            color: white; font-weight: 800; font-size: 22px;
+            box-shadow: 0 8px 16px -4px rgba(2, 132, 199, 0.3);
+        }
+        .brand h1 { margin: 0; font-size: 18px; color: var(--text-main); }
+        .brand span { font-size: 13px; color: var(--text-secondary); display: block; margin-top: 2px;}
+
+        .status {
+            font-size: 12px; background: rgba(255,255,255,0.5);
+            padding: 6px 10px; border-radius: 8px; font-weight: 500;
+        }
+        .status.connecting { color: #f59e0b; }
+        .status.connected { color: #10b981; }
+        .status.error { color: #ef4444; }
+
+        .chat-area {
+            flex: 1; padding: 30px; overflow-y: auto;
+            display: flex; flex-direction: column; gap: 24px;
+        }
+        .message { display: flex; gap: 16px; max-width: 80%; animation: fadeIn 0.4s ease-out; }
+        .message.user { align-self: flex-end; flex-direction: row-reverse; }
+        .bubble {
+            padding: 16px 22px; border-radius: 24px; font-size: 15px; line-height: 1.6;
+            backdrop-filter: blur(10px);
+        }
+        .message.ai .bubble {
+            background: rgba(255, 255, 255, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            color: var(--text-main); border-bottom-left-radius: 4px;
+        }
+        .message.user .bubble {
+            background: var(--accent-gradient); color: white;
+            box-shadow: 0 8px 20px -5px rgba(2, 132, 199, 0.3);
+            border-bottom-right-radius: 4px;
+        }
+
+        /* Markdown 样式 */
+        .bubble h1, .bubble h2, .bubble h3 { margin: 12px 0 8px 0; }
+        .bubble h1 { font-size: 1.3em; }
+        .bubble h2 { font-size: 1.2em; }
+        .bubble h3 { font-size: 1.1em; }
+        .bubble p { margin: 8px 0; }
+        .bubble ul, .bubble ol { margin: 8px 0; padding-left: 24px; }
+        .bubble li { margin: 4px 0; }
+        .bubble code {
+            background: rgba(0,0,0,0.05); padding: 2px 6px; border-radius: 4px;
+            font-family: "SFMono-Regular", Consolas, monospace; font-size: 0.9em;
+        }
+        .bubble pre {
+            background: rgba(0,0,0,0.05); padding: 12px; border-radius: 8px;
+            overflow-x: auto; margin: 8px 0;
+        }
+        .bubble pre code { background: none; padding: 0; }
+        .bubble blockquote {
+            border-left: 3px solid rgba(0,0,0,0.1); padding-left: 12px;
+            margin: 8px 0; color: var(--text-secondary);
+        }
+        .bubble a { color: #0284c7; text-decoration: underline; }
+        .bubble strong { font-weight: 600; }
+        .bubble em { font-style: italic; }
+
+        .login-btn {
+            display: inline-block; margin-top: 12px; padding: 10px 24px;
+            background: var(--accent-gradient); color: white; border: none;
+            border-radius: 12px; font-size: 14px; font-weight: 500;
+            cursor: pointer; text-decoration: none; transition: all 0.2s;
+            box-shadow: 0 4px 12px -2px rgba(2, 132, 199, 0.3);
+        }
+        .login-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 16px -2px rgba(2, 132, 199, 0.4); }
+
+        .tool-badge {
+            background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.3);
+            border-radius: 12px; padding: 6px 10px; margin-top: 8px;
+            font-size: 11px; color: #3b82f6; display: inline-block;
+        }
+
+        .system-msg {
+            text-align: center; color: #64748b; font-size: 13px;
+            padding: 12px; background: rgba(255,255,255,0.4);
+            border-radius: 16px; margin: 8px auto; max-width: 400px;
+        }
+
+        .footer {
+            padding: 20px 30px; background: rgba(255, 255, 255, 0.4);
+            border-top: 1px solid rgba(255, 255, 255, 0.5);
+        }
+
+        .chips {
+            display: flex; gap: 10px; margin-bottom: 15px;
+            overflow-x: auto; padding-bottom: 5px;
+        }
+        .chip {
+            padding: 8px 16px; background: rgba(255, 255, 255, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            border-radius: 20px; font-size: 13px; color: var(--text-main);
+            cursor: pointer; transition: all 0.2s; white-space: nowrap;
+        }
+        .chip:hover {
+            background: white; transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05); color: #0284c7;
+        }
+
+        .input-group {
+            background: rgba(255, 255, 255, 0.8); border-radius: 20px;
+            padding: 8px; display: flex; align-items: center;
+            border: 1px solid rgba(255,255,255,0.6); transition: all 0.3s;
+        }
+        .input-group:focus-within {
+            background: #fff; box-shadow: 0 0 0 4px rgba(56, 189, 248, 0.2);
+        }
+        input {
+            flex: 1; border: none; background: transparent; padding: 12px 16px;
+            font-size: 15px; outline: none; color: var(--text-main);
+        }
+        input:disabled {
+            opacity: 0.5; cursor: not-allowed;
+        }
+        .send-btn {
+            width: 44px; height: 44px; border: none;
+            background: var(--accent-gradient); color: white;
+            border-radius: 14px; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 4px 12px -2px rgba(2, 132, 199, 0.3);
+            transition: transform 0.2s;
+        }
+        .send-btn:hover:not(:disabled) { transform: scale(1.05); }
+        .send-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .chat-area::-webkit-scrollbar { width: 6px; }
+        .chat-area::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.1); border-radius: 3px; }
+    </style>
+</head>
+<body>
+    <div class="ambient-light">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+        <div class="blob blob-3"></div>
+    </div>
+
+    <div class="glass-container">
+        <header class="header">
+            <div class="brand">
+                <div class="logo-box">P</div>
+                <div>
+                    <h1>Registry Specialist</h1>
+                    <span>Michael at PY.KG</span>
+                </div>
+            </div>
+            <div class="status connecting" id="status">
+                <span>●</span> <span id="statusText">Connecting...</span>
+            </div>
+        </header>
+
+        <div class="chat-area" id="chat">
+            <div class="system-msg">Initializing...</div>
+        </div>
+
+        <div class="footer">
+            <div class="chips">
+                <div class="chip" onclick="fill('Check my domains')">My Domains</div>
+                <div class="chip" onclick="fill('Register a domain')">Register</div>
+                <div class="chip" onclick="fill('Manage DNS records')">DNS</div>
+                <div class="chip" onclick="fill('Check notifications')">Notifications</div>
+            </div>
+
+            <div class="input-group">
+                <input type="text" id="input" placeholder="Type your message..." autocomplete="off">
+                <button class="send-btn" id="sendBtn" onclick="send()">
+                    <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14M12 5l7 7-7 7"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const chat = document.getElementById('chat');
+        const input = document.getElementById('input');
+        const sendBtn = document.getElementById('sendBtn');
+        const status = document.getElementById('status');
+        const statusText = document.getElementById('statusText');
+
+        let convId = null;
+        let processing = false;
+
+        // Markdown 渲染
+        function md(text) {
+            return text
+                .replace(/```(\w+)?\n([\s\S]*?)```/g, '<pre><code>$2</code></pre>')
+                .replace(/`([^`]+)`/g, '<code>$1</code>')
+                .replace(/^### (.*$)/gm, '<h3>$1</h3>')
+                .replace(/^## (.*$)/gm, '<h2>$1</h2>')
+                .replace(/^# (.*$)/gm, '<h1>$1</h1>')
+                .replace(/\*\*([^\*]+)\*\*/g, '<strong>$1</strong>')
+                .replace(/\*([^\*]+)\*/g, '<em>$1</em>')
+                .replace(/^> (.*$)/gm, '<blockquote>$1</blockquote>')
+                .replace(/^\- (.*$)/gm, '<li>$1</li>')
+                .replace(/(<li>.*<\/li>)/s, '<ul>$1</ul>')
+                .replace(/^\d+\. (.*$)/gm, '<li>$1</li>')
+                .replace(/\n\n/g, '</p><p>')
+                .replace(/^(?!<[hup])/gm, '<p>')
+                .replace(/$/gm, '</p>')
+                .replace(/<\/p><p><\/p>/g, '')
+                .replace(/<p><([hup])/g, '<$1')
+                .replace(/<\/([hup])><\/p>/g, '</$1>');
+        }
+
+        async function init() {
+            setStatus('connecting', 'Connecting...');
+            try {
+                const res = await fetch('/api/me');
+                if (res.ok) {
+                    setStatus('connected', 'Online');
+                    chat.innerHTML = '';
+
+                    // Send initial greeting
+                    setTimeout(() => send(''), 100);
+                } else if (res.status === 401 || res.status === 403) {
+                    setStatus('error', 'Not logged in');
+                    chat.innerHTML = '';
+                    showLoginPrompt();
+                } else {
+                    throw new Error('Connection failed');
+                }
+            } catch (e) {
+                setStatus('error', 'Offline');
+                addSystem('Connection failed: ' + e.message);
+            }
+        }
+
+        function setStatus(state, text) {
+            status.className = 'status ' + state;
+            statusText.textContent = text;
+        }
+
+        function showLoginPrompt() {
+            const div = document.createElement('div');
+            div.className = 'message ai';
+            div.innerHTML = `
+                <div class="bubble">
+                    <p>Hello! I'm Michael, your Registry Specialist at PY.KG. 👋</p>
+                    <p>To access full features, please log in to your account.</p>
+                    <a href="/auth/login" class="login-btn">Log In</a>
+                </div>
+            `;
+            chat.appendChild(div);
+            scroll();
+
+            // Disable input
+            input.disabled = true;
+            input.placeholder = 'Please log in first...';
+            sendBtn.disabled = true;
+        }
+
+        function fill(text) {
+            input.value = text;
+            input.focus();
+        }
+
+        input.addEventListener('keypress', (e) => {
+            if(e.key === 'Enter') send();
+        });
+
+        async function send(msg = null) {
+            if (msg === null) {
+                msg = input.value.trim();
+            }
+            if (processing) return;
+
+            if (msg) {
+                addMsg(msg, 'user');
+                input.value = '';
+            }
+
+            processing = true;
+            sendBtn.disabled = true;
+            setStatus('connecting', 'Thinking...');
+
+            const aiId = 'ai-' + Date.now();
+            const aiDiv = createMsg('ai', '', aiId);
+            chat.appendChild(aiDiv);
+            const bubble = aiDiv.querySelector('.bubble');
+
+            try {
+                const res = await fetch('/api/agent/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: msg || '', conversation_id: convId })
+                });
+
+                if (res.status === 401 || res.status === 403) {
+                    bubble.innerHTML = '<p>Your session has expired. Please log in again.</p><a href="/auth/login" class="login-btn">Log In</a>';
+                    setStatus('error', 'Not logged in');
+                    return;
+                }
+
+                if (!res.ok) throw new Error('Request failed');
+
+                const data = await res.json();
+                if (!data.success) throw new Error(data.error);
+
+                convId = data.data.conversation_id;
+
+                // Show tools
+                if (data.data.tool_calls?.length > 0) {
+                    const tools = data.data.tool_calls.map(t => {
+                        const names = {
+                            'get_user_info': 'User Info',
+                            'get_domain_info': 'Domains',
+                            'query_dns_records': 'DNS Records',
+                            'check_domain_available': 'Availability',
+                            'register_domain': 'Registration',
+                            'add_dns_record': 'Add DNS',
+                            'update_dns_record': 'Update DNS',
+                            'delete_dns_record': 'Delete DNS',
+                            'whois_lookup': 'WHOIS',
+                            'check_blacklist': 'Blacklist',
+                            'submit_appeal': 'Appeal',
+                            'submit_report': 'Report',
+                            'get_notifications': 'Notifications',
+                        };
+                        return names[t.name] || t.name;
+                    });
+                    bubble.innerHTML = `<div class="tool-badge">🔧 ${tools.join(', ')}</div>`;
+                }
+
+                // Render markdown
+                await type(bubble, md(data.data.response));
+                setStatus('connected', 'Online');
+            } catch (e) {
+                bubble.innerHTML = `<span style="color:#ef4444">Error: ${e.message}</span>`;
+                setStatus('error', 'Failed');
+            } finally {
+                processing = false;
+                sendBtn.disabled = false;
+                scroll();
+            }
+        }
+
+        function createMsg(type, content, id) {
+            const div = document.createElement('div');
+            div.className = `message ${type}`;
+            if (id) div.id = id;
+            div.innerHTML = `<div class="bubble">${content}</div>`;
+            return div;
+        }
+
+        function addMsg(content, type) {
+            chat.appendChild(createMsg(type, content));
+            scroll();
+        }
+
+        function addSystem(text) {
+            const div = document.createElement('div');
+            div.className = 'system-msg';
+            div.textContent = text;
+            chat.appendChild(div);
+            scroll();
+        }
+
+        async function type(el, html, speed = 8) {
+            const temp = document.createElement('div');
+            temp.innerHTML = html;
+            const text = temp.textContent;
+
+            el.innerHTML = el.innerHTML; // 保留已有内容
+            const div = document.createElement('div');
+            el.appendChild(div);
+
+            for (let i = 0; i < text.length; i++) {
+                div.textContent += text[i];
+                if (i % 5 === 0) {
+                    scroll();
+                    await new Promise(r => setTimeout(r, speed));
+                }
+            }
+
+            // 替换为完整 HTML
+            div.innerHTML = html;
+        }
+
+        function scroll() {
+            chat.scrollTop = chat.scrollHeight;
+        }
+
+        init();
+    </script>
+</body>
+</html>

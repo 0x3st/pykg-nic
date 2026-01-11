@@ -14,6 +14,7 @@ export interface Env {
   SESSION_COOKIE_NAME?: string;
   ADMIN_LINUXDO_IDS?: string;   // 管理员 LinuxDO ID 列表，逗号分隔
   ADMIN_SECRET?: string;        // 管理员提升密钥
+  DEEPSEEK_API_KEY?: string;    // DeepSeek API Key for Agent
 }
 
 export interface LinuxDOUser {
