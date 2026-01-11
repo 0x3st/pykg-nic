@@ -248,34 +248,6 @@
             width: 18px; height: 18px; cursor: pointer;
         }
 
-        /* Floating DNS Panel */
-        .dns-panel-overlay {
-            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,0,0,0.4); backdrop-filter: blur(4px);
-            z-index: 1000; display: none; align-items: center; justify-content: center;
-        }
-        .dns-panel-overlay.active { display: flex; }
-        .dns-panel {
-            background: rgba(255,255,255,0.95); backdrop-filter: blur(20px);
-            border-radius: 20px; width: 90%; max-width: 900px; max-height: 85vh;
-            overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-            display: flex; flex-direction: column; animation: slideUp 0.3s ease-out;
-        }
-        @keyframes slideUp {
-            from { transform: translateY(50px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
-        }
-        .dns-panel-close {
-            position: absolute; top: 16px; right: 16px; width: 32px; height: 32px;
-            background: rgba(0,0,0,0.1); border: none; border-radius: 50%;
-            cursor: pointer; display: flex; align-items: center; justify-content: center;
-            font-size: 20px; color: white; transition: all 0.2s;
-        }
-        .dns-panel-close:hover { background: rgba(0,0,0,0.2); transform: rotate(90deg); }
-        .dns-panel-body {
-            flex: 1; overflow-y: auto; padding: 20px;
-        }
-
         .tool-badge {
             background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.3);
             border-radius: 12px; padding: 6px 10px; margin-top: 8px;
@@ -287,6 +259,127 @@
             padding: 12px; background: rgba(255,255,255,0.4);
             border-radius: 16px; margin: 8px auto; max-width: 400px;
         }
+
+        /* Inbox Button & Panel */
+        .inbox-btn {
+            position: relative; width: 40px; height: 40px;
+            background: rgba(255,255,255,0.5); border: 1px solid rgba(255,255,255,0.6);
+            border-radius: 12px; cursor: pointer; display: flex;
+            align-items: center; justify-content: center;
+            color: var(--text-main); transition: all 0.2s;
+        }
+        .inbox-btn:hover { background: rgba(255,255,255,0.8); transform: translateY(-2px); }
+        .inbox-badge {
+            position: absolute; top: -6px; right: -6px;
+            background: #ef4444; color: white; font-size: 11px;
+            font-weight: 600; min-width: 18px; height: 18px;
+            border-radius: 9px; display: flex; align-items: center;
+            justify-content: center; padding: 0 5px;
+        }
+        .inbox-badge.hidden { display: none; }
+
+        .inbox-panel {
+            position: fixed; top: 80px; right: 20px; width: 400px;
+            max-width: calc(100vw - 40px); max-height: 70vh;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(25px); border-radius: 20px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.15);
+            border: 1px solid rgba(255,255,255,0.8);
+            z-index: 1000; display: none; flex-direction: column;
+            overflow: hidden; animation: slideIn 0.3s ease-out;
+        }
+        .inbox-panel.active { display: flex; }
+        @keyframes slideIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .inbox-header {
+            padding: 16px 20px; border-bottom: 1px solid rgba(0,0,0,0.06);
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .inbox-header h3 { margin: 0; font-size: 16px; color: var(--text-main); }
+        .inbox-close {
+            width: 28px; height: 28px; border: none; background: rgba(0,0,0,0.05);
+            border-radius: 8px; cursor: pointer; display: flex;
+            align-items: center; justify-content: center; transition: all 0.2s;
+        }
+        .inbox-close:hover { background: rgba(0,0,0,0.1); }
+
+        .inbox-tabs {
+            display: flex; border-bottom: 1px solid rgba(0,0,0,0.06);
+        }
+        .inbox-tab {
+            flex: 1; padding: 12px; border: none; background: none;
+            font-size: 13px; font-weight: 500; cursor: pointer;
+            color: var(--text-secondary); transition: all 0.2s;
+            position: relative;
+        }
+        .inbox-tab.active { color: #0284c7; }
+        .inbox-tab.active::after {
+            content: ''; position: absolute; bottom: 0; left: 20%; right: 20%;
+            height: 2px; background: #0284c7; border-radius: 1px;
+        }
+        .inbox-tab .tab-badge {
+            display: inline-block; background: #ef4444; color: white;
+            font-size: 10px; padding: 1px 6px; border-radius: 10px;
+            margin-left: 6px; font-weight: 600;
+        }
+        .inbox-tab .tab-badge.hidden { display: none; }
+
+        .inbox-content {
+            flex: 1; overflow-y: auto; padding: 12px;
+        }
+        .inbox-tab-content { display: none; }
+        .inbox-tab-content.active { display: block; }
+
+        .inbox-item {
+            padding: 12px; margin-bottom: 8px;
+            background: rgba(255,255,255,0.6); border-radius: 12px;
+            border: 1px solid rgba(0,0,0,0.04); transition: all 0.2s;
+        }
+        .inbox-item:hover { background: rgba(255,255,255,0.9); }
+        .inbox-item.unread { background: rgba(56, 189, 248, 0.08); border-color: rgba(56, 189, 248, 0.2); }
+        .inbox-item-header {
+            display: flex; justify-content: space-between; align-items: flex-start;
+            margin-bottom: 6px;
+        }
+        .inbox-item-title { font-weight: 600; font-size: 13px; color: var(--text-main); }
+        .inbox-item-time { font-size: 11px; color: var(--text-secondary); }
+        .inbox-item-body { font-size: 13px; color: var(--text-secondary); line-height: 1.5; }
+        .inbox-item-sender {
+            display: inline-block; font-size: 11px; padding: 2px 8px;
+            background: rgba(16, 185, 129, 0.15); color: #059669;
+            border-radius: 6px; margin-bottom: 6px;
+        }
+        .inbox-item-sender.user { background: rgba(59, 130, 246, 0.15); color: #3b82f6; }
+
+        .inbox-empty {
+            text-align: center; padding: 40px 20px; color: var(--text-secondary);
+        }
+
+        .inbox-compose {
+            padding: 12px; border-top: 1px solid rgba(0,0,0,0.06);
+            background: rgba(255,255,255,0.5);
+        }
+        .inbox-compose textarea {
+            width: 100%; padding: 10px 12px; border: 1px solid rgba(0,0,0,0.1);
+            border-radius: 10px; font-size: 13px; font-family: inherit;
+            resize: none; background: rgba(255,255,255,0.8); transition: all 0.2s;
+        }
+        .inbox-compose textarea:focus {
+            outline: none; border-color: #38bdf8;
+            box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.15);
+        }
+        .inbox-compose-footer {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-top: 8px;
+        }
+        .inbox-compose-footer small { color: var(--text-secondary); font-size: 11px; }
+        .inbox-send-btn {
+            padding: 8px 16px; background: var(--accent-gradient); color: white;
+            border: none; border-radius: 10px; font-size: 12px; font-weight: 600;
+            cursor: pointer; transition: all 0.2s;
+        }
+        .inbox-send-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(2, 132, 199, 0.3); }
+        .inbox-send-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
 
         .footer {
             padding: 20px 30px; background: rgba(255, 255, 255, 0.4);
@@ -356,6 +449,12 @@
                 </div>
             </div>
             <div style="display: flex; align-items: center; gap: 1rem;">
+                <button class="inbox-btn" id="inboxBtn" onclick="toggleInbox()">
+                    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                    </svg>
+                    <span id="inboxBadge" class="inbox-badge hidden">0</span>
+                </button>
                 <a href="/legacy.html" style="font-size: 12px; color: var(--text-secondary); text-decoration: none; padding: 4px 8px; border-radius: 6px; background: rgba(255,255,255,0.3); transition: all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.5)'" onmouseout="this.style.background='rgba(255,255,255,0.3)'">Classic UI</a>
                 <div class="status connecting" id="status">
                     <span>●</span> <span id="statusText">Connecting...</span>
@@ -386,12 +485,37 @@
         </div>
     </div>
 
-    <!-- Floating DNS Manager Panel -->
-    <div class="dns-panel-overlay" id="dnsPanel">
-        <div class="dns-panel">
-            <button class="dns-panel-close" onclick="closeDnsPanel()">×</button>
-            <div class="dns-panel-body" id="dnsPanelBody">
-                <!-- DNS manager content will be inserted here -->
+    <!-- Inbox Panel -->
+    <div class="inbox-panel" id="inboxPanel">
+        <div class="inbox-header">
+            <h3>Inbox</h3>
+            <button class="inbox-close" onclick="toggleInbox()">
+                <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+        </div>
+        <div class="inbox-tabs">
+            <button class="inbox-tab active" data-tab="messages" onclick="switchInboxTab('messages')">
+                Messages <span class="tab-badge hidden" id="msgBadge">0</span>
+            </button>
+            <button class="inbox-tab" data-tab="notifications" onclick="switchInboxTab('notifications')">
+                Notifications <span class="tab-badge hidden" id="notifBadge">0</span>
+            </button>
+        </div>
+        <div class="inbox-content">
+            <div class="inbox-tab-content active" id="messagesTab">
+                <div class="inbox-empty">Loading...</div>
+            </div>
+            <div class="inbox-tab-content" id="notificationsTab">
+                <div class="inbox-empty">Loading...</div>
+            </div>
+        </div>
+        <div class="inbox-compose" id="inboxCompose">
+            <textarea id="messageInput" rows="2" placeholder="Send a message to admin..." maxlength="2000"></textarea>
+            <div class="inbox-compose-footer">
+                <small><span id="charCount">0</span>/2000</small>
+                <button class="inbox-send-btn" id="sendMsgBtn" onclick="sendInboxMessage()">Send</button>
             </div>
         </div>
     </div>
@@ -431,17 +555,38 @@
         async function init() {
             setStatus('connecting', 'Connecting...');
             try {
-                const res = await fetch('/api/me');
-                if (res.ok) {
-                    const userData = await res.json();
-                    const username = userData.data?.username || 'there';
+                // Fetch user info, domain info, and notifications in parallel
+                const [meRes, domainRes, notifRes] = await Promise.all([
+                    fetch('/api/me'),
+                    fetch('/api/domains'),
+                    fetch('/api/notifications?unread_only=true')
+                ]);
+
+                if (meRes.ok) {
+                    const userData = await meRes.json();
+                    const username = userData.data?.user?.username || 'there';
+                    const isBanned = userData.data?.user?.is_banned;
+
+                    // Parse domain data
+                    let domainData = null;
+                    if (domainRes.ok) {
+                        const domainJson = await domainRes.json();
+                        domainData = domainJson.data;
+                    }
+
+                    // Parse notifications
+                    let notifications = [];
+                    if (notifRes.ok) {
+                        const notifJson = await notifRes.json();
+                        notifications = notifJson.data?.notifications || [];
+                    }
 
                     setStatus('connected', 'Online');
                     chat.innerHTML = '';
 
-                    // Show welcome message immediately without API call
-                    showWelcome(username);
-                } else if (res.status === 401 || res.status === 403) {
+                    // Show personalized welcome message
+                    showWelcome(username, { isBanned, domainData, notifications });
+                } else if (meRes.status === 401 || meRes.status === 403) {
                     setStatus('error', 'Not logged in');
                     chat.innerHTML = '';
                     showLoginPrompt();
@@ -459,12 +604,99 @@
             statusText.textContent = text;
         }
 
-        function showWelcome(username) {
-            const div = document.createElement('div');
-            div.className = 'message ai';
-            div.innerHTML = `
-                <div class="bubble">
-                    <p>Hello <strong>${username}</strong>! I'm Michael, your Registry Specialist at PY.KG.</p>
+        function getGreeting(username) {
+            const hour = new Date().getHours();
+            const greetings = [
+                `Hi ${username}!`,
+                `Hello ${username}!`,
+                `Hey ${username}!`,
+                `Welcome, ${username}!`,
+                `Hi there, ${username}!`,
+            ];
+
+            // Time-based greetings
+            if (hour >= 5 && hour < 12) {
+                greetings.push(`Good morning, ${username}!`);
+            } else if (hour >= 12 && hour < 18) {
+                greetings.push(`Good afternoon, ${username}!`);
+            } else {
+                greetings.push(`Good evening, ${username}!`);
+            }
+
+            return greetings[Math.floor(Math.random() * greetings.length)];
+        }
+
+        function showWelcome(username, context = {}) {
+            const { isBanned, domainData, notifications = [] } = context;
+            const greeting = getGreeting(username);
+
+            let content = `<p>${greeting} I'm Michael, your Registry Specialist at PY.KG.</p>`;
+
+            // Show brief unread notification hint (detailed view in inbox panel)
+            if (notifications.length > 0) {
+                content += `
+                    <p style="color: #0284c7; background: rgba(2, 132, 199, 0.1); padding: 12px 14px; border-radius: 8px; border-left: 3px solid #0284c7; font-size: 14px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+                        <span>You have <strong>${notifications.length}</strong> unread notification${notifications.length > 1 ? 's' : ''}.</span>
+                        <button onclick="toggleInbox(); switchInboxTab('notifications');" style="padding: 6px 14px; background: linear-gradient(135deg, #0284c7, #10b981); color: white; border: none; border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s; box-shadow: 0 2px 8px rgba(2, 132, 199, 0.3);" onmouseover="this.style.transform='translateY(-1px)'" onmouseout="this.style.transform='none'">View Inbox</button>
+                    </p>
+                `;
+            }
+
+            // Check for banned user
+            if (isBanned) {
+                content += `
+                    <p style="color: #dc2626; background: rgba(239, 68, 68, 0.1); padding: 12px; border-radius: 8px; border-left: 3px solid #dc2626;">
+                        Your account has been suspended. If you believe this is a mistake, you can submit an appeal.
+                    </p>
+                    <p>Click the button below to submit an appeal:</p>
+                    <button class="login-btn" onclick="fill('I want to submit an appeal for my account')">Submit Appeal</button>
+                `;
+            }
+            // Check for suspended domain
+            else if (domainData?.domain?.status === 'suspended') {
+                const suspendReason = domainData.domain.suspend_reason || 'Policy violation';
+                content += `
+                    <p style="color: #f59e0b; background: rgba(245, 158, 11, 0.1); padding: 12px; border-radius: 8px; border-left: 3px solid #f59e0b;">
+                        Your domain <strong>${domainData.domain.fqdn}</strong> has been suspended.<br>
+                        <small>Reason: ${suspendReason}</small>
+                    </p>
+                    <p>You can submit an appeal if you believe this was a mistake:</p>
+                    <button class="login-btn" onclick="fill('I want to appeal the suspension of my domain')">Submit Appeal</button>
+                `;
+            }
+            // Check for pending review
+            else if (domainData?.domain?.status === 'review' || domainData?.pendingReview) {
+                const label = domainData?.domain?.label || domainData?.pendingReview?.label;
+                content += `
+                    <p style="color: #3b82f6; background: rgba(59, 130, 246, 0.1); padding: 12px; border-radius: 8px; border-left: 3px solid #3b82f6;">
+                        Your domain registration for <strong>${label}.py.kg</strong> is under review. We'll notify you once it's approved.
+                    </p>
+                    <p>In the meantime, how can I help you?</p>
+                `;
+            }
+            // Check for pending order (unpaid)
+            else if (domainData?.pendingOrder) {
+                content += `
+                    <p style="color: #8b5cf6; background: rgba(139, 92, 246, 0.1); padding: 12px; border-radius: 8px; border-left: 3px solid #8b5cf6;">
+                        You have a pending payment for <strong>${domainData.pendingOrder.label}.py.kg</strong>. Complete the payment to secure your domain!
+                    </p>
+                `;
+            }
+            // Active domain user
+            else if (domainData?.domain?.status === 'active') {
+                content += `
+                    <p>Your domain <strong>${domainData.domain.fqdn}</strong> is active and running smoothly.</p>
+                    <p>How can I help you today? I can assist with:</p>
+                    <ul>
+                        <li>DNS record configuration</li>
+                        <li>Domain management</li>
+                        <li>WHOIS and blacklist queries</li>
+                    </ul>
+                `;
+            }
+            // No domain yet
+            else {
+                content += `
                     <p>How can I help you today? I can assist with:</p>
                     <ul>
                         <li>Domain registration and management</li>
@@ -473,8 +705,12 @@
                         <li>Appeals and reports</li>
                     </ul>
                     <p>Feel free to ask me anything about your domains.</p>
-                </div>
-            `;
+                `;
+            }
+
+            const div = document.createElement('div');
+            div.className = 'message ai';
+            div.innerHTML = `<div class="bubble">${content}</div>`;
             chat.appendChild(div);
             scroll();
         }
@@ -578,9 +814,19 @@
                         // Show text response first
                         await type(bubble, md(data.data.response));
 
-                        // Add button to open DNS panel
-                        const btnHtml = `<div style="margin-top: 12px;"><button onclick="openDnsPanel(${JSON.stringify(dnsManagerCall.result.data).replace(/"/g, '&quot;')})" style="background: linear-gradient(135deg, #38bdf8, #10b981); color: white; border: none; padding: 10px 20px; border-radius: 10px; font-weight: 600; cursor: pointer; box-shadow: 0 4px 12px rgba(56, 189, 248, 0.3); transition: all 0.2s;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 16px rgba(56, 189, 248, 0.4)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(56, 189, 248, 0.3)'">🌐 Open DNS Manager</button></div>`;
-                        bubble.insertAdjacentHTML('beforeend', btnHtml);
+                        // Remove old DNS manager if exists (to prevent duplicate IDs)
+                        const existingManager = document.getElementById(globalDnsManagerId);
+                        if (existingManager) {
+                            console.log('Removing existing DNS manager');
+                            existingManager.remove(); // Remove the old dns-manager element
+                        }
+
+                        // Render DNS manager inside the bubble (better visual)
+                        const dnsContainer = document.createElement('div');
+                        dnsContainer.style.marginTop = '16px';
+                        dnsContainer.id = globalDnsManagerId + '-wrapper';
+                        bubble.appendChild(dnsContainer);
+                        renderDnsManager(dnsContainer, dnsManagerCall.result.data);
 
                         setStatus('connected', 'Online');
                         processing = false;
@@ -652,47 +898,20 @@
         // DNS Manager UI Functions
         const dnsManagers = {}; // Store manager state
         let currentDnsData = null; // Store current DNS data
-
-        function openDnsPanel(dnsData) {
-            console.log('Opening DNS panel with data:', dnsData);
-            currentDnsData = dnsData;
-
-            const panel = document.getElementById('dnsPanel');
-            const body = document.getElementById('dnsPanelBody');
-
-            // Render DNS manager into panel
-            body.innerHTML = '';
-            renderDnsManager(body, dnsData);
-
-            // Show panel
-            panel.classList.add('active');
-        }
-
-        function closeDnsPanel() {
-            const panel = document.getElementById('dnsPanel');
-            panel.classList.remove('active');
-        }
-
-        // Close panel when clicking overlay
-        document.addEventListener('DOMContentLoaded', () => {
-            document.getElementById('dnsPanel').addEventListener('click', (e) => {
-                if (e.target.id === 'dnsPanel') {
-                    closeDnsPanel();
-                }
-            });
-        });
+        let globalDnsManagerId = 'dns-current'; // Global fixed ID
 
         function renderDnsManager(container, dnsData) {
             const records = dnsData.records || [];
             const domain = dnsData.domain || {};
 
-            const managerId = 'dns-main'; // Use fixed ID for the panel
+            const managerId = globalDnsManagerId; // Use global fixed ID
 
             // Store state for refreshing
             dnsManagers[managerId] = { domain };
+            currentDnsData = dnsData;
 
             const managerHtml = `
-                <div class="dns-manager" id="${managerId}" style="border: none; box-shadow: none; margin: 0;">
+                <div class="dns-manager" id="${managerId}">
                     <div class="dns-manager-header">
                         <h3>🌐 DNS Records for ${domain.fqdn || 'your domain'}</h3>
                         <button class="dns-btn-add" onclick="toggleDnsForm('${managerId}')">+ Add Record</button>
@@ -884,48 +1103,236 @@
         }
 
         async function refreshDnsRecords(managerId) {
-            console.log('Refreshing DNS records for', managerId);
+            console.log('=== REFRESH START ===');
 
             try {
-                const contentDiv = document.getElementById(managerId + '-content');
-                if (!contentDiv) {
-                    console.error('Content div not found:', managerId + '-content');
-                    return;
-                }
-
-                // Show loading state
-                const loadingHtml = '<div class="dns-empty">🔄 Refreshing records...</div>';
-                contentDiv.innerHTML = loadingHtml;
-
                 const res = await fetch('/api/dns-records');
-                console.log('Refresh response status:', res.status);
-
                 const result = await res.json();
-                console.log('Refresh result:', result);
 
                 if (result.success) {
                     const records = result.data.records || [];
                     console.log('Got records:', records.length, records);
 
-                    // Update table with new records - DIRECT innerHTML update
-                    const newTable = renderDnsTable(records, managerId);
-                    console.log('Updating contentDiv with new table, length:', newTable.length);
-                    contentDiv.innerHTML = newTable;
-                    console.log('ContentDiv updated, current HTML length:', contentDiv.innerHTML.length);
+                    // Find the wrapper and re-render entire DNS manager
+                    const wrapper = document.getElementById(managerId + '-wrapper');
+                    if (wrapper) {
+                        const domain = dnsManagers[managerId]?.domain || currentDnsData?.domain || {};
+                        renderDnsManager(wrapper, { records, domain });
+                        console.log('DNS Manager re-rendered successfully');
+                    } else {
+                        console.error('Wrapper not found:', managerId + '-wrapper');
+                    }
                 } else {
-                    console.error('Refresh failed:', result.error);
-                    contentDiv.innerHTML = `<div class="dns-empty" style="color: #dc2626;">Failed to refresh: ${result.error || 'Unknown error'}</div>`;
+                    console.error('API error:', result.error);
+                    alert('Failed to refresh: ' + (result.error || 'Unknown error'));
                 }
             } catch (e) {
-                console.error('Failed to refresh DNS records:', e);
-                const contentDiv = document.getElementById(managerId + '-content');
-                if (contentDiv) {
-                    contentDiv.innerHTML = `<div class="dns-empty" style="color: #dc2626;">Error: ${e.message}</div>`;
+                console.error('Refresh error:', e);
+                alert('Error: ' + e.message);
+            }
+        }
+
+        // ========== Inbox Functions ==========
+        let inboxOpen = false;
+        let inboxMessages = [];
+        let inboxNotifications = [];
+        let inboxPollingInterval = null;
+
+        function toggleInbox() {
+            const panel = document.getElementById('inboxPanel');
+            inboxOpen = !inboxOpen;
+            panel.classList.toggle('active', inboxOpen);
+            if (inboxOpen) {
+                loadInboxMessages();
+                loadInboxNotifications();
+            }
+        }
+
+        function switchInboxTab(tab) {
+            document.querySelectorAll('.inbox-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.inbox-tab-content').forEach(c => c.classList.remove('active'));
+            document.querySelector(`.inbox-tab[data-tab="${tab}"]`).classList.add('active');
+            document.getElementById(tab === 'messages' ? 'messagesTab' : 'notificationsTab').classList.add('active');
+            // Show/hide compose area based on tab
+            document.getElementById('inboxCompose').style.display = tab === 'messages' ? 'block' : 'none';
+        }
+
+        async function loadInboxMessages() {
+            const container = document.getElementById('messagesTab');
+            try {
+                const res = await fetch('/api/messages');
+                if (!res.ok) throw new Error('Failed to load');
+                const data = await res.json();
+                inboxMessages = data.data?.messages || [];
+
+                if (inboxMessages.length === 0) {
+                    container.innerHTML = '<div class="inbox-empty">No messages yet.<br><small>Send a message to start chatting with admin.</small></div>';
+                } else {
+                    container.innerHTML = inboxMessages.map(m => `
+                        <div class="inbox-item ${!m.is_read && m.sender_type === 'admin' ? 'unread' : ''}">
+                            <div class="inbox-item-sender ${m.sender_type === 'user' ? 'user' : ''}">${m.sender_type === 'admin' ? 'Admin' : 'You'}</div>
+                            <div class="inbox-item-header">
+                                <span class="inbox-item-title">${escapeHtml(m.sender_username)}</span>
+                                <span class="inbox-item-time">${formatTime(m.created_at)}</span>
+                            </div>
+                            <div class="inbox-item-body">${escapeHtml(m.content)}</div>
+                        </div>
+                    `).join('');
+                    container.scrollTop = container.scrollHeight;
+                }
+                updateInboxBadges();
+            } catch (e) {
+                container.innerHTML = `<div class="inbox-empty" style="color: #ef4444;">Failed to load messages</div>`;
+            }
+        }
+
+        async function loadInboxNotifications() {
+            const container = document.getElementById('notificationsTab');
+            try {
+                const res = await fetch('/api/notifications');
+                if (!res.ok) throw new Error('Failed to load');
+                const data = await res.json();
+                inboxNotifications = data.data?.notifications || [];
+
+                if (inboxNotifications.length === 0) {
+                    container.innerHTML = '<div class="inbox-empty">No notifications yet.</div>';
+                } else {
+                    container.innerHTML = inboxNotifications.map(n => `
+                        <div class="inbox-item ${!n.is_read ? 'unread' : ''}" onclick="markNotificationRead(${n.id}, this)">
+                            <div class="inbox-item-header">
+                                <span class="inbox-item-title">${escapeHtml(n.title)}</span>
+                                <span class="inbox-item-time">${formatTime(n.created_at)}</span>
+                            </div>
+                            <div class="inbox-item-body">${escapeHtml(n.message)}</div>
+                        </div>
+                    `).join('');
+                }
+                updateInboxBadges();
+            } catch (e) {
+                container.innerHTML = `<div class="inbox-empty" style="color: #ef4444;">Failed to load notifications</div>`;
+            }
+        }
+
+        async function markNotificationRead(id, el) {
+            if (el.classList.contains('unread')) {
+                el.classList.remove('unread');
+                try {
+                    await fetch('/api/notifications', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ id })
+                    });
+                    updateInboxBadges();
+                } catch (e) {
+                    console.error('Failed to mark as read:', e);
                 }
             }
         }
 
+        async function sendInboxMessage() {
+            const textarea = document.getElementById('messageInput');
+            const btn = document.getElementById('sendMsgBtn');
+            const content = textarea.value.trim();
+
+            if (!content) return;
+            if (content.length > 2000) {
+                alert('Message too long (max 2000 characters)');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.textContent = 'Sending...';
+
+            try {
+                const res = await fetch('/api/messages', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ content })
+                });
+                if (!res.ok) throw new Error('Failed to send');
+
+                textarea.value = '';
+                document.getElementById('charCount').textContent = '0';
+                await loadInboxMessages();
+            } catch (e) {
+                alert('Failed to send message: ' + e.message);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Send';
+            }
+        }
+
+        async function checkInboxUnread() {
+            try {
+                const [msgRes, notifRes] = await Promise.all([
+                    fetch('/api/messages?check_only=true'),
+                    fetch('/api/notifications?unread_only=true')
+                ]);
+
+                let unreadMsgs = 0;
+                let unreadNotifs = 0;
+
+                if (msgRes.ok) {
+                    const data = await msgRes.json();
+                    unreadMsgs = data.data?.conversation?.unread_user_count || 0;
+                }
+                if (notifRes.ok) {
+                    const data = await notifRes.json();
+                    unreadNotifs = (data.data?.notifications || []).length;
+                }
+
+                updateBadge('inboxBadge', unreadMsgs + unreadNotifs);
+                updateBadge('msgBadge', unreadMsgs);
+                updateBadge('notifBadge', unreadNotifs);
+            } catch (e) {
+                console.error('Failed to check unread:', e);
+            }
+        }
+
+        function updateBadge(id, count) {
+            const badge = document.getElementById(id);
+            if (count > 0) {
+                badge.textContent = count > 99 ? '99+' : count;
+                badge.classList.remove('hidden');
+            } else {
+                badge.classList.add('hidden');
+            }
+        }
+
+        function updateInboxBadges() {
+            checkInboxUnread();
+        }
+
+        function formatTime(timestamp) {
+            const date = new Date(timestamp);
+            const now = new Date();
+            const diff = now - date;
+            if (diff < 60000) return 'Just now';
+            if (diff < 3600000) return Math.floor(diff / 60000) + 'm ago';
+            if (diff < 86400000) return Math.floor(diff / 3600000) + 'h ago';
+            if (diff < 604800000) return Math.floor(diff / 86400000) + 'd ago';
+            return date.toLocaleDateString();
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Setup message input character count
+        document.getElementById('messageInput').addEventListener('input', (e) => {
+            document.getElementById('charCount').textContent = e.target.value.length;
+        });
+
+        // Start polling for unread messages
+        function startInboxPolling() {
+            checkInboxUnread();
+            inboxPollingInterval = setInterval(checkInboxUnread, 30000);
+        }
+
         init();
+        startInboxPolling();
     </script>
 </body>
 </html>
