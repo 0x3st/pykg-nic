@@ -136,61 +136,67 @@
 
         /* DNS Manager UI */
         .dns-manager {
-            background: rgba(255,255,255,0.95); border-radius: 12px; padding: 0;
-            margin-top: 12px; overflow: hidden; border: 1px solid rgba(0,0,0,0.08);
+            background: rgba(255,255,255,0.8); border-radius: 16px; padding: 0;
+            margin-top: 12px; overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.6);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.08);
+            backdrop-filter: blur(10px);
         }
         .dns-manager-header {
-            background: linear-gradient(135deg, #0284c7, #0369a1);
-            color: white; padding: 12px 16px; display: flex;
+            background: linear-gradient(135deg, rgba(56, 189, 248, 0.8), rgba(16, 185, 129, 0.8));
+            color: white; padding: 14px 18px; display: flex;
             justify-content: space-between; align-items: center;
+            backdrop-filter: blur(10px);
         }
-        .dns-manager-header h3 { margin: 0; font-size: 14px; font-weight: 600; }
+        .dns-manager-header h3 { margin: 0; font-size: 15px; font-weight: 600; }
         .dns-table {
             width: 100%; border-collapse: collapse; font-size: 13px;
         }
         .dns-table th {
-            background: rgba(0,0,0,0.02); padding: 10px 12px;
+            background: rgba(0,0,0,0.03); padding: 10px 12px;
             text-align: left; font-weight: 600; border-bottom: 2px solid rgba(0,0,0,0.06);
             font-size: 11px; text-transform: uppercase; color: var(--text-secondary);
         }
         .dns-table td {
-            padding: 12px; border-bottom: 1px solid rgba(0,0,0,0.04);
+            padding: 12px; border-bottom: 1px solid rgba(0,0,0,0.06);
         }
-        .dns-table tr:hover { background: rgba(56, 189, 248, 0.04); }
+        .dns-table tr:hover { background: rgba(56, 189, 248, 0.06); }
         .dns-type-badge {
-            display: inline-block; padding: 3px 8px; border-radius: 6px;
+            display: inline-block; padding: 4px 10px; border-radius: 8px;
             font-size: 11px; font-weight: 600; font-family: monospace;
         }
-        .dns-type-A { background: #dbeafe; color: #1e40af; }
-        .dns-type-AAAA { background: #e0e7ff; color: #4338ca; }
-        .dns-type-CNAME { background: #fce7f3; color: #9f1239; }
-        .dns-type-TXT { background: #d1fae5; color: #065f46; }
+        .dns-type-A { background: rgba(56, 189, 248, 0.2); color: #0284c7; }
+        .dns-type-AAAA { background: rgba(139, 92, 246, 0.2); color: #7c3aed; }
+        .dns-type-CNAME { background: rgba(236, 72, 153, 0.2); color: #db2777; }
+        .dns-type-TXT { background: rgba(16, 185, 129, 0.2); color: #059669; }
         .dns-actions {
             display: flex; gap: 6px;
         }
         .dns-btn {
-            padding: 4px 10px; border-radius: 6px; font-size: 11px;
+            padding: 5px 12px; border-radius: 8px; font-size: 11px;
             cursor: pointer; border: none; font-weight: 500; transition: all 0.2s;
         }
         .dns-btn-edit {
-            background: rgba(59, 130, 246, 0.1); color: #2563eb;
+            background: rgba(56, 189, 248, 0.15); color: #0284c7;
         }
-        .dns-btn-edit:hover { background: rgba(59, 130, 246, 0.2); }
+        .dns-btn-edit:hover { background: rgba(56, 189, 248, 0.25); transform: translateY(-1px); }
         .dns-btn-delete {
-            background: rgba(239, 68, 68, 0.1); color: #dc2626;
+            background: rgba(239, 68, 68, 0.15); color: #dc2626;
         }
-        .dns-btn-delete:hover { background: rgba(239, 68, 68, 0.2); }
+        .dns-btn-delete:hover { background: rgba(239, 68, 68, 0.25); transform: translateY(-1px); }
         .dns-btn-add {
-            background: white; color: #0284c7; padding: 6px 14px;
-            border-radius: 8px; font-size: 12px; font-weight: 600;
+            background: rgba(255,255,255,0.9); color: #0284c7; padding: 7px 16px;
+            border-radius: 10px; font-size: 12px; font-weight: 600;
             cursor: pointer; border: none; transition: all 0.2s;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         }
-        .dns-btn-add:hover { background: rgba(255,255,255,0.9); transform: scale(1.05); }
+        .dns-btn-add:hover { background: white; transform: scale(1.05); box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
         .dns-empty {
             text-align: center; padding: 40px 20px; color: var(--text-secondary);
         }
         .dns-form {
-            padding: 16px; background: rgba(0,0,0,0.02); display: none;
+            padding: 18px; background: rgba(255,255,255,0.4); display: none;
+            border-top: 1px solid rgba(0,0,0,0.06);
         }
         .dns-form.active { display: block; }
         .dns-form-grid {
@@ -198,39 +204,48 @@
             margin-bottom: 12px;
         }
         .dns-form-group {
-            display: flex; flex-direction: column; gap: 4px;
+            display: flex; flex-direction: column; gap: 5px;
         }
         .dns-form-group label {
             font-size: 11px; font-weight: 600; color: var(--text-secondary);
-            text-transform: uppercase;
+            text-transform: uppercase; letter-spacing: 0.5px;
         }
         .dns-form-group input, .dns-form-group select {
-            padding: 8px 10px; border-radius: 6px; border: 1px solid rgba(0,0,0,0.1);
+            padding: 9px 12px; border-radius: 8px;
+            border: 1px solid rgba(0,0,0,0.1);
             font-size: 13px; font-family: inherit;
+            background: rgba(255,255,255,0.8);
+            transition: all 0.2s;
         }
         .dns-form-group input:focus, .dns-form-group select:focus {
-            outline: none; border-color: #0284c7; box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.1);
+            outline: none; border-color: #38bdf8;
+            box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.15);
+            background: white;
         }
         .dns-form-actions {
             display: flex; gap: 8px; justify-content: flex-end;
         }
         .dns-form-btn {
-            padding: 8px 16px; border-radius: 6px; font-size: 12px;
+            padding: 9px 18px; border-radius: 8px; font-size: 12px;
             font-weight: 600; cursor: pointer; border: none; transition: all 0.2s;
         }
         .dns-form-btn-save {
-            background: #0284c7; color: white;
+            background: linear-gradient(135deg, #38bdf8, #10b981); color: white;
+            box-shadow: 0 2px 8px rgba(56, 189, 248, 0.3);
         }
-        .dns-form-btn-save:hover { background: #0369a1; }
+        .dns-form-btn-save:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(56, 189, 248, 0.4);
+        }
         .dns-form-btn-cancel {
-            background: rgba(0,0,0,0.05); color: var(--text);
+            background: rgba(0,0,0,0.06); color: var(--text);
         }
         .dns-form-btn-cancel:hover { background: rgba(0,0,0,0.1); }
         .proxied-toggle {
-            display: flex; align-items: center; gap: 8px; margin-top: 4px;
+            display: flex; align-items: center; gap: 8px; margin-top: 6px;
         }
         .proxied-toggle input[type="checkbox"] {
-            width: 16px; height: 16px; cursor: pointer;
+            width: 18px; height: 18px; cursor: pointer;
         }
 
         .tool-badge {
@@ -592,11 +607,17 @@
         }
 
         // DNS Manager UI Functions
+        const dnsManagers = {}; // Store manager state
+
         function renderDnsManager(container, dnsData) {
             const records = dnsData.records || [];
             const domain = dnsData.domain || {};
 
             const managerId = 'dns-' + Date.now();
+
+            // Store state for refreshing
+            dnsManagers[managerId] = { domain };
+
             const managerHtml = `
                 <div class="dns-manager" id="${managerId}">
                     <div class="dns-manager-header">
