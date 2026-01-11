@@ -30,7 +30,7 @@ export const onRequest: PagesFunction<Env> = async ({ request, env }) => {
 
   // Check if agent is enabled
   if (!env.DEEPSEEK_API_KEY) {
-    return errorResponse('Agent功能未启用', 503);
+    return errorResponse('Agent feature is not enabled', 503);
   }
 
   // Authenticate
@@ -49,17 +49,13 @@ export const onRequest: PagesFunction<Env> = async ({ request, env }) => {
 
   // Check if user is banned
   if (dbUser?.is_banned === 1) {
-    return errorResponse('您的账号已被封禁', 403);
+    return errorResponse('Your account has been banned', 403);
   }
 
   try {
     // Parse request body
     const body = await request.json() as ChatRequest;
     const userMessage = body.message?.trim();
-
-    if (!userMessage) {
-      return errorResponse('消息内容不能为空', 400);
-    }
 
     // Get or create conversation
     let conversationId = body.conversation_id;
@@ -135,13 +131,18 @@ export const onRequest: PagesFunction<Env> = async ({ request, env }) => {
       }
     }
 
+    // Validate message for existing conversations or non-welcome messages
+    if (!userMessage) {
+      return errorResponse('Message cannot be empty', 400);
+    }
+
     // Add user message
     conversationMessages.push({
       role: 'user',
       content: userMessage,
     });
 
-    // 限制对话历史：只保留系统消息 + 最近 8 条消息（约 4 轮对话）
+    // Limit conversation history: keep system message + last 8 messages (about 4 rounds)
     if (conversationMessages.length > 9) {
       const systemMsg = conversationMessages[0];
       const recentMsgs = conversationMessages.slice(-8);
@@ -173,7 +174,7 @@ export const onRequest: PagesFunction<Env> = async ({ request, env }) => {
       },
       {
         maxIterations: 10,
-        temperature: 0.3, // 降低 temperature 减少输出长度和成本
+        temperature: 0.3, // Lower temperature reduces output length and cost
       }
     );
 
@@ -196,7 +197,7 @@ export const onRequest: PagesFunction<Env> = async ({ request, env }) => {
     return errorResponse(
       error instanceof Error
         ? error.message
-        : '处理请求时发生错误，请稍后重试',
+        : 'An error occurred while processing your request. Please try again later.',
       500
     );
   }

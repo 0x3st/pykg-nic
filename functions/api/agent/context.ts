@@ -40,7 +40,7 @@ export const onRequest: PagesFunction<Env> = async ({ request, env }) => {
         .first();
 
       if (!conversation) {
-        return errorResponse('对话不存在', 404);
+        return errorResponse('Conversation not found', 404);
       }
 
       return successResponse({
@@ -60,7 +60,7 @@ export const onRequest: PagesFunction<Env> = async ({ request, env }) => {
       const items: ConversationItem[] = conversations.results.map((conv: any) => {
         const messages = JSON.parse(conv.messages as string);
         const userMessages = messages.filter((m: any) => m.role === 'user');
-        const preview = userMessages.length > 0 ? userMessages[0].content : '新对话';
+        const preview = userMessages.length > 0 ? userMessages[0].content : 'New conversation';
 
         return {
           id: conv.id,
@@ -79,7 +79,7 @@ export const onRequest: PagesFunction<Env> = async ({ request, env }) => {
     console.error('Agent context error:', error);
 
     return errorResponse(
-      error instanceof Error ? error.message : '获取对话历史失败',
+      error instanceof Error ? error.message : 'Failed to retrieve conversation history',
       500
     );
   }
